@@ -1,0 +1,125 @@
+{
+  "name": "@payloadcms/plugin-newsletter",
+  "version": "0.1.0",
+  "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "import": "./src/exports/client.ts",
+      "types": "./src/exports/client.ts",
+      "default": "./src/exports/client.ts"
+    },
+    "./types": {
+      "import": "./src/exports/types.ts",
+      "types": "./src/exports/types.ts",
+      "default": "./src/exports/types.ts"
+    },
+    "./components": {
+      "import": "./src/exports/components.ts",
+      "types": "./src/exports/components.ts",
+      "default": "./src/exports/components.ts"
+    }
+  },
+  "scripts": {
+    "build": "pnpm build:swc && pnpm build:types",
+    "build:swc": "swc ./src -d ./dist --copy-files",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "dev": "pnpm build:swc --watch",
+    "clean": "rimraf dist",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm clean && pnpm build"
+  },
+  "files": [
+    "dist",
+    "*.md"
+  ],
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./client": {
+        "import": "./dist/exports/client.js",
+        "types": "./dist/exports/client.d.ts",
+        "default": "./dist/exports/client.js"
+      },
+      "./types": {
+        "import": "./dist/exports/types.js",
+        "types": "./dist/exports/types.d.ts",
+        "default": "./dist/exports/types.js"
+      },
+      "./components": {
+        "import": "./dist/exports/components.js",
+        "types": "./dist/exports/components.d.ts",
+        "default": "./dist/exports/components.js"
+      }
+    }
+  },
+  "keywords": [
+    "payload",
+    "cms",
+    "plugin",
+    "newsletter",
+    "email",
+    "subscribers",
+    "magic-link",
+    "authentication",
+    "resend",
+    "broadcast",
+    "payload-plugin"
+  ],
+  "author": "Payload CMS",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/payloadcms/plugin-newsletter"
+  },
+  "bugs": {
+    "url": "https://github.com/payloadcms/plugin-newsletter/issues"
+  },
+  "homepage": "https://github.com/payloadcms/plugin-newsletter#readme",
+  "dependencies": {
+    "@payloadcms/translations": "^3.0.0",
+    "@payloadcms/ui": "^3.0.0",
+    "@react-email/components": "^0.0.25",
+    "jsonwebtoken": "^9.0.2",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.4.0",
+    "@swc/core": "^1.7.0",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "payload": "^3.0.0",
+    "prettier": "^3.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "payload": "^3.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  }
+}
