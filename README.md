@@ -17,19 +17,26 @@ A complete newsletter management plugin for Payload CMS that provides subscriber
 
 ### 1. Install the plugin
 
+**Note: This plugin is not yet published to npm. Install directly from GitHub:**
+
+```bash
+npm install github:aniketpanjwani/payload-plugin-email-newsletter
+# or
+yarn add github:aniketpanjwani/payload-plugin-email-newsletter
+# or
+pnpm add github:aniketpanjwani/payload-plugin-email-newsletter
+```
+
+Once published to npm, you'll be able to install with:
 ```bash
 npm install @payloadcms/plugin-newsletter
-# or
-yarn add @payloadcms/plugin-newsletter
-# or
-pnpm add @payloadcms/plugin-newsletter
 ```
 
 ### 2. Add to your Payload config
 
 ```typescript
 import { buildConfig } from 'payload/config'
-import { newsletterPlugin } from '@payloadcms/plugin-newsletter'
+import { newsletterPlugin } from 'payload-plugin-newsletter'
 
 export default buildConfig({
   plugins: [
@@ -70,7 +77,7 @@ The plugin automatically adds:
 #### Simple Newsletter Signup Form
 
 ```tsx
-import { NewsletterForm } from '@payloadcms/plugin-newsletter/components'
+import { NewsletterForm } from 'payload-plugin-newsletter/components'
 
 export function MyHomepage() {
   return (
@@ -330,7 +337,7 @@ import type {
   NewsletterPluginConfig,
   Subscriber,
   EmailProvider 
-} from '@payloadcms/plugin-newsletter/types'
+} from 'payload-plugin-newsletter/types'
 ```
 
 ## Customization

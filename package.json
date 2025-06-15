@@ -1,5 +1,5 @@
 {
-  "name": "@payloadcms/plugin-newsletter",
+  "name": "payload-plugin-newsletter",
   "version": "0.1.0",
   "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
   "type": "module",
@@ -80,16 +80,16 @@
     "broadcast",
     "payload-plugin"
   ],
-  "author": "Payload CMS",
+  "author": "Aniket Panjwani",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/payloadcms/plugin-newsletter"
+    "url": "https://github.com/aniketpanjwani/payload-plugin-email-newsletter"
   },
   "bugs": {
-    "url": "https://github.com/payloadcms/plugin-newsletter/issues"
+    "url": "https://github.com/aniketpanjwani/payload-plugin-email-newsletter/issues"
   },
-  "homepage": "https://github.com/payloadcms/plugin-newsletter#readme",
+  "homepage": "https://github.com/aniketpanjwani/payload-plugin-email-newsletter#readme",
   "dependencies": {
     "@payloadcms/translations": "^3.0.0",
     "@payloadcms/ui": "^3.0.0",

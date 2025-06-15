@@ -100,10 +100,10 @@ Current limitations we're aware of:
 We welcome all feedback! Here's how to contribute:
 
 1. **GitHub Issues**: For bugs and feature requests
-   - [Create an issue](https://github.com/payloadcms/plugin-newsletter/issues)
+   - [Create an issue](https://github.com/aniketpanjwani/payload-plugin-email-newsletter/issues)
 
 2. **GitHub Discussions**: For design discussions and questions
-   - [Start a discussion](https://github.com/payloadcms/plugin-newsletter/discussions)
+   - [Start a discussion](https://github.com/aniketpanjwani/payload-plugin-email-newsletter/discussions)
 
 3. **Pull Requests**: For direct contributions
    - Fork the repo and submit a PR
