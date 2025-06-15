@@ -4,6 +4,7 @@ import { createSubscribersCollection } from './collections/Subscribers'
 import { createEmailSettingsGlobal } from './globals/EmailSettings'
 import { createEmailService } from './providers'
 import { createNewsletterEndpoints } from './endpoints'
+import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
 
 // Extend Payload type to include our email service
 declare module 'payload' {
@@ -40,14 +41,21 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
   // Build collections array
   let collections = [...(incomingConfig.collections || []), subscribersCollection]
 
-  // Extend articles collection if newsletter scheduling is enabled
+  // Extend collections with newsletter scheduling fields if enabled
   if (config.features?.newsletterScheduling?.enabled) {
-    const articlesCollection = config.features.newsletterScheduling.articlesCollection || 'articles'
+    const targetCollections = config.features.newsletterScheduling.collections || 'articles'
+    const collectionsToExtend = Array.isArray(targetCollections) ? targetCollections : [targetCollections]
+    const schedulingFields = createNewsletterSchedulingFields(config)
     
     collections = collections.map(collection => {
-      if (collection.slug === articlesCollection) {
-        // TODO: Add newsletter scheduling fields
-        return collection
+      if (collectionsToExtend.includes(collection.slug)) {
+        return {
+          ...collection,
+          fields: [
+            ...collection.fields,
+            ...schedulingFields,
+          ],
+        }
       }
       return collection
     })

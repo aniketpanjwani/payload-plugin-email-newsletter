@@ -137,7 +137,32 @@ export interface NewsletterPluginConfig {
      */
     newsletterScheduling?: {
       enabled?: boolean
-      articlesCollection?: string
+      /**
+       * Collections to add newsletter fields to
+       * Can be a string for single collection or array for multiple
+       * @example 'articles' or ['articles', 'posts', 'updates']
+       */
+      collections?: string | string[]
+      /**
+       * Field configuration
+       */
+      fields?: {
+        /**
+         * Group name for newsletter fields
+         * @default 'newsletterScheduling'
+         */
+        groupName?: string
+        /**
+         * Rich text field name to use for content
+         * @default 'content'
+         */
+        contentField?: string
+        /**
+         * Whether to create a markdown companion field
+         * @default true
+         */
+        createMarkdownField?: boolean
+      }
     }
   }
 
