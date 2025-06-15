@@ -1,4 +1,4 @@
-import type { Config, CollectionConfig, GlobalConfig, Field, Endpoint } from 'payload'
+import type { Field } from 'payload'
 
 export interface NewsletterPluginConfig {
   /**

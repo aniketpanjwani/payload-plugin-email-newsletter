@@ -1,7 +1,6 @@
 import type { Endpoint, PayloadHandler } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { 
-  isValidEmail, 
   isDomainAllowed, 
   sanitizeInput, 
   validateSubscriberData,

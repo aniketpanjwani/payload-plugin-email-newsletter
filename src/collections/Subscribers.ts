@@ -1,4 +1,4 @@
-import type { CollectionConfig, Field, CollectionBeforeChangeHook, CollectionAfterChangeHook, CollectionBeforeDeleteHook, Access, AccessArgs, PayloadRequest } from 'payload'
+import type { CollectionConfig, Field, CollectionAfterChangeHook, CollectionBeforeDeleteHook, Access, AccessArgs, PayloadRequest } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 
 export const createSubscribersCollection = (

@@ -129,7 +129,7 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
 
         (payload as any).newsletterEmailService = createEmailService(emailServiceConfig)
 
-        console.log('Newsletter plugin initialized with', (payload as any).newsletterEmailService.getProvider(), 'provider')
+        console.warn('Newsletter plugin initialized with', (payload as any).newsletterEmailService.getProvider(), 'provider')
       } catch (error) {
         console.error('Failed to initialize newsletter email service:', error)
       }

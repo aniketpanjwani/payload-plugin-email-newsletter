@@ -1,13 +1,10 @@
 import React from 'react'
 import {
   Heading,
-  Text,
-  Link,
-  Img,
   Button,
   Markdown,
 } from '@react-email/components'
-import { BaseTemplate, baseStyles } from './BaseTemplate'
+import { BaseTemplate } from './BaseTemplate'
 
 export interface NewsletterTemplateProps {
   subject: string

@@ -81,7 +81,7 @@ export const MagicLinkVerify: React.FC<MagicLinkVerifyProps> = ({
 }) => {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
   const [error, setError] = useState<string | null>(null)
-  const [sessionToken, setSessionToken] = useState<string | null>(null)
+  const [_sessionToken, setSessionToken] = useState<string | null>(null)
 
   const styles = {
     container: { ...defaultStyles.container, ...customStyles.container },

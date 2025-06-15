@@ -2,7 +2,6 @@ import React from 'react'
 import {
   Heading,
   Text,
-  Link,
   Button,
 } from '@react-email/components'
 import { BaseTemplate } from './BaseTemplate'

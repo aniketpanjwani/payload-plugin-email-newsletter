@@ -39,7 +39,7 @@ export const createUnsubscribeEndpoint = (
               collection: config.subscribersSlug || 'subscribers',
               id: payload.subscriberId,
             })
-          } catch (error) {
+          } catch {
             return res.status(401).json({
               success: false,
               error: 'Invalid or expired unsubscribe link',

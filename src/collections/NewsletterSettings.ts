@@ -296,7 +296,7 @@ export const createNewsletterSettingsCollection = (
     ],
     hooks: {
       beforeChange: [
-        async ({ data, operation, req }) => {
+        async ({ data, req, operation }) => {
           // If setting this config as active, deactivate all others
           if (data?.active && operation !== 'create') {
             await req.payload.update({
@@ -341,12 +341,12 @@ export const createNewsletterSettingsCollection = (
         },
       ],
       afterChange: [
-        async ({ doc, req, operation }) => {
+        async ({ doc, req }) => {
           // Reinitialize email service when settings change
           if ((req.payload as any).newsletterEmailService && doc.active) {
             try {
               // TODO: Implement email service reinitialization
-              console.log('Newsletter settings updated, reinitializing service...')
+              console.warn('Newsletter settings updated, reinitializing service...')
             } catch (error) {
               console.error('Failed to reinitialize email service:', error)
             }
