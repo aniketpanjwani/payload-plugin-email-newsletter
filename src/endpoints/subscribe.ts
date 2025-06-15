@@ -35,6 +35,7 @@ export const createSubscribeEndpoint = (
         }
 
         // Check domain restrictions from active settings
+        // Settings are public info needed for validation, but we can still respect access control
         const settingsResult = await req.payload.find({
           collection: config.settingsSlug || 'newsletter-settings',
           where: {
@@ -43,6 +44,8 @@ export const createSubscribeEndpoint = (
             },
           },
           limit: 1,
+          overrideAccess: false,
+          // No user context for public endpoint
         })
         
         const settings = settingsResult.docs[0]
@@ -56,6 +59,7 @@ export const createSubscribeEndpoint = (
         }
 
         // Check if already subscribed
+        // This needs admin access to check for existing email
         const existing = await req.payload.find({
           collection: config.subscribersSlug || 'subscribers',
           where: {
@@ -63,6 +67,7 @@ export const createSubscribeEndpoint = (
               equals: email.toLowerCase(),
             },
           },
+          // Keep overrideAccess: true for public subscription check
         })
 
         if (existing.docs.length > 0) {
@@ -98,6 +103,7 @@ export const createSubscribeEndpoint = (
               equals: ipAddress,
             },
           },
+          // Keep overrideAccess: true for rate limiting check
         })
 
         if (ipSubscribers.docs.length >= maxPerIP) {
@@ -142,9 +148,11 @@ export const createSubscribeEndpoint = (
         }
 
         // Create subscriber
+        // Public endpoint needs to create subscribers
         const subscriber = await req.payload.create({
           collection: config.subscribersSlug || 'subscribers',
           data: subscriberData,
+          // Keep overrideAccess: true for public subscription
         })
 
         // Handle survey responses if provided

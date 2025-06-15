@@ -32,10 +32,16 @@ export const createPreferencesEndpoint = (
           })
         }
 
-        // Get subscriber
+        // Get subscriber - use synthetic user to ensure access control
         const subscriber = await req.payload.findByID({
           collection: config.subscribersSlug || 'subscribers',
           id: payload.subscriberId,
+          overrideAccess: false,
+          user: {
+            collection: 'subscribers',
+            id: payload.subscriberId,
+            email: payload.email,
+          },
         })
 
         if (!subscriber) {
@@ -114,11 +120,17 @@ export const createUpdatePreferencesEndpoint = (
           updateData.emailPreferences = emailPreferences
         }
 
-        // Update subscriber
+        // Update subscriber - use synthetic user to ensure only updating own data
         const subscriber = await req.payload.update({
           collection: config.subscribersSlug || 'subscribers',
           id: payload.subscriberId,
           data: updateData,
+          overrideAccess: false,
+          user: {
+            collection: 'subscribers',
+            id: payload.subscriberId,
+            email: payload.email,
+          },
         })
 
         res.json({

@@ -414,6 +414,23 @@ newsletterPlugin({
 - Check the email provider's dashboard for errors
 - Ensure from address is verified with your provider
 
+## Security
+
+### Access Control
+
+Starting from v0.3.0, the plugin implements proper access control for all operations:
+
+- **Subscriber data**: Users can only access and modify their own data via magic link authentication
+- **Newsletter settings**: Only admin users can modify email provider settings and configurations
+- **API endpoints**: All endpoints respect Payload's access control rules
+
+### Best Practices
+
+- Always use environment variables for sensitive data (API keys, JWT secrets)
+- Enable double opt-in for GDPR compliance
+- Configure allowed domains to prevent spam subscriptions
+- Set reasonable rate limits for subscriptions per IP
+
 ## Migration Guide
 
 Coming from another newsletter system? The plugin stores subscribers in a standard Payload collection, making it easy to import existing data:

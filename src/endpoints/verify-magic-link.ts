@@ -33,10 +33,11 @@ export const createVerifyMagicLinkEndpoint = (
           })
         }
 
-        // Find the subscriber
+        // Find the subscriber - token verified so we can use admin access for initial lookup
         const subscriber = await req.payload.findByID({
           collection: config.subscribersSlug || 'subscribers',
           id: payload.subscriberId,
+          // Keep overrideAccess: true for token verification
         })
 
         if (!subscriber) {
@@ -62,6 +63,13 @@ export const createVerifyMagicLinkEndpoint = (
           })
         }
 
+        // Create synthetic user for subscriber operations
+        const syntheticUser = {
+          collection: 'subscribers',
+          id: subscriber.id,
+          email: subscriber.email,
+        }
+
         // Update subscription status if pending
         if (subscriber.subscriptionStatus === 'pending') {
           await req.payload.update({
@@ -70,6 +78,8 @@ export const createVerifyMagicLinkEndpoint = (
             data: {
               subscriptionStatus: 'active',
             },
+            overrideAccess: false,
+            user: syntheticUser,
           })
         }
 
@@ -81,6 +91,8 @@ export const createVerifyMagicLinkEndpoint = (
             magicLinkToken: null,
             magicLinkTokenExpiry: null,
           },
+          overrideAccess: false,
+          user: syntheticUser,
         })
 
         // Generate session token

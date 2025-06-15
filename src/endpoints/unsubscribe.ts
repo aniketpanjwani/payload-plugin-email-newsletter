@@ -35,6 +35,8 @@ export const createUnsubscribeEndpoint = (
               throw new Error('Invalid token type')
             }
 
+            // Token verified, so we can look up the subscriber
+            // Using overrideAccess: true here is OK since we verified the token
             subscriber = await req.payload.findByID({
               collection: config.subscribersSlug || 'subscribers',
               id: payload.subscriberId,
@@ -89,13 +91,19 @@ export const createUnsubscribeEndpoint = (
           })
         }
 
-        // Update subscription status
+        // Update subscription status - use synthetic user to ensure proper access
         await req.payload.update({
           collection: config.subscribersSlug || 'subscribers',
           id: subscriber.id,
           data: {
             subscriptionStatus: 'unsubscribed',
             unsubscribedAt: new Date().toISOString(),
+          },
+          overrideAccess: false,
+          user: {
+            collection: 'subscribers',
+            id: subscriber.id,
+            email: subscriber.email,
           },
         })
 

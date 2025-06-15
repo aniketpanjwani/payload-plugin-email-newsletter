@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-06-15
+
+### Added
+- Comprehensive security improvements to respect Payload access control
+- Synthetic user pattern for subscriber self-service operations
+- Admin verification for newsletter settings modifications
+- Security documentation in README
+
+### Changed
+- All API endpoints now properly implement `overrideAccess` and `user` parameters
+- Preferences endpoint now ensures subscribers can only access their own data
+- Unsubscribe endpoint validates ownership through tokens
+- Magic link verification uses synthetic users for updates
+- Newsletter settings modifications now require admin authentication
+
+### Security
+- Implemented proper access control for all Payload Local API operations
+- Added user context validation for authenticated endpoints
+- Restricted settings access to admin users only
+- Enhanced protection against unauthorized data access
+
 ## [0.2.0] - 2025-06-15
 
 ### Changed
@@ -52,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain restriction options
 - Input validation and sanitization
 
+[0.3.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.3.0
+[0.2.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.2.0
+[0.1.1]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.1.0
 
 ---

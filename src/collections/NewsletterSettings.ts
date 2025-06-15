@@ -297,6 +297,11 @@ export const createNewsletterSettingsCollection = (
     hooks: {
       beforeChange: [
         async ({ data, req, operation }) => {
+          // Verify admin access for settings changes
+          if (!req.user || req.user.collection !== 'users') {
+            throw new Error('Only administrators can modify newsletter settings')
+          }
+          
           // If setting this config as active, deactivate all others
           if (data?.active && operation !== 'create') {
             await req.payload.update({
@@ -309,6 +314,7 @@ export const createNewsletterSettingsCollection = (
               data: {
                 active: false,
               },
+              // Keep overrideAccess: true for admin operations after verification
             })
           }
           
@@ -321,6 +327,7 @@ export const createNewsletterSettingsCollection = (
                   equals: true,
                 },
               },
+              // Keep overrideAccess: true for admin operations
             })
             
             if (existingActive.docs.length > 0) {
@@ -332,6 +339,7 @@ export const createNewsletterSettingsCollection = (
                   data: {
                     active: false,
                   },
+                  // Keep overrideAccess: true for admin operations
                 })
               }
             }
