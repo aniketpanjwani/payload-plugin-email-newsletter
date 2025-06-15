@@ -1,5 +1,8 @@
 # Payload Newsletter Plugin
 
+[![npm version](https://badge.fury.io/js/payload-plugin-newsletter.svg)](https://www.npmjs.com/package/payload-plugin-newsletter)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A complete newsletter management plugin for Payload CMS that provides subscriber management, magic link authentication, and email service integration out of the box.
 
 ## Features
@@ -17,23 +20,14 @@ A complete newsletter management plugin for Payload CMS that provides subscriber
 
 ### 1. Install the plugin
 
-**Note: This plugin is not yet published to npm. Install directly from GitHub:**
-
-```bash
-bun add github:aniketpanjwani/payload-plugin-email-newsletter
-# or
-npm install github:aniketpanjwani/payload-plugin-email-newsletter
-# or
-yarn add github:aniketpanjwani/payload-plugin-email-newsletter
-# or
-pnpm add github:aniketpanjwani/payload-plugin-email-newsletter
-```
-
-Once published to npm, you'll be able to install with:
 ```bash
 bun add payload-plugin-newsletter
 # or
 npm install payload-plugin-newsletter
+# or
+yarn add payload-plugin-newsletter
+# or
+pnpm add payload-plugin-newsletter
 ```
 
 ### 2. Add to your Payload config

@@ -33,3 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Input validation and sanitization
 
 [0.1.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.1.0
+
+---
+
+**npm**: https://www.npmjs.com/package/payload-plugin-newsletter
