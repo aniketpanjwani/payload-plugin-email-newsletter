@@ -64,7 +64,7 @@ export default buildConfig({
 
 The plugin automatically adds:
 - A `subscribers` collection to manage your subscribers
-- A `newsletter-settings` global for email configuration
+- A `newsletter-settings` collection for email configurations (supports multiple environments)
 - API endpoints for subscription and authentication
 - Newsletter scheduling fields to your articles (optional)
 
@@ -111,11 +111,31 @@ Subscribers can be managed through the Payload admin panel at `/admin/collection
 
 ### Email Settings
 
-After setup, configure email settings at `/admin/globals/newsletter-settings` in your admin panel. You can:
+After setup, configure email settings at `/admin/collections/newsletter-settings` in your admin panel. You can:
+- Create multiple configurations (e.g., for different environments or purposes)
+- Set one configuration as active at a time
 - Switch between email providers
 - Update API keys and settings
 - Customize email templates
 - Set subscription preferences
+
+**Note**: Only one configuration can be active at a time. The plugin will use the active configuration for sending emails.
+
+## Initial Setup
+
+After installing the plugin, you'll need to:
+
+1. **Create an email configuration**:
+   - Go to `/admin/collections/newsletter-settings`
+   - Click "Create New"
+   - Give it a name (e.g., "Production" or "Development")
+   - Configure your email provider settings
+   - Set it as "Active"
+   - Save
+
+2. **Start collecting subscribers**:
+   - Subscribers will appear in `/admin/collections/subscribers`
+   - Use the provided React components or API endpoints
 
 ## Configuration Options
 

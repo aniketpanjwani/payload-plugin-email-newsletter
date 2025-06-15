@@ -12,6 +12,12 @@ export interface NewsletterPluginConfig {
    * @default 'subscribers'
    */
   subscribersSlug?: string
+  
+  /**
+   * Slug for the newsletter settings collection
+   * @default 'newsletter-settings'
+   */
+  settingsSlug?: string
 
   /**
    * Authentication configuration for magic links

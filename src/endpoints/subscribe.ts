@@ -35,10 +35,18 @@ export const createSubscribeEndpoint = (
           })
         }
 
-        // Check domain restrictions from settings
-        const settings = await req.payload.findGlobal({
-          slug: 'newsletter-settings',
+        // Check domain restrictions from active settings
+        const settingsResult = await req.payload.find({
+          collection: config.settingsSlug || 'newsletter-settings',
+          where: {
+            active: {
+              equals: true,
+            },
+          },
+          limit: 1,
         })
+        
+        const settings = settingsResult.docs[0]
 
         const allowedDomains = settings?.allowedDomains?.map((d: any) => d.domain) || []
         if (!isDomainAllowed(email, allowedDomains)) {

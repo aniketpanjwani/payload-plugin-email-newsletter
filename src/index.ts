@@ -1,7 +1,7 @@
 import type { Config } from 'payload'
 import type { NewsletterPluginConfig } from './types'
 import { createSubscribersCollection } from './collections/Subscribers'
-import { createEmailSettingsGlobal } from './globals/EmailSettings'
+import { createNewsletterSettingsCollection } from './collections/NewsletterSettings'
 import { createEmailService } from './providers'
 import { createNewsletterEndpoints } from './endpoints'
 import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
@@ -18,6 +18,7 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
   const config: NewsletterPluginConfig = {
     enabled: true,
     subscribersSlug: 'subscribers',
+    settingsSlug: 'newsletter-settings',
     auth: {
       enabled: true,
       tokenExpiration: '7d',
@@ -32,14 +33,12 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     return incomingConfig
   }
 
-  // Create subscribers collection
+  // Create plugin collections
   const subscribersCollection = createSubscribersCollection(config)
-
-  // Create email settings global
-  const emailSettingsGlobal = createEmailSettingsGlobal(config)
+  const settingsCollection = createNewsletterSettingsCollection(config)
 
   // Build collections array
-  let collections = [...(incomingConfig.collections || []), subscribersCollection]
+  let collections = [...(incomingConfig.collections || []), subscribersCollection, settingsCollection]
 
   // Extend collections with newsletter scheduling fields if enabled
   if (config.features?.newsletterScheduling?.enabled) {
@@ -70,7 +69,6 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     collections,
     globals: [
       ...(incomingConfig.globals || []),
-      emailSettingsGlobal,
     ],
     endpoints: [
       ...(incomingConfig.endpoints || []),
@@ -79,11 +77,18 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     onInit: async (payload) => {
       // Initialize email service
       try {
-        // Get settings from global
-        const settings = await (payload as any).findGlobal({
-          slug: 'newsletter-settings',
-          depth: 0,
+        // Get active settings from collection
+        const settingsResult = await payload.find({
+          collection: config.settingsSlug || 'newsletter-settings',
+          where: {
+            active: {
+              equals: true,
+            },
+          },
+          limit: 1,
         })
+        
+        const settings = settingsResult.docs[0]
 
         let emailServiceConfig: any
         

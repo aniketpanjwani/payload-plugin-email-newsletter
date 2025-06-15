@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-06-15
+
+### Changed
+- **BREAKING**: Changed newsletter settings from a global to a collection
+  - Allows multiple configurations (e.g., dev/staging/prod)
+  - Only one configuration can be active at a time
+  - Migrate existing settings by creating a new configuration in the collection
+- Updated README to clarify the settings collection usage
+
+### Added
+- Support for multiple email configurations
+- Automatic deactivation of other configs when activating one
+- Configuration name field for better organization
+
 ## [0.1.1] - 2025-06-15
 
 ### Fixed
