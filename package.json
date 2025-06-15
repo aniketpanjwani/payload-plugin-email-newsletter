@@ -36,7 +36,10 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "generate:types": "tsc --emitDeclarationOnly --outDir dist",
-    "prepublishOnly": "bun run clean && bun run build"
+    "prepublishOnly": "bun run clean && bun run build",
+    "release:patch": "./scripts/release.sh patch",
+    "release:minor": "./scripts/release.sh minor",
+    "release:major": "./scripts/release.sh major"
   },
   "files": [
     "dist",

@@ -1,0 +1,67 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0.0, v0.1.1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.1.0
+          
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Type check
+        run: bun typecheck
+        
+      - name: Lint
+        run: bun lint
+        
+      - name: Build
+        run: bun run build
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.1.0
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Build
+        run: bun run build
+        
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - See [CHANGELOG.md](https://github.com/aniketpanjwani/payload-plugin-email-newsletter/blob/main/CHANGELOG.md) for details
+          draft: false
+          prerelease: false
