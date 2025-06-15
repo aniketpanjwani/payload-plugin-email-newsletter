@@ -1,4 +1,30 @@
-// Client-side exports (React components and hooks)
-// These will be populated as we build the components
+'use client'
 
-export {}
+// React components
+export { 
+  NewsletterForm, 
+  createNewsletterForm,
+  PreferencesForm,
+  createPreferencesForm,
+  MagicLinkVerify,
+  createMagicLinkVerify,
+} from '../components'
+
+// Hooks
+export { useNewsletterAuth } from '../hooks/useNewsletterAuth'
+
+// Types for client-side use
+export type {
+  SignupFormProps,
+  PreferencesFormProps,
+  Subscriber,
+} from '../types'
+
+export type {
+  MagicLinkVerifyProps,
+} from '../components'
+
+export type {
+  UseNewsletterAuthOptions,
+  UseNewsletterAuthReturn,
+} from '../hooks/useNewsletterAuth'

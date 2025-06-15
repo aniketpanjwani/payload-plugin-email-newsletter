@@ -257,13 +257,80 @@ export interface SignupFormProps {
     description?: string
   }
   className?: string
+  styles?: {
+    form?: React.CSSProperties
+    inputGroup?: React.CSSProperties
+    label?: React.CSSProperties
+    input?: React.CSSProperties
+    button?: React.CSSProperties
+    buttonDisabled?: React.CSSProperties
+    error?: React.CSSProperties
+    success?: React.CSSProperties
+    checkbox?: React.CSSProperties
+    checkboxInput?: React.CSSProperties
+    checkboxLabel?: React.CSSProperties
+  }
+  apiEndpoint?: string
+  buttonText?: string
+  loadingText?: string
+  successMessage?: string
+  placeholders?: {
+    email?: string
+    name?: string
+  }
+  labels?: {
+    email?: string
+    name?: string
+    newsletter?: string
+    announcements?: string
+  }
 }
 
 export interface PreferencesFormProps {
-  subscriber: Subscriber
+  subscriber?: Subscriber
   onSuccess?: (subscriber: Subscriber) => void
   onError?: (error: Error) => void
   className?: string
+  styles?: {
+    container?: React.CSSProperties
+    heading?: React.CSSProperties
+    form?: React.CSSProperties
+    section?: React.CSSProperties
+    sectionTitle?: React.CSSProperties
+    inputGroup?: React.CSSProperties
+    label?: React.CSSProperties
+    input?: React.CSSProperties
+    select?: React.CSSProperties
+    checkbox?: React.CSSProperties
+    checkboxInput?: React.CSSProperties
+    checkboxLabel?: React.CSSProperties
+    buttonGroup?: React.CSSProperties
+    button?: React.CSSProperties
+    primaryButton?: React.CSSProperties
+    secondaryButton?: React.CSSProperties
+    dangerButton?: React.CSSProperties
+    error?: React.CSSProperties
+    success?: React.CSSProperties
+    info?: React.CSSProperties
+  }
+  sessionToken?: string
+  apiEndpoint?: string
+  showUnsubscribe?: boolean
+  locales?: string[]
+  labels?: {
+    title?: string
+    personalInfo?: string
+    emailPreferences?: string
+    name?: string
+    language?: string
+    newsletter?: string
+    announcements?: string
+    saveButton?: string
+    unsubscribeButton?: string
+    saving?: string
+    saved?: string
+    unsubscribeConfirm?: string
+  }
 }
 
 export interface BeforeSubscribeArgs {

@@ -1,4 +1,5 @@
-// Component exports
-// These will be populated as we build the components
+'use client'
 
-export {}
+// Re-export all components from the client export
+// This allows users to import directly from @payloadcms/plugin-newsletter/components
+export * from './client'
