@@ -32,17 +32,21 @@ export class ResendProvider implements EmailProvider {
         name: this.fromName,
       }
 
+      if (!params.html && !params.text) {
+        throw new Error('Either html or text content is required')
+      }
+
       await this.client.emails.send({
         from: `${from.name} <${from.email}>`,
         to: Array.isArray(params.to) ? params.to : [params.to],
         subject: params.subject,
-        html: params.html,
+        html: params.html || '',
         text: params.text,
-        reply_to: params.replyTo,
+        replyTo: params.replyTo,
       })
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to send email via Resend: ${error.message}`,
+        `Failed to send email via Resend: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'resend',
         error
       )
@@ -64,9 +68,9 @@ export class ResendProvider implements EmailProvider {
         unsubscribed: contact.subscriptionStatus === 'unsubscribed',
         audienceId,
       })
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to add contact to Resend: ${error.message}`,
+        `Failed to add contact to Resend: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'resend',
         error
       )
@@ -97,9 +101,9 @@ export class ResendProvider implements EmailProvider {
         // If contact doesn't exist, add them
         await this.addContact(contact)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to update contact in Resend: ${error.message}`,
+        `Failed to update contact in Resend: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'resend',
         error
       )
@@ -126,9 +130,9 @@ export class ResendProvider implements EmailProvider {
           break
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to remove contact from Resend: ${error.message}`,
+        `Failed to remove contact from Resend: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'resend',
         error
       )
@@ -136,11 +140,16 @@ export class ResendProvider implements EmailProvider {
   }
 
   private getAudienceId(locale?: string): string | undefined {
-    const localeConfig = this.audienceIds[locale || 'en']
+    const localeKey = locale || 'en'
+    if (!this.audienceIds) return undefined
+    
+    const localeConfig = this.audienceIds[localeKey]
     if (!localeConfig) return undefined
 
-    return this.isDevelopment 
-      ? localeConfig.development || localeConfig.production
-      : localeConfig.production || localeConfig.development
+    const audienceId = this.isDevelopment 
+      ? (localeConfig.development || localeConfig.production)
+      : (localeConfig.production || localeConfig.development)
+    
+    return audienceId
   }
 }

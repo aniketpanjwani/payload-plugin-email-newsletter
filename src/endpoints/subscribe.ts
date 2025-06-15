@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadHandler } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { 
   isValidEmail, 
@@ -14,7 +14,7 @@ export const createSubscribeEndpoint = (
   return {
     path: '/newsletter/subscribe',
     method: 'post',
-    handler: async (req, res) => {
+    handler: (async (req: any, res: any) => {
       try {
         const { 
           email, 
@@ -40,7 +40,7 @@ export const createSubscribeEndpoint = (
           slug: 'newsletter-settings',
         })
 
-        const allowedDomains = settings?.allowedDomains?.map(d => d.domain) || []
+        const allowedDomains = settings?.allowedDomains?.map((d: any) => d.domain) || []
         if (!isDomainAllowed(email, allowedDomains)) {
           return res.status(400).json({
             success: false,
@@ -168,6 +168,6 @@ export const createSubscribeEndpoint = (
           error: 'Failed to subscribe. Please try again.',
         })
       }
-    },
+    }) as PayloadHandler,
   }
 }

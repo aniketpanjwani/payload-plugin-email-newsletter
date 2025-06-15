@@ -230,7 +230,7 @@ export const createEmailSettingsGlobal = (
       afterChange: [
         async ({ doc, req }) => {
           // Reinitialize email service with new settings
-          if (req.payload.newsletterEmailService) {
+          if ((req.payload as any).newsletterEmailService) {
             try {
               // TODO: Implement email service reinitialization
               console.log('Email settings updated, reinitializing service...')

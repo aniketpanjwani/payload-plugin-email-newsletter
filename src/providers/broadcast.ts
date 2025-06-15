@@ -57,9 +57,9 @@ export class BroadcastProvider implements EmailProvider {
         const error = await response.text()
         throw new Error(`Broadcast API error: ${response.status} - ${error}`)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to send email via Broadcast: ${error.message}`,
+        `Failed to send email via Broadcast: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'broadcast',
         error
       )
@@ -90,9 +90,9 @@ export class BroadcastProvider implements EmailProvider {
         const error = await response.text()
         throw new Error(`Broadcast API error: ${response.status} - ${error}`)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to add contact to Broadcast: ${error.message}`,
+        `Failed to add contact to Broadcast: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'broadcast',
         error
       )
@@ -148,9 +148,9 @@ export class BroadcastProvider implements EmailProvider {
         const error = await response.text()
         throw new Error(`Broadcast API error: ${response.status} - ${error}`)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to update contact in Broadcast: ${error.message}`,
+        `Failed to update contact in Broadcast: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'broadcast',
         error
       )
@@ -193,9 +193,9 @@ export class BroadcastProvider implements EmailProvider {
         const error = await response.text()
         throw new Error(`Broadcast API error: ${response.status} - ${error}`)
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new EmailProviderError(
-        `Failed to remove contact from Broadcast: ${error.message}`,
+        `Failed to remove contact from Broadcast: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'broadcast',
         error
       )

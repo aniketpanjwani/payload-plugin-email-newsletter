@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadHandler } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { 
   verifyMagicLinkToken, 
@@ -11,7 +11,7 @@ export const createVerifyMagicLinkEndpoint = (
   return {
     path: '/newsletter/verify-magic-link',
     method: 'post',
-    handler: async (req, res) => {
+    handler: (async (req: any, res: any) => {
       try {
         const { token } = req.body
 
@@ -26,10 +26,10 @@ export const createVerifyMagicLinkEndpoint = (
         let payload
         try {
           payload = verifyMagicLinkToken(token)
-        } catch (error) {
+        } catch (error: unknown) {
           return res.status(401).json({
             success: false,
-            error: error.message,
+            error: error instanceof Error ? error.message : 'Invalid token',
           })
         }
 
@@ -85,7 +85,7 @@ export const createVerifyMagicLinkEndpoint = (
 
         // Generate session token
         const sessionToken = generateSessionToken(
-          subscriber.id,
+          String(subscriber.id),
           subscriber.email
         )
 
@@ -100,13 +100,13 @@ export const createVerifyMagicLinkEndpoint = (
             emailPreferences: subscriber.emailPreferences,
           },
         })
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Verify magic link error:', error)
         res.status(500).json({
           success: false,
           error: 'Failed to verify magic link',
         })
       }
-    },
+    }) as PayloadHandler,
   }
 }

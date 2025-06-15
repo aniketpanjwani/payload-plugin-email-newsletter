@@ -8,7 +8,7 @@ import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
 
 // Extend Payload type to include our email service
 declare module 'payload' {
-  export interface Payload {
+  interface BasePayload {
     newsletterEmailService?: any
   }
 }
@@ -80,20 +80,22 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
       // Initialize email service
       try {
         // Get settings from global
-        const settings = await payload.findGlobal({
+        const settings = await (payload as any).findGlobal({
           slug: 'newsletter-settings',
           depth: 0,
         })
 
+        let emailServiceConfig: any
+        
         if (settings) {
-          const emailConfig = {
+          emailServiceConfig = {
             provider: settings.provider || config.providers.default,
             fromAddress: settings.fromAddress || config.providers.resend?.fromAddress || config.providers.broadcast?.fromAddress || 'noreply@example.com',
             fromName: settings.fromName || config.providers.resend?.fromName || config.providers.broadcast?.fromName || 'Newsletter',
             replyTo: settings.replyTo,
             resend: settings.provider === 'resend' ? {
               apiKey: settings.resendSettings?.apiKey || config.providers.resend?.apiKey || '',
-              audienceIds: settings.resendSettings?.audienceIds?.reduce((acc, item) => {
+              audienceIds: settings.resendSettings?.audienceIds?.reduce((acc: any, item: any) => {
                 acc[item.locale] = {
                   production: item.production,
                   development: item.development,
@@ -109,22 +111,20 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
               },
             } : config.providers.broadcast,
           }
-
-          payload.newsletterEmailService = createEmailService(emailConfig)
         } else {
           // Use config defaults
-          const emailConfig = {
+          emailServiceConfig = {
             provider: config.providers.default,
             fromAddress: config.providers.resend?.fromAddress || config.providers.broadcast?.fromAddress || 'noreply@example.com',
             fromName: config.providers.resend?.fromName || config.providers.broadcast?.fromName || 'Newsletter',
             resend: config.providers.resend,
             broadcast: config.providers.broadcast,
           }
-
-          payload.newsletterEmailService = createEmailService(emailConfig)
         }
 
-        console.log('Newsletter plugin initialized with', payload.newsletterEmailService.getProvider(), 'provider')
+        (payload as any).newsletterEmailService = createEmailService(emailServiceConfig)
+
+        console.log('Newsletter plugin initialized with', (payload as any).newsletterEmailService.getProvider(), 'provider')
       } catch (error) {
         console.error('Failed to initialize newsletter email service:', error)
       }

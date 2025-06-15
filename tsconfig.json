@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
@@ -13,7 +13,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -21,10 +21,10 @@
     "incremental": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "paths": {
-      "@payloadcms/plugin-newsletter": ["./src/index.ts"],
-      "@payloadcms/plugin-newsletter/client": ["./src/exports/client.ts"],
-      "@payloadcms/plugin-newsletter/types": ["./src/exports/types.ts"],
-      "@payloadcms/plugin-newsletter/components": ["./src/exports/components.ts"]
+      "payload-plugin-newsletter": ["./src/index.ts"],
+      "payload-plugin-newsletter/client": ["./src/exports/client.ts"],
+      "payload-plugin-newsletter/types": ["./src/exports/types.ts"],
+      "payload-plugin-newsletter/components": ["./src/exports/components.ts"]
     }
   },
   "include": ["src/**/*"],

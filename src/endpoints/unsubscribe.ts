@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadHandler } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { isValidEmail } from '../utils/validation'
 
@@ -8,7 +8,7 @@ export const createUnsubscribeEndpoint = (
   return {
     path: '/newsletter/unsubscribe',
     method: 'post',
-    handler: async (req, res) => {
+    handler: (async (req: any, res: any) => {
       try {
         const { email, token } = req.body
 
@@ -103,13 +103,13 @@ export const createUnsubscribeEndpoint = (
           success: true,
           message: 'Successfully unsubscribed',
         })
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Unsubscribe error:', error)
         res.status(500).json({
           success: false,
           error: 'Failed to unsubscribe. Please try again.',
         })
       }
-    },
+    }) as PayloadHandler,
   }
 }

@@ -20,6 +20,8 @@ A complete newsletter management plugin for Payload CMS that provides subscriber
 **Note: This plugin is not yet published to npm. Install directly from GitHub:**
 
 ```bash
+bun add github:aniketpanjwani/payload-plugin-email-newsletter
+# or
 npm install github:aniketpanjwani/payload-plugin-email-newsletter
 # or
 yarn add github:aniketpanjwani/payload-plugin-email-newsletter
@@ -29,7 +31,9 @@ pnpm add github:aniketpanjwani/payload-plugin-email-newsletter
 
 Once published to npm, you'll be able to install with:
 ```bash
-npm install @payloadcms/plugin-newsletter
+bun add payload-plugin-newsletter
+# or
+npm install payload-plugin-newsletter
 ```
 
 ### 2. Add to your Payload config

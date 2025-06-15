@@ -1,4 +1,4 @@
-import type { CollectionConfig, Field } from 'payload'
+import type { CollectionConfig, Field, CollectionBeforeChangeHook, CollectionAfterChangeHook, CollectionBeforeDeleteHook, Access, AccessArgs, PayloadRequest } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 
 export const createSubscribersCollection = (
@@ -215,121 +215,125 @@ export const createSubscribersCollection = (
     },
     fields,
     hooks: {
-      afterCreate: [
-        async ({ doc, req }) => {
-          // Add to email service
-          if (req.payload.newsletterEmailService) {
-            try {
-              await req.payload.newsletterEmailService.addContact(doc)
-            } catch (error) {
-              console.error('Failed to add contact to email service:', error)
+      afterChange: [
+        async ({ doc, req, operation, previousDoc }) => {
+          // After create logic
+          if (operation === 'create') {
+            // Add to email service
+            const emailService = (req.payload as any).newsletterEmailService
+            if (emailService) {
+              try {
+                await emailService.addContact(doc)
+              } catch (error) {
+                console.error('Failed to add contact to email service:', error)
+              }
+            }
+
+            // Send welcome email if active
+            if (doc.subscriptionStatus === 'active' && emailService) {
+              try {
+                // TODO: Send welcome email
+              } catch (error) {
+                console.error('Failed to send welcome email:', error)
+              }
+            }
+
+            // Custom after subscribe hook
+            if (pluginConfig.hooks?.afterSubscribe) {
+              await pluginConfig.hooks.afterSubscribe({ doc, req })
             }
           }
-
-          // Send welcome email if active
-          if (doc.subscriptionStatus === 'active' && req.payload.newsletterEmailService) {
-            try {
-              // TODO: Send welcome email
-            } catch (error) {
-              console.error('Failed to send welcome email:', error)
+          
+          // After update logic
+          if (operation === 'update' && previousDoc) {
+            // Update email service if status changed
+            const emailService = (req.payload as any).newsletterEmailService
+            if (
+              doc.subscriptionStatus !== previousDoc.subscriptionStatus &&
+              emailService
+            ) {
+              try {
+                await emailService.updateContact(doc)
+              } catch (error) {
+                console.error('Failed to update contact in email service:', error)
+              }
             }
-          }
 
-          // Custom after subscribe hook
-          if (pluginConfig.hooks?.afterSubscribe) {
-            await pluginConfig.hooks.afterSubscribe({ doc, req })
+            // Handle unsubscribe
+            if (
+              doc.subscriptionStatus === 'unsubscribed' &&
+              previousDoc.subscriptionStatus !== 'unsubscribed'
+            ) {
+              // Set unsubscribed timestamp
+              doc.unsubscribedAt = new Date().toISOString()
+              
+              // Custom after unsubscribe hook
+              if (pluginConfig.hooks?.afterUnsubscribe) {
+                await pluginConfig.hooks.afterUnsubscribe({ doc, req })
+              }
+            }
           }
         },
-      ],
-      afterUpdate: [
-        async ({ doc, previousDoc, req }) => {
-          // Update email service if status changed
-          if (
-            doc.subscriptionStatus !== previousDoc.subscriptionStatus &&
-            req.payload.newsletterEmailService
-          ) {
-            try {
-              await req.payload.newsletterEmailService.updateContact(doc)
-            } catch (error) {
-              console.error('Failed to update contact in email service:', error)
-            }
-          }
-
-          // Handle unsubscribe
-          if (
-            doc.subscriptionStatus === 'unsubscribed' &&
-            previousDoc.subscriptionStatus !== 'unsubscribed'
-          ) {
-            // Set unsubscribed timestamp
-            doc.unsubscribedAt = new Date().toISOString()
-            
-            // Custom after unsubscribe hook
-            if (pluginConfig.hooks?.afterUnsubscribe) {
-              await pluginConfig.hooks.afterUnsubscribe({ doc, req })
-            }
-          }
-        },
-      ],
+      ] as CollectionAfterChangeHook[],
       beforeDelete: [
         async ({ id, req }) => {
           // Remove from email service
-          if (req.payload.newsletterEmailService) {
+          const emailService = (req.payload as any).newsletterEmailService
+          if (emailService) {
             try {
               const doc = await req.payload.findByID({
                 collection: slug,
                 id,
               })
-              await req.payload.newsletterEmailService.removeContact(doc.email)
+              await emailService.removeContact(doc.email)
             } catch (error) {
               console.error('Failed to remove contact from email service:', error)
             }
           }
         },
-      ],
+      ] as CollectionBeforeDeleteHook[],
     },
     access: {
       create: () => true, // Public can subscribe
-      read: ({ req: { user } }) => {
+      read: (({ req }: AccessArgs) => {
+        const user = (req as PayloadRequest).user
         // Admins can read all
         if (user) {
           return true
         }
         // Magic link authenticated subscribers can read their own data
-        return {
-          id: {
-            equals: req.user?.subscriberId,
-          },
+        const subscriberId = (req as any).user?.subscriberId
+        if (subscriberId) {
+          return {
+            id: {
+              equals: subscriberId,
+            },
+          }
         }
-      },
-      update: ({ req: { user } }) => {
+        return false
+      }) as Access,
+      update: (({ req }: AccessArgs) => {
+        const user = (req as PayloadRequest).user
         // Admins can update all
         if (user?.collection === 'users') {
           return true
         }
         // Subscribers can update their own preferences
-        return {
-          and: [
-            {
-              id: {
-                equals: req.user?.subscriberId,
-              },
+        const subscriberId = (req as any).user?.subscriberId
+        if (subscriberId) {
+          return {
+            id: {
+              equals: subscriberId,
             },
-            // Limit what fields they can update
-            {
-              or: [
-                { emailPreferences: { exists: true } },
-                { name: { exists: true } },
-                { locale: { exists: true } },
-                { subscriptionStatus: { equals: 'unsubscribed' } },
-              ],
-            },
-          ],
+          }
         }
-      },
-      delete: ({ req: { user } }) => {
+        return false
+      }) as Access,
+      delete: (({ req }: AccessArgs) => {
+        const user = (req as PayloadRequest).user
         // Only admins can delete
         return Boolean(user?.collection === 'users')
-      },
+      }) as Access,
     },
     timestamps: true,
   }

@@ -49,9 +49,9 @@ export function generateMagicLinkToken(
   const expiresIn = config.auth?.tokenExpiration || '7d'
 
   return jwt.sign(payload, getJWTSecret(), {
-    expiresIn,
+    expiresIn: expiresIn,
     issuer: 'payload-newsletter-plugin',
-  })
+  } as jwt.SignOptions)
 }
 
 /**
@@ -68,11 +68,11 @@ export function verifyMagicLinkToken(token: string): MagicLinkTokenPayload {
     }
 
     return payload as MagicLinkTokenPayload
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
       throw new Error('Magic link has expired. Please request a new one.')
     }
-    if (error.name === 'JsonWebTokenError') {
+    if (error instanceof Error && error.name === 'JsonWebTokenError') {
       throw new Error('Invalid magic link token')
     }
     throw error
@@ -112,11 +112,11 @@ export function verifySessionToken(token: string): SessionTokenPayload {
     }
 
     return payload as SessionTokenPayload
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
       throw new Error('Session has expired. Please sign in again.')
     }
-    if (error.name === 'JsonWebTokenError') {
+    if (error instanceof Error && error.name === 'JsonWebTokenError') {
       throw new Error('Invalid session token')
     }
     throw error

@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, PayloadHandler } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { verifySessionToken } from '../utils/jwt'
 
@@ -8,7 +8,7 @@ export const createPreferencesEndpoint = (
   return {
     path: '/newsletter/preferences',
     method: 'get',
-    handler: async (req, res) => {
+    handler: (async (req: any, res: any) => {
       try {
         // Get token from Authorization header
         const authHeader = req.headers.authorization
@@ -25,10 +25,10 @@ export const createPreferencesEndpoint = (
         let payload
         try {
           payload = verifySessionToken(token)
-        } catch (error) {
+        } catch (error: unknown) {
           return res.status(401).json({
             success: false,
-            error: error.message,
+            error: error instanceof Error ? error.message : 'Invalid token',
           })
         }
 
@@ -56,14 +56,14 @@ export const createPreferencesEndpoint = (
             subscriptionStatus: subscriber.subscriptionStatus,
           },
         })
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Get preferences error:', error)
         res.status(500).json({
           success: false,
           error: 'Failed to get preferences',
         })
       }
-    },
+    }) as PayloadHandler,
   }
 }
 
@@ -73,7 +73,7 @@ export const createUpdatePreferencesEndpoint = (
   return {
     path: '/newsletter/preferences',
     method: 'post',
-    handler: async (req, res) => {
+    handler: (async (req: any, res: any) => {
       try {
         // Get token from Authorization header
         const authHeader = req.headers.authorization
@@ -90,10 +90,10 @@ export const createUpdatePreferencesEndpoint = (
         let payload
         try {
           payload = verifySessionToken(token)
-        } catch (error) {
+        } catch (error: unknown) {
           return res.status(401).json({
             success: false,
-            error: error.message,
+            error: error instanceof Error ? error.message : 'Invalid token',
           })
         }
 
@@ -132,13 +132,13 @@ export const createUpdatePreferencesEndpoint = (
             subscriptionStatus: subscriber.subscriptionStatus,
           },
         })
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Update preferences error:', error)
         res.status(500).json({
           success: false,
           error: 'Failed to update preferences',
         })
       }
-    },
+    }) as PayloadHandler,
   }
 }

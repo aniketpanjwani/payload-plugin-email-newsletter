@@ -125,13 +125,13 @@ export function createNewsletterSchedulingFields(
 
   // Add markdown companion field if requested
   if (createMarkdownField) {
-    fields.push(createMarkdownField({
+    fields.push(createMarkdownFieldInternal({
       name: `${contentField}Markdown`,
       richTextField: contentField,
       label: 'Email Content (Markdown)',
       admin: {
         position: 'sidebar',
-        condition: (data) => Boolean(data?.[contentField] && data?.[groupName]?.scheduled),
+        condition: (data: any) => Boolean(data?.[contentField] && data?.[groupName]?.scheduled),
         description: 'Markdown version for email rendering',
         readOnly: true,
       },
@@ -145,7 +145,7 @@ export function createNewsletterSchedulingFields(
  * Create a markdown companion field for rich text
  * This creates a virtual field that converts rich text to markdown
  */
-function createMarkdownField(config: {
+function createMarkdownFieldInternal(config: {
   name: string
   richTextField: string
   label?: string
@@ -161,20 +161,14 @@ function createMarkdownField(config: {
     },
     hooks: {
       afterRead: [
-        async ({ data, req }) => {
+        async ({ data }) => {
           // Convert rich text to markdown on read
           if (data?.[config.richTextField]) {
             try {
               const { convertLexicalToMarkdown } = await import('@payloadcms/richtext-lexical')
               return convertLexicalToMarkdown({
-                converters: ({
-                  defaultConverters,
-                }) => [
-                  ...defaultConverters,
-                  // Custom converters can be added here
-                ],
                 data: data[config.richTextField],
-              })
+              } as any)
             } catch (error) {
               console.error('Failed to convert rich text to markdown:', error)
               return ''

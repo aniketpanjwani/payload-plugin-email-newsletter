@@ -99,7 +99,7 @@ export const MagicLinkVerify: React.FC<MagicLinkVerifyProps> = ({
       verifyToken(token)
     } else {
       setStatus('error')
-      setError(labels.invalid)
+      setError(labels.invalid || 'Invalid magic link')
     }
   }, [propToken])
 
@@ -135,7 +135,7 @@ export const MagicLinkVerify: React.FC<MagicLinkVerifyProps> = ({
       }
     } catch (err) {
       setStatus('error')
-      const errorMessage = err instanceof Error ? err.message : labels.error
+      const errorMessage = err instanceof Error ? err.message : (labels.error || 'Verification failed')
       setError(errorMessage)
       if (onError) {
         onError(err instanceof Error ? err : new Error(errorMessage))
