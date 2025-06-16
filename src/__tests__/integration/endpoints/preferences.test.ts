@@ -15,7 +15,7 @@ describe('Preferences Endpoint Security', () => {
   let postEndpoint: any
   let mockReq: any
   let mockRes: any
-  const config = createTestConfig({
+  const _config = createTestConfig({
     subscribersSlug: 'subscribers',
   })
 

@@ -7,7 +7,7 @@ import { createTestConfig } from '../utils/test-config'
 describe('CSRF Protection', () => {
   let mockReq: any
   let mockRes: any
-  const config = createTestConfig()
+  const _config = createTestConfig()
 
   beforeEach(() => {
     clearCollections()
@@ -163,7 +163,7 @@ describe('CSRF Protection', () => {
 
   describe('Double Submit Cookie Pattern', () => {
     it('should implement double submit cookie pattern', () => {
-      const doubleSubmitMiddleware = (req: any, res: any) => {
+      const doubleSubmitMiddleware = (req: any, _res: any) => {
         if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
           return true
         }

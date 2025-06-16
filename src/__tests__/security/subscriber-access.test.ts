@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { adminOnly, adminOrSelf } from '../../utils/access'
 import type { PayloadRequest } from 'payload'
 
@@ -168,7 +168,7 @@ describe('Subscriber Access Control Security', () => {
       const access = adminOrSelf(mockConfig)
       
       // Subscriber A
-      const subscriberA = {
+      const _subscriberA = {
         id: 'sub-a',
         email: 'a@example.com',
         collection: 'subscribers',

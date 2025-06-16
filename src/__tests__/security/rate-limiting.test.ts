@@ -278,8 +278,8 @@ describe.skip('Rate Limiting Security', () => {
   describe('Distributed Rate Limiting', () => {
     it('should handle distributed environments', async () => {
       // Simulate multiple server instances checking the same limit
-      const instance1 = new RateLimiter(config.rateLimiting)
-      const instance2 = new RateLimiter(config.rateLimiting)
+      const _instance1 = new RateLimiter(config.rateLimiting)
+      const _instance2 = new RateLimiter(config.rateLimiting)
       
       // Both instances should share the same rate limit state
       // In a real implementation, this would use Redis or similar
@@ -316,7 +316,7 @@ describe.skip('Rate Limiting Security', () => {
     it('should prevent header spoofing', async () => {
       const getClientIdentifier = (req: any): string => {
         // Should not trust X-Forwarded-For without validation
-        const suspiciousHeaders = [
+        const _suspiciousHeaders = [
           'X-Forwarded-For',
           'X-Real-IP',
           'CF-Connecting-IP'

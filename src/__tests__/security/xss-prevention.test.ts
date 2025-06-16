@@ -6,7 +6,7 @@ import { createTestConfig } from '../utils/test-config'
 
 describe('XSS Prevention', () => {
   let mockReq: any
-  const config = createTestConfig()
+  const _config = createTestConfig()
 
   beforeEach(() => {
     clearCollections()

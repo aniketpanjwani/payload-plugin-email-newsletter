@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ResendProvider } from '../../../providers/resend'
 import { Resend } from 'resend'
-import type { Subscriber } from '../../../types'
 
 vi.mock('resend')
 

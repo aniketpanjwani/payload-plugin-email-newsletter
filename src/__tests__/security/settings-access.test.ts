@@ -7,7 +7,7 @@ import { createTestConfig } from '../utils/test-config'
 
 describe('Newsletter Settings Access Control Security', () => {
   let mockReq: Partial<PayloadRequest>
-  const mockConfig = createTestConfig()
+  const _mockConfig = createTestConfig()
 
   beforeEach(() => {
     clearCollections()
@@ -128,7 +128,7 @@ describe('Newsletter Settings Access Control Security', () => {
       
       // Mock the beforeChange hook behavior
       const beforeChangeHook = vi.fn(({ req, operation }) => {
-        if (operation !== 'read' && !_req.user?.roles?.includes('admin')) {
+        if (operation !== 'read' && !req.user?.roles?.includes('admin')) {
           throw new Error('Unauthorized: Only admins can modify newsletter settings')
         }
       })
