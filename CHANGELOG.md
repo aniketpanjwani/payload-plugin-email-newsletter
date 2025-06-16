@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2025-06-16
+
+### Fixed
+- Fixed all ESLint errors across the codebase (56 errors resolved)
+- Fixed test failures by restoring mock data seeding
+- Fixed import paths in test files
+- Fixed unused variable and parameter warnings
+- Fixed regex escape character issues
+
+### Added
+- Added comprehensive CI/CD workflows for automatic testing and releases
+- Added CI workflow that runs on every push to main and PRs
+- Added auto-release workflow with smart version bumping based on commit messages
+- Auto-release workflow now skips test-only and documentation-only changes
+
+### Changed
+- Improved auto-release workflow to check for significant changes before releasing
+- Test files now properly import and use mock data fixtures
+
 ## [0.4.3] - 2025-06-16
 
 ### Fixed
