@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { isAdmin } from '../../../utils/access'
+import { createTestConfig } from '../../utils/test-config'
 
 describe('Access Control Utilities', () => {
   describe('isAdmin', () => {

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
-  clearCollections 
+  clearCollections,
+  seedCollection 
 } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
 
@@ -12,7 +13,7 @@ describe('Subscriber Data Isolation', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('subscribers', mockSubscribers)
+    seedCollection('subscribers', mockSubscribers)
     
     const payloadMock = createPayloadRequestMock()
     mockPayload = payloadMock.payload

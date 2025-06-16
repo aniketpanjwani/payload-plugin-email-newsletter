@@ -1,11 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
+import { mockSubscribers } from '../../fixtures/subscribers'
 
-// Mock JWT utils before imports
-vi.mock('../../../utils/jwt')
+// Mock the JWT module
+vi.mock('../../../utils/jwt', () => ({
+  verifySessionToken: vi.fn(),
+  generateSessionToken: vi.fn(),
+}))
 
+// Import after mocking
 import { createPreferencesEndpoint, createUpdatePreferencesEndpoint } from '../../../endpoints/preferences'
-import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
-// import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifySessionToken } from '../../../utils/jwt'
 
 describe('Preferences Endpoint Security', () => {
@@ -19,7 +23,7 @@ describe('Preferences Endpoint Security', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('subscribers', mockSubscribers)
+    seedCollection('subscribers', mockSubscribers)
     
     getEndpoint = createPreferencesEndpoint(config)
     postEndpoint = createUpdatePreferencesEndpoint(config)

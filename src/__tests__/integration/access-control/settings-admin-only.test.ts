@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
   clearCollections,
+  seedCollection,
   createMockAdminUser,
   createMockNonAdminUser
 } from '../../mocks/payload'
@@ -27,7 +28,7 @@ describe('Newsletter Settings Admin-Only Access', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('newsletter-settings', [mockSettings])
+    seedCollection('newsletter-settings', [mockSettings])
     
     const payloadMock = createPayloadRequestMock()
     mockPayload = payloadMock.payload

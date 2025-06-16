@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { CollectionBeforeChangeHook, CollectionAfterChangeHook } from 'payload'
-import { createPayloadRequestMock, clearCollections, createMockAdminUser } from '../../mocks/payload'
+import { createPayloadRequestMock, clearCollections, seedCollection, createMockAdminUser } from '../../mocks/payload'
+import { mockSubscribers } from '../../mocks/fixtures'
 import { createResendMock, createBroadcastMock } from '../../mocks/email-providers'
 import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 
@@ -17,7 +18,7 @@ describe('Subscriber Collection Hooks Security', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('subscribers', mockSubscribers)
+    seedCollection('subscribers', mockSubscribers)
     
     const payloadMock = createPayloadRequestMock()
     mockReq = {
@@ -162,11 +163,11 @@ describe('Subscriber Collection Hooks Security', () => {
         return data
       }
 
-      // seedCollection('subscribers', [{
-      //   id: 'existing',
-      //   email: 'existing@example.com',
-      //   subscriptionStatus: 'active',
-      // }])
+      seedCollection('subscribers', [{
+        id: 'existing',
+        email: 'existing@example.com',
+        subscriptionStatus: 'active',
+      }])
 
       await expect(
         beforeChangeHook(createBeforeChangeArgs({

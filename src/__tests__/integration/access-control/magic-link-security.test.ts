@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
-  clearCollections 
+  clearCollections,
+  seedCollection 
 } from '../../mocks/payload'
 import { generateMagicLinkToken, verifyMagicLinkToken } from '../../../utils/jwt'
 
@@ -40,11 +41,11 @@ describe('Magic Link Security', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('subscribers', [
-    //   subscriberWithToken,
-    //   subscriberWithUsedToken,
-    //   subscriberWithExpiredToken
-    // ])
+    seedCollection('subscribers', [
+      subscriberWithToken,
+      subscriberWithUsedToken,
+      subscriberWithExpiredToken
+    ])
     
     const payloadMock = createPayloadRequestMock()
     mockPayload = payloadMock.payload

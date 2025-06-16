@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createUnsubscribeEndpoint } from '../../../endpoints/unsubscribe'
-import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
-// import { mockSubscribers } from '../../fixtures/subscribers'
+import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
+import { mockSubscribers } from '../../fixtures/subscribers'
 
 // Mock jsonwebtoken before imports
 const mockJwt = {
@@ -30,7 +30,7 @@ describe('Unsubscribe Endpoint Security', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('subscribers', mockSubscribers)
+    seedCollection('subscribers', mockSubscribers)
     
     endpoint = createUnsubscribeEndpoint(config)
     const payloadMock = createPayloadRequestMock()

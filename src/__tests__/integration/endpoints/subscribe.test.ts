@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createSubscribeEndpoint } from '../../../endpoints/subscribe'
-import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
-// import { mockNewsletterSettings } from '../../fixtures/newsletter-settings'
+import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
+import { mockNewsletterSettings } from '../../fixtures/newsletter-settings'
 import { createResendMock } from '../../mocks/email-providers'
 
 // Comment out email service mock as the module doesn't exist
@@ -23,7 +23,7 @@ describe('Subscribe Endpoint Security', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('newsletter-settings', [mockNewsletterSettings])
+    seedCollection('newsletter-settings', [mockNewsletterSettings])
     
     endpoint = createSubscribeEndpoint(config)
     const payloadMock = createPayloadRequestMock()
@@ -110,7 +110,7 @@ describe('Subscribe Endpoint Security', () => {
   describe('Rate Limiting', () => {
     it('should enforce max subscribers per IP', async () => {
       // Create max subscribers from same IP
-      const maxSubscribers = 5 // mockNewsletterSettings.subscriptionSettings.maxSubscribersPerIP
+      const maxSubscribers = mockNewsletterSettings.subscriptionSettings.maxSubscribersPerIP
       
       // Add all subscribers at once
       const ipSubscribers = []
@@ -124,7 +124,7 @@ describe('Subscribe Endpoint Security', () => {
           subscriptionStatus: 'active',
         })
       }
-      // seedCollection('subscribers', ipSubscribers)
+      seedCollection('subscribers', ipSubscribers)
 
       mockReq.body = { email: 'newuser@example.com' }
       await endpoint.handler(mockReq, mockRes)
@@ -138,16 +138,16 @@ describe('Subscribe Endpoint Security', () => {
 
     it('should not count unsubscribed users in rate limit', async () => {
       // Create some unsubscribed users
-      // for (let i = 0; i < 5; i++) {
-      //   seedCollection('subscribers', [{
+      for (let i = 0; i < 5; i++) {
+        seedCollection('subscribers', [{
       //     id: `sub-unsub-${i}`,
       //     email: `unsub${i}@example.com`,
       //     signupMetadata: {
       //       ipAddress: '127.0.0.1',
       //     },
-      //     subscriptionStatus: 'unsubscribed',
-      //   }])
-      // }
+          subscriptionStatus: 'unsubscribed',
+        }])
+      }
 
       mockReq.body = { email: 'newuser@example.com' }
       await endpoint.handler(mockReq, mockRes)
@@ -181,11 +181,11 @@ describe('Subscribe Endpoint Security', () => {
 
   describe('Duplicate Prevention', () => {
     it('should handle existing active subscribers', async () => {
-      // seedCollection('subscribers', [{
-      //   id: 'existing-sub',
-      //   email: 'existing@example.com',
-      //   subscriptionStatus: 'active',
-      // }])
+      seedCollection('subscribers', [{
+        id: 'existing-sub',
+        email: 'existing@example.com',
+        subscriptionStatus: 'active',
+      }])
 
       mockReq.body = { email: 'existing@example.com' }
       await endpoint.handler(mockReq, mockRes)
@@ -201,11 +201,11 @@ describe('Subscribe Endpoint Security', () => {
     })
 
     it('should not allow resubscription of unsubscribed users', async () => {
-      // seedCollection('subscribers', [{
-      //   id: 'unsub-user',
-      //   email: 'comeback@example.com',
-      //   subscriptionStatus: 'unsubscribed',
-      // }])
+      seedCollection('subscribers', [{
+        id: 'unsub-user',
+        email: 'comeback@example.com',
+        subscriptionStatus: 'unsubscribed',
+      }])
 
       mockReq.body = { email: 'comeback@example.com' }
       await endpoint.handler(mockReq, mockRes)
@@ -245,13 +245,15 @@ describe('Subscribe Endpoint Security', () => {
 
     it('should activate immediately when double opt-in is disabled', async () => {
       // Disable double opt-in
-      // const noDoubleOptIn = {
-      //   subscriptionSettings: {
-      //     requireDoubleOptIn: false,
-      //   },
-      // }
+      const noDoubleOptIn = {
+        ...mockNewsletterSettings,
+        subscriptionSettings: {
+          ...mockNewsletterSettings.subscriptionSettings,
+          requireDoubleOptIn: false,
+        },
+      }
       clearCollections()
-      // seedCollection('newsletter-settings', [noDoubleOptIn])
+      seedCollection('newsletter-settings', [noDoubleOptIn])
 
       mockReq.body = { email: 'instant@example.com' }
       await endpoint.handler(mockReq, mockRes)

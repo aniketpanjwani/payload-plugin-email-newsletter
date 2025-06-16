@@ -4,8 +4,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('../../../utils/jwt')
 
 import { createVerifyMagicLinkEndpoint } from '../../../endpoints/verify-magic-link'
-import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
-// import { mockSubscribers } from '../../fixtures/subscribers'
+import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
+import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifyMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
 
 describe('Verify Magic Link Endpoint', () => {
@@ -18,7 +18,7 @@ describe('Verify Magic Link Endpoint', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('subscribers', mockSubscribers)
+    seedCollection('subscribers', mockSubscribers)
     
     endpoint = createVerifyMagicLinkEndpoint(config)
     const payloadMock = createPayloadRequestMock()
