@@ -44,9 +44,6 @@ coverage/
 # Feature planning (not for public repo)
 feature_design/
 
-# Claude-specific documentation
-CLAUDE.md
-
 # Misc
 .eslintcache
 .cache
