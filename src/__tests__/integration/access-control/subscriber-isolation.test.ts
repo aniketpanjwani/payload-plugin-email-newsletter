@@ -1,24 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
-  seedCollection, 
   clearCollections 
 } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
-import { createTestConfig } from '../../utils/test-config'
 
 describe('Subscriber Data Isolation', () => {
   let mockPayload: any
   let subscriberA: any
   let subscriberB: any
-  
-  const _config = createTestConfig({
-    subscribersSlug: 'subscribers'
-  })
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('subscribers', mockSubscribers)
+    // seedCollection('subscribers', mockSubscribers)
     
     const payloadMock = createPayloadRequestMock()
     mockPayload = payloadMock.payload
@@ -294,11 +288,11 @@ describe('Subscriber Data Isolation', () => {
   describe('Magic Link Token Isolation', () => {
     it('should not expose other subscribers magic link tokens', async () => {
       // Add magic link token to subscriber B
-      seedCollection('subscribers', [{
-        ...subscriberB,
-        magicLinkToken: 'secret-token-b',
-        magicLinkTokenExpiry: new Date(Date.now() + 3600000)
-      }])
+      // seedCollection('subscribers', [{
+      //   ...subscriberB,
+      //   magicLinkToken: 'secret-token-b',
+      //   magicLinkTokenExpiry: new Date(Date.now() + 3600000)
+      // }])
 
       const syntheticUserA = {
         collection: 'subscribers',

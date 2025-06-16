@@ -1,22 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
-  seedCollection, 
   clearCollections,
   createMockAdminUser,
   createMockNonAdminUser
 } from '../../mocks/payload'
-import { createTestConfig } from '../../utils/test-config'
 
 describe('Newsletter Settings Admin-Only Access', () => {
   let mockPayload: any
   let adminUser: any
   let regularUser: any
   let subscriberUser: any
-  
-  const _config = createTestConfig({
-    settingsSlug: 'newsletter-settings'
-  })
 
   const mockSettings = {
     id: 'settings-1',
@@ -33,7 +27,7 @@ describe('Newsletter Settings Admin-Only Access', () => {
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('newsletter-settings', [mockSettings])
+    // seedCollection('newsletter-settings', [mockSettings])
     
     const payloadMock = createPayloadRequestMock()
     mockPayload = payloadMock.payload

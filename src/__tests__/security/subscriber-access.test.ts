@@ -168,11 +168,11 @@ describe('Subscriber Access Control Security', () => {
       const access = adminOrSelf(mockConfig)
       
       // Subscriber A
-      const _subscriberA = {
-        id: 'sub-a',
-        email: 'a@example.com',
-        collection: 'subscribers',
-      }
+      // const _subscriberA = {
+      //   id: 'sub-a',  
+      //   email: 'a@example.com',
+      //   collection: 'subscribers',
+      // }
       
       // Subscriber B trying to access Subscriber A's data
       mockReq.user = {

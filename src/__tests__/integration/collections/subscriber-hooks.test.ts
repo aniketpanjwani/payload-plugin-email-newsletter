@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { CollectionBeforeChangeHook, CollectionAfterChangeHook } from 'payload'
-import { createPayloadRequestMock, seedCollection, clearCollections, createMockAdminUser } from '../../mocks/payload'
-import { mockSubscribers } from '../../fixtures/subscribers'
+import { createPayloadRequestMock, clearCollections, createMockAdminUser } from '../../mocks/payload'
 import { createResendMock, createBroadcastMock } from '../../mocks/email-providers'
-import { createTestConfig } from '../../utils/test-config'
 import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 
 // Comment out email service mock as the module doesn't exist
@@ -16,13 +14,10 @@ import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-
 describe('Subscriber Collection Hooks Security', () => {
   let mockReq: any
   let mockEmailService: any
-  const _config = createTestConfig({
-    subscribersSlug: 'subscribers',
-  })
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('subscribers', mockSubscribers)
+    // seedCollection('subscribers', mockSubscribers)
     
     const payloadMock = createPayloadRequestMock()
     mockReq = {
@@ -167,11 +162,11 @@ describe('Subscriber Collection Hooks Security', () => {
         return data
       }
 
-      seedCollection('subscribers', [{
-        id: 'existing',
-        email: 'existing@example.com',
-        subscriptionStatus: 'active',
-      }])
+      // seedCollection('subscribers', [{
+      //   id: 'existing',
+      //   email: 'existing@example.com',
+      //   subscriptionStatus: 'active',
+      // }])
 
       await expect(
         beforeChangeHook(createBeforeChangeArgs({

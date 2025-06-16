@@ -156,7 +156,7 @@ describe('Authorization Security', () => {
     it('should control delete operations', () => {
       const canDelete = (user: any, collection: string, docId: string): boolean => {
         const rules: Record<string, (user: any, id: string) => boolean> = {
-          'subscribers': (u, id) => {
+          'subscribers': (u, _id) => {
             if (u?.roles?.includes('admin')) return true
             // Subscribers cannot delete themselves, only unsubscribe
             return false

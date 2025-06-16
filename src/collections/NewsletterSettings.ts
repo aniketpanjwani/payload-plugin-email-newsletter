@@ -356,8 +356,8 @@ export const createNewsletterSettingsCollection = (
             try {
               // TODO: Implement email service reinitialization
               console.warn('Newsletter settings updated, reinitializing service...')
-            } catch (error) {
-              console.error('Failed to reinitialize email service:', error)
+            } catch {
+              // Failed to reinitialize email service
             }
           }
           

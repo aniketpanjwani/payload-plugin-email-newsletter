@@ -4,23 +4,21 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('../../../utils/jwt')
 
 import { createVerifyMagicLinkEndpoint } from '../../../endpoints/verify-magic-link'
-import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
-import { mockSubscribers } from '../../fixtures/subscribers'
+import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
+// import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifyMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
-
-import { createTestConfig } from '../../utils/test-config'
 
 describe('Verify Magic Link Endpoint', () => {
   let endpoint: any
   let mockReq: any
   let mockRes: any
-  const _config = createTestConfig({
+  const config = {
     subscribersSlug: 'subscribers',
-  })
+  }
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('subscribers', mockSubscribers)
+    // seedCollection('subscribers', mockSubscribers)
     
     endpoint = createVerifyMagicLinkEndpoint(config)
     const payloadMock = createPayloadRequestMock()
@@ -85,7 +83,7 @@ subscriberId: 'non-existent',
     it('should reject tokens with mismatched email', async () => {
       vi.mocked(verifyMagicLinkToken).mockReturnValue({
 subscriberId: 'sub-1',
-        email: 'wrong@example.com', // Doesn't match subscriber email,
+        email: 'wrong@example.com', // Doesn't match subscriber email
         type: 'magic-link' as const,
       })
 

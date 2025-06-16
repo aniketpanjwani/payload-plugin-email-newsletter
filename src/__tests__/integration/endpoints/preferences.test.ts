@@ -4,24 +4,22 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('../../../utils/jwt')
 
 import { createPreferencesEndpoint, createUpdatePreferencesEndpoint } from '../../../endpoints/preferences'
-import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
-import { mockSubscribers } from '../../fixtures/subscribers'
+import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
+// import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifySessionToken } from '../../../utils/jwt'
-
-import { createTestConfig } from '../../utils/test-config'
 
 describe('Preferences Endpoint Security', () => {
   let getEndpoint: any
   let postEndpoint: any
   let mockReq: any
   let mockRes: any
-  const _config = createTestConfig({
+  const config = {
     subscribersSlug: 'subscribers',
-  })
+  }
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('subscribers', mockSubscribers)
+    // seedCollection('subscribers', mockSubscribers)
     
     getEndpoint = createPreferencesEndpoint(config)
     postEndpoint = createUpdatePreferencesEndpoint(config)

@@ -120,7 +120,7 @@ export function sanitizeInput(input: string): string {
     .replace(/&&/g, '') // Remove command chaining
     .replace(/\$\(/g, '') // Remove command substitution pattern $()
     .replace(/\.\./g, '') // Remove directory traversal
-    .replace(/\/\.\./g, '') // Remove path traversal
+    .replace(/\/..\//g, '') // Remove path traversal
     .replace(/\0/g, '') // Remove null bytes
   
   return cleaned.trim()

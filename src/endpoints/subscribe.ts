@@ -186,8 +186,7 @@ export const createSubscribeEndpoint = (
             ? 'Please check your email to confirm your subscription'
             : 'Successfully subscribed',
         })
-      } catch (error) {
-        console.error('Subscribe endpoint error:', error)
+      } catch {
         res.status(500).json({
           success: false,
           error: 'Failed to subscribe. Please try again.',

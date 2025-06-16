@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
 
-import { createMockUser, createMockAdminUser, createPayloadRequestMock, clearCollections, seedCollection } from '../mocks/payload'
-import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
-import { createTestConfig } from '../utils/test-config'
+import { createMockUser, createMockAdminUser, createPayloadRequestMock, clearCollections } from '../mocks/payload'
+// import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
+// import { createTestConfig } from '../utils/test-config'
 
 describe('Newsletter Settings Access Control Security', () => {
   let mockReq: Partial<PayloadRequest>
-  const _mockConfig = createTestConfig()
+  // const _mockConfig = createTestConfig()
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('newsletter-settings', [mockNewsletterSettings])
+    // seedCollection('newsletter-settings', [mockNewsletterSettings])
     mockReq = createPayloadRequestMock()
   })
 

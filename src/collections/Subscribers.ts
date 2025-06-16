@@ -225,8 +225,8 @@ export const createSubscribersCollection = (
             if (emailService) {
               try {
                 await emailService.addContact(doc)
-              } catch (error) {
-                console.error('Failed to add contact to email service:', error)
+              } catch {
+                // Failed to add contact to email service
               }
             }
 
@@ -234,8 +234,8 @@ export const createSubscribersCollection = (
             if (doc.subscriptionStatus === 'active' && emailService) {
               try {
                 // TODO: Send welcome email
-              } catch (error) {
-                console.error('Failed to send welcome email:', error)
+              } catch {
+                // Failed to send welcome email
               }
             }
 
@@ -255,8 +255,8 @@ export const createSubscribersCollection = (
             ) {
               try {
                 await emailService.updateContact(doc)
-              } catch (error) {
-                console.error('Failed to update contact in email service:', error)
+              } catch {
+                // Failed to update contact in email service
               }
             }
 
@@ -287,8 +287,8 @@ export const createSubscribersCollection = (
                 id,
               })
               await emailService.removeContact(doc.email)
-            } catch (error) {
-              console.error('Failed to remove contact from email service:', error)
+            } catch {
+              // Failed to remove contact from email service
             }
           }
         },

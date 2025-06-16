@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createPayloadRequestMock, seedCollection, clearCollections } from '../mocks/payload'
-import { mockSubscribers } from '../fixtures/subscribers'
+import { createPayloadRequestMock, clearCollections } from '../mocks/payload'
 
 import { createTestConfig } from '../utils/test-config'
 
@@ -11,7 +10,6 @@ describe('CSRF Protection', () => {
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('subscribers', mockSubscribers)
     
     const payloadMock = createPayloadRequestMock()
     mockReq = {

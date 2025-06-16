@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createUnsubscribeEndpoint } from '../../../endpoints/unsubscribe'
-import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
-import { mockSubscribers } from '../../fixtures/subscribers'
-
-import { createTestConfig } from '../../utils/test-config'
+import { createPayloadRequestMock, clearCollections } from '../../mocks/payload'
+// import { mockSubscribers } from '../../fixtures/subscribers'
 
 // Mock jsonwebtoken before imports
 const mockJwt = {
@@ -14,25 +12,25 @@ const mockJwt = {
 vi.mock('jsonwebtoken', () => mockJwt)
 
 // Mock console.error to capture errors
-const originalConsoleError = console.error
-beforeAll(() => {
-  console.error = vi.fn()
-})
-afterAll(() => {
-  console.error = originalConsoleError
-})
+// const originalConsoleError = console.error
+// beforeAll(() => {
+//   console.error = vi.fn()
+// })
+// afterAll(() => {
+//   console.error = originalConsoleError
+// })
 
 describe('Unsubscribe Endpoint Security', () => {
   let endpoint: any
   let mockReq: any
   let mockRes: any
-  const config = createTestConfig({
+  const config = {
     subscribersSlug: 'subscribers',
-  })
+  }
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('subscribers', mockSubscribers)
+    // seedCollection('subscribers', mockSubscribers)
     
     endpoint = createUnsubscribeEndpoint(config)
     const payloadMock = createPayloadRequestMock()

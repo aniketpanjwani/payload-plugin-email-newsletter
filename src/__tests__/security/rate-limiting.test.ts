@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { 
-  createPayloadRequestMock, 
+  // createPayloadRequestMock, 
   clearCollections 
 } from '../mocks/payload'
 import { createTestConfig } from '../utils/test-config'
@@ -10,7 +10,7 @@ import { RateLimiter } from '../../utils/rate-limiter'
 // Skip rate limiting tests since the RateLimiter mocking isn't working properly
 // and rate limiting is not fully implemented in the plugin
 describe.skip('Rate Limiting Security', () => {
-  let _mockPayload: any
+  // let _mockPayload: any
   let rateLimiter: any
   
   const config = createTestConfig({
@@ -25,8 +25,8 @@ describe.skip('Rate Limiting Security', () => {
 
   beforeEach(() => {
     clearCollections()
-    const payloadMock = createPayloadRequestMock()
-    _mockPayload = payloadMock.payload
+    // const payloadMock = createPayloadRequestMock()
+    // _mockPayload = payloadMock.payload
     
     // Mock rate limiter
     rateLimiter = {

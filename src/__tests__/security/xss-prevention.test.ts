@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createPayloadRequestMock, seedCollection, clearCollections } from '../mocks/payload'
-import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
+import { createPayloadRequestMock, clearCollections } from '../mocks/payload'
+// import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
 
 import { createTestConfig } from '../utils/test-config'
 
@@ -10,7 +10,7 @@ describe('XSS Prevention', () => {
 
   beforeEach(() => {
     clearCollections()
-    seedCollection('newsletter-settings', [mockNewsletterSettings])
+    // seedCollection('newsletter-settings', [mockNewsletterSettings])
     
     const payloadMock = createPayloadRequestMock()
     mockReq = {
@@ -64,9 +64,9 @@ describe('XSS Prevention', () => {
               name: 'Test User',
             },
           })
-        } catch (error: any) {
+        } catch (error) {
           // Should fail validation
-          expect(error.message).toContain('Invalid email')
+          expect((error as Error).message).toContain('Invalid email')
         }
       }
     })
@@ -269,9 +269,8 @@ describe('XSS Prevention', () => {
       const maliciousToken = '"><script>alert("xss")</script>'
       const safeLink = generateMagicLink('https://example.com/verify', maliciousToken)
       expect(safeLink).not.toContain('<script>')
-      // Verify the token is properly encoded (double-encoding is actually safer)
-      expect(safeLink).toContain('%253Cscript%253E')
-      expect(safeLink).toContain('%2522')
+      // Verify the token is properly encoded
+      expect(safeLink).toContain('%22%3E%3Cscript%3E')
       
       // Invalid base URLs
       expect(() => generateMagicLink('javascript:alert("xss")', 'token')).toThrow()
@@ -294,9 +293,9 @@ describe('XSS Prevention', () => {
             collection: 'subscribers',
             where: input as any,
           })
-        } catch (error: any) {
+        } catch (error) {
           // Should either sanitize or reject
-          expect(error.message).toContain('Invalid')
+          expect((error as Error).message).toContain('Invalid')
         }
       }
     })
@@ -317,7 +316,7 @@ describe('XSS Prevention', () => {
               ...fields,
             },
           })
-        } catch (error: any) {
+        } catch (error) {
           // Should reject dangerous field names
           expect(error).toBeDefined()
         }

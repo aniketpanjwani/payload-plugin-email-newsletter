@@ -6,20 +6,20 @@ import {
   verifySessionToken
 } from '../../utils/jwt'
 import { 
-  createPayloadRequestMock, 
+  // createPayloadRequestMock, 
   clearCollections 
 } from '../mocks/payload'
 
 vi.mock('../../utils/jwt')
 
 describe('Authentication Security', () => {
-  let _mockPayload: any
+  // let _mockPayload: any
   const jwtSecret = 'test-secret-key-for-testing-only-32chars'
   
   beforeEach(() => {
     clearCollections()
-    const payloadMock = createPayloadRequestMock()
-    _mockPayload = payloadMock.payload
+    // const payloadMock = createPayloadRequestMock()
+    // _mockPayload = payloadMock.payload
     
     vi.clearAllMocks()
     process.env.PAYLOAD_SECRET = jwtSecret

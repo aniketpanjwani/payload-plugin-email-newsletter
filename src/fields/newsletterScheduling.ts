@@ -169,8 +169,7 @@ function createMarkdownFieldInternal(config: {
               return convertLexicalToMarkdown({
                 data: data[config.richTextField],
               } as any)
-            } catch (error) {
-              console.error('Failed to convert rich text to markdown:', error)
+            } catch {
               return ''
             }
           }

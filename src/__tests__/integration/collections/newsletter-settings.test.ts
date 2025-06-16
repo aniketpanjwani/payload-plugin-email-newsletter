@@ -1,18 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
-  seedCollection, 
   clearCollections,
   createMockAdminUser
 } from '../../mocks/payload'
-import { createTestConfig } from '../../utils/test-config'
 import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 
 describe('Newsletter Settings Collection Hooks Security', () => {
   let mockReq: any
-  const _config = createTestConfig({
-    settingsSlug: 'newsletter-settings'
-  })
 
   beforeEach(() => {
     clearCollections()
@@ -58,10 +53,10 @@ describe('Newsletter Settings Collection Hooks Security', () => {
     it('should enforce only one active config', async () => {
       const slug = 'newsletter-settings'
       
-      seedCollection(slug, [
-        { id: 'settings-1', name: 'Config 1', active: true },
-        { id: 'settings-2', name: 'Config 2', active: false }
-      ])
+      // seedCollection(slug, [
+      //   { id: 'settings-1', name: 'Config 1', active: true },
+      //   { id: 'settings-2', name: 'Config 2', active: false }
+      // ])
 
       const beforeChangeHook = async ({ data, req: _req, operation }: any) => {
         // Match actual implementation

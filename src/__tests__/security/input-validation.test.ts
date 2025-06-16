@@ -7,17 +7,17 @@ import {
   normalizeEmail
 } from '../../utils/validation'
 import { 
-  createPayloadRequestMock, 
+  // createPayloadRequestMock, 
   clearCollections 
 } from '../mocks/payload'
 
 describe('Input Validation Security', () => {
-  let _mockPayload: any
+  // let _mockPayload: any
   
   beforeEach(() => {
     clearCollections()
-    const payloadMock = createPayloadRequestMock()
-    _mockPayload = payloadMock.payload
+    // const payloadMock = createPayloadRequestMock()
+    // _mockPayload = payloadMock.payload
     vi.clearAllMocks()
   })
 
