@@ -316,50 +316,42 @@ describe('Authorization Security', () => {
     it('should authorize newsletter endpoints correctly', () => {
       const authorizeEndpoint = (endpoint: string, method: string, user: any): boolean => {
         const publicEndpoints = [
-          { path: '/api/newsletter/subscribe', method: 'POST' },
-          { path: '/api/newsletter/verify-magic-link', method: 'POST' }
+          { path: '/newsletter/subscribe', method: 'POST' },
+          { path: '/newsletter/unsubscribe', method: 'POST' },
+          { path: '/newsletter/verify-magic-link', method: 'POST' }
         ]
         
         const subscriberEndpoints = [
-          { path: '/api/newsletter/preferences', method: 'GET' },
-          { path: '/api/newsletter/preferences', method: 'POST' },
-          { path: '/api/newsletter/unsubscribe', method: 'POST' }
+          { path: '/newsletter/preferences', method: 'GET' },
+          { path: '/newsletter/preferences', method: 'PUT' }
         ]
         
-        const adminEndpoints = [
-          { path: '/api/newsletter/send', method: 'POST' },
-          { path: '/api/newsletter/stats', method: 'GET' }
-        ]
+        // Note: The actual implementation doesn't have send or stats endpoints
         
         // Check public endpoints
         if (publicEndpoints.some(e => e.path === endpoint && e.method === method)) {
           return true
         }
         
-        // Check subscriber endpoints
+        // Check subscriber endpoints (require authentication)
         if (subscriberEndpoints.some(e => e.path === endpoint && e.method === method)) {
-          return user?.collection === 'subscribers' || user?.roles?.includes('admin')
-        }
-        
-        // Check admin endpoints
-        if (adminEndpoints.some(e => e.path === endpoint && e.method === method)) {
-          return user?.roles?.includes('admin') || false
+          // In actual implementation, these require a valid JWT token
+          return !!(user?.collection === 'subscribers' || user?.roles?.includes('admin'))
         }
         
         return false
       }
       
       // Public endpoints
-      expect(authorizeEndpoint('/api/newsletter/subscribe', 'POST', null)).toBe(true)
-      expect(authorizeEndpoint('/api/newsletter/verify-magic-link', 'POST', null)).toBe(true)
+      expect(authorizeEndpoint('/newsletter/subscribe', 'POST', null)).toBe(true)
+      expect(authorizeEndpoint('/newsletter/unsubscribe', 'POST', null)).toBe(true)
+      expect(authorizeEndpoint('/newsletter/verify-magic-link', 'POST', null)).toBe(true)
       
-      // Subscriber endpoints
-      expect(authorizeEndpoint('/api/newsletter/preferences', 'GET', subscriberUser)).toBe(true)
-      expect(authorizeEndpoint('/api/newsletter/preferences', 'GET', null)).toBe(false)
-      
-      // Admin endpoints
-      expect(authorizeEndpoint('/api/newsletter/send', 'POST', adminUser)).toBe(true)
-      expect(authorizeEndpoint('/api/newsletter/send', 'POST', subscriberUser)).toBe(false)
+      // Subscriber endpoints (require auth)
+      expect(authorizeEndpoint('/newsletter/preferences', 'GET', subscriberUser)).toBe(true)
+      expect(authorizeEndpoint('/newsletter/preferences', 'GET', null)).toBe(false)
+      expect(authorizeEndpoint('/newsletter/preferences', 'PUT', subscriberUser)).toBe(true)
+      expect(authorizeEndpoint('/newsletter/preferences', 'PUT', null)).toBe(false)
     })
 
     it('should validate JWT bearer tokens for protected endpoints', () => {

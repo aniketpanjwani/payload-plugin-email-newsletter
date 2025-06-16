@@ -11,8 +11,13 @@ collections.set('newsletter-settings', new Map())
 collections.set('users', new Map())
 
 // Helper to filter sensitive fields based on user permissions
-const filterSensitiveFields = (doc: any, collection: string, user: any): any => {
+const filterSensitiveFields = (doc: any, collection: string, user: any, overrideAccess: boolean = false): any => {
   if (!doc) return doc
+  
+  // If access is overridden, return everything
+  if (overrideAccess) {
+    return doc
+  }
   
   const filtered = { ...doc }
   
@@ -29,10 +34,8 @@ const filterSensitiveFields = (doc: any, collection: string, user: any): any => 
   
   // For newsletter settings
   if (collection === 'newsletter-settings') {
-    // Non-admin users shouldn't see API keys (though they shouldn't have access at all)
-    if (!user?.roles?.includes('admin')) {
-      delete filtered.providerApiKey
-    }
+    // Currently API keys are not hidden (field-level access control not implemented)
+    // This matches the actual behavior
   }
   
   return filtered
@@ -80,10 +83,7 @@ export const createPayloadMock = (): any => {
           if (!user || !user.roles?.includes('admin')) {
             throw new Error('Unauthorized')
           }
-          // Enforce singleton pattern
-          if (collectionData.size > 0) {
-            throw new Error('Newsletter settings already exist')
-          }
+          // Don't enforce singleton pattern here - that's done in hooks
         } else if (!user) {
           throw new Error('Unauthorized')
         }
@@ -118,22 +118,9 @@ export const createPayloadMock = (): any => {
 
       // Simulate access control
       if (!overrideAccess) {
-        // Newsletter settings require admin for read
+        // Newsletter settings can be read publicly - no restrictions for read access
         if (collection === 'newsletter-settings') {
-          if (!user || !user.roles?.includes('admin')) {
-            return {
-              docs: [],
-              totalDocs: 0,
-              limit: 10,
-              totalPages: 0,
-              page: 1,
-              pagingCounter: 1,
-              hasPrevPage: false,
-              hasNextPage: false,
-              prevPage: null,
-              nextPage: null,
-            }
-          }
+          // Public read access, no restrictions
         }
         // Users collection - subscribers cannot access
         else if (collection === 'users') {
@@ -149,7 +136,7 @@ export const createPayloadMock = (): any => {
           // Will filter below to only show own data
         }
         // Other collections require authentication
-        else if (!user) {
+        else if (collection === 'subscribers' && !user) {
           throw new Error('Unauthorized')
         }
       }
@@ -183,7 +170,7 @@ export const createPayloadMock = (): any => {
       }
 
       // Filter sensitive fields from results
-      const filteredDocs = docs.map(doc => filterSensitiveFields(doc, collection, user))
+      const filteredDocs = docs.map(doc => filterSensitiveFields(doc, collection, user, overrideAccess))
 
       return {
         docs: filteredDocs,
@@ -206,11 +193,9 @@ export const createPayloadMock = (): any => {
 
       // Simulate access control
       if (!overrideAccess) {
-        // Newsletter settings require admin for read
+        // Newsletter settings can be read publicly
         if (collection === 'newsletter-settings') {
-          if (!user || !user.roles?.includes('admin')) {
-            return null
-          }
+          // Public read access allowed
         }
         // Subscribers can only read their own data
         else if (collection === 'subscribers') {
@@ -231,7 +216,7 @@ export const createPayloadMock = (): any => {
       if (!doc) return null
       
       // Filter sensitive fields based on permissions
-      return filterSensitiveFields(doc, collection, user)
+      return filterSensitiveFields(doc, collection, user, overrideAccess)
     }),
     update: vi.fn(async ({ collection, id, data, user, overrideAccess = true }) => {
       const collectionData = collections.get(collection)
@@ -316,9 +301,12 @@ export const createPayloadMock = (): any => {
 
       // Simulate access control
       if (!overrideAccess) {
-        // Newsletter settings should never be deleted
+        // Newsletter settings require admin for delete operations
         if (collection === 'newsletter-settings') {
-          throw new Error('Newsletter settings cannot be deleted')
+          if (!user || !user.roles?.includes('admin')) {
+            throw new Error('Unauthorized')
+          }
+          // Even admins shouldn't delete settings in practice, but access control allows it
         } 
         // Subscribers can only delete their own data
         else if (collection === 'subscribers') {

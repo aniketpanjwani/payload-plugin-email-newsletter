@@ -7,7 +7,7 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: ['./src/__tests__/setup/unit.setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
-    exclude: ['src/__tests__/integration/**', 'src/__tests__/security/**', 'e2e/**', 'node_modules/**', 'dist/**'],
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     environmentOptions: {
       happyDOM: {
         settings: {

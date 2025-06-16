@@ -28,7 +28,16 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "build"],
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "build",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "src/__tests__/**/*"
+  ],
   "ts-node": {
     "swc": true
   }

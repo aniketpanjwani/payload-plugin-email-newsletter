@@ -7,14 +7,13 @@ export const mockNewsletterSettings = {
     apiKey: 'test-api-key',
     audienceIds: [],
   },
-  from: {
-    email: 'newsletter@example.com',
-    name: 'Test Newsletter',
+  fromAddress: 'newsletter@example.com',
+  fromName: 'Test Newsletter',
+  subscriptionSettings: {
+    requireDoubleOptIn: true,
+    allowedDomains: [],
+    maxSubscribersPerIP: 10,
   },
-  // Settings directly on object, not nested
-  requireDoubleOptIn: true,
-  allowedDomains: [],
-  maxSubscribersPerIP: 10,
   emailTemplates: {
     welcome: {
       enabled: true,

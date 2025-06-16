@@ -1,0 +1,39 @@
+# Development and test files
+dev/
+src/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+vitest.config.ts
+vitest.integration.config.ts
+.swcrc
+tsconfig.json
+.eslintrc.js
+
+# Build and config files
+bun.lockb
+.env*
+.DS_Store
+*.log
+
+# Git and IDE
+.git
+.gitignore
+.vscode
+.idea
+*.sublime-*
+
+# Documentation source (keep compiled docs if any)
+feature_design/
+CLAUDE.md
+
+# Scripts and development tools
+scripts/
+
+# Coverage reports
+coverage/
+.nyc_output
+
+# Note: DO NOT ignore dist/ - it contains the compiled code for npm package!

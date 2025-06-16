@@ -5,6 +5,24 @@ import { vi, beforeEach } from 'vitest'
 process.env.JWT_SECRET = 'test-jwt-secret'
 process.env.PAYLOAD_SECRET = 'test-payload-secret'
 
+// Happy DOM Timer Patch - Fix timer issues with Vitest
+// According to Happy DOM docs, Vitest doesn't use Happy DOM's timer implementation by default
+// This causes issues with React component tests that use timers
+if (globalThis.window && globalThis.document) {
+  // Access the Happy DOM window instance
+  const happyWindow = (globalThis.document as any).defaultView || (globalThis.document as any).window
+  
+  if (happyWindow) {
+    // Replace Node.js timers with Happy DOM's timers
+    globalThis.setTimeout = happyWindow.setTimeout.bind(happyWindow)
+    globalThis.clearTimeout = happyWindow.clearTimeout.bind(happyWindow)
+    globalThis.setInterval = happyWindow.setInterval.bind(happyWindow)
+    globalThis.clearInterval = happyWindow.clearInterval.bind(happyWindow)
+    globalThis.requestAnimationFrame = happyWindow.requestAnimationFrame.bind(happyWindow)
+    globalThis.cancelAnimationFrame = happyWindow.cancelAnimationFrame.bind(happyWindow)
+  }
+}
+
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,

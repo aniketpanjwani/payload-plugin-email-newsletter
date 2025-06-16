@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build": "bun run build:swc && bun run build:types",
-    "build:swc": "swc ./src -d ./dist --copy-files",
+    "build:swc": "swc ./src -d ./dist --copy-files --ignore '**/*.test.ts' --ignore '**/*.test.tsx' --ignore '**/__tests__/**'",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "dev": "bun run build:swc --watch",
     "clean": "rimraf dist",

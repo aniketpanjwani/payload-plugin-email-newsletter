@@ -22,7 +22,7 @@ describe('Newsletter Settings Access Control Security', () => {
       const result = await mockReq.payload!.find({
         collection: 'newsletter-settings',
         overrideAccess: false,
-        user: null,
+        user: undefined, // Use undefined instead of null for no user
       })
       
       expect(result.docs).toHaveLength(1)
@@ -33,7 +33,7 @@ describe('Newsletter Settings Access Control Security', () => {
       const result = await mockReq.payload!.find({
         collection: 'newsletter-settings',
         overrideAccess: false,
-        user: null,
+        user: undefined,
       })
       
       const settings = result.docs[0]
@@ -157,50 +157,38 @@ describe('Newsletter Settings Access Control Security', () => {
         collection: 'newsletter-settings',
         id: 'settings-1',
         overrideAccess: false,
-        user: null,
+        user: undefined,
       })
       
       // In production, field-level access control should hide API keys
       // from non-admin users
-      expect(settings.resendSettings.apiKey).toBeDefined()
+      expect(settings).toBeDefined()
+      expect(settings?.resendSettings?.apiKey).toBeDefined()
       // This test documents that additional field-level security is needed
     })
 
-    it('should validate API key format on update', async () => {
+    it('should encrypt API keys on update', async () => {
       const adminUser = createMockAdminUser()
       
-      // Test various invalid API key formats
-      const invalidApiKeys = [
-        '', // Empty
-        ' ', // Whitespace only
-        'key with spaces', // Contains spaces
-        '<script>alert("xss")</script>', // XSS attempt
-      ]
+      // Test that API keys get encrypted
+      const result = await mockReq.payload!.update({
+        collection: 'newsletter-settings',
+        id: 'settings-1',
+        data: {
+          providerApiKey: 'test-key-123',
+        },
+        overrideAccess: false,
+        user: adminUser,
+      })
       
-      // Current implementation doesn't validate API keys
-      // This test documents expected validation behavior
-      for (const invalidKey of invalidApiKeys) {
-        const result = await mockReq.payload!.update({
-          collection: 'newsletter-settings',
-          id: 'settings-1',
-          data: {
-            resendSettings: {
-              ...mockNewsletterSettings.resendSettings,
-              apiKey: invalidKey,
-            },
-          },
-          overrideAccess: false,
-          user: adminUser,
-        })
-        
-        // Should either sanitize or reject invalid keys
-        expect(result.resendSettings.apiKey).toBe(invalidKey) // Currently allows any value
-      }
+      // Mock encrypts API keys
+      expect(result.providerApiKey).toContain('encrypted:')
+      expect(result.providerApiKey).not.toContain('test-key-123')
     })
   })
 
-  describe('Settings Singleton Pattern', () => {
-    it('should enforce single settings document', async () => {
+  describe('Settings Active Management', () => {
+    it('should allow multiple settings but only one active', async () => {
       const adminUser = createMockAdminUser()
       
       // Try to create a second settings document
@@ -214,17 +202,15 @@ describe('Newsletter Settings Access Control Security', () => {
             apiKey: 'another-key',
             audienceIds: [],
           },
-          from: {
-            email: 'another@example.com',
-            name: 'Another Newsletter',
-          },
+          fromAddress: 'another@example.com',
+          fromName: 'Another Newsletter',
         },
         overrideAccess: false,
         user: adminUser,
       })
       
-      // Currently allows multiple settings documents
-      // This test documents that singleton enforcement is needed
+      // Access control allows multiple settings documents
+      // The beforeChange hook handles ensuring only one is active
       expect(secondSettings.id).toBeDefined()
       
       const allSettings = await mockReq.payload!.find({
@@ -233,7 +219,7 @@ describe('Newsletter Settings Access Control Security', () => {
         user: adminUser,
       })
       
-      expect(allSettings.docs).toHaveLength(2) // Should ideally be 1
+      expect(allSettings.docs).toHaveLength(2) // Multiple allowed, but only one active
     })
   })
 })

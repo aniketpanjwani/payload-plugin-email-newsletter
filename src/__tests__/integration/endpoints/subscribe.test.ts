@@ -112,7 +112,7 @@ describe('Subscribe Endpoint Security', () => {
   describe('Rate Limiting', () => {
     it('should enforce max subscribers per IP', async () => {
       // Create max subscribers from same IP
-      const maxSubscribers = mockNewsletterSettings.maxSubscribersPerIP
+      const maxSubscribers = mockNewsletterSettings.subscriptionSettings.maxSubscribersPerIP
       
       // Add all subscribers at once
       const ipSubscribers = []
@@ -228,12 +228,12 @@ describe('Subscribe Endpoint Security', () => {
       // TODO comment in implementation - email not sent yet
       expect(mockEmailService.emails.send).not.toHaveBeenCalled()
       
-      // Without accessible settings, defaults to active status
+      // With settings requiring double opt-in, should be pending
       expect(mockReq.payload.create).toHaveBeenCalledWith(
         expect.objectContaining({
           collection: 'subscribers',
           data: expect.objectContaining({
-            subscriptionStatus: 'active', // No settings, defaults to active
+            subscriptionStatus: 'pending', // Double opt-in enabled, so pending
           }),
         })
       )
@@ -241,7 +241,7 @@ describe('Subscribe Endpoint Security', () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
         subscriber: expect.any(Object),
-        message: 'Successfully subscribed',
+        message: 'Please check your email to confirm your subscription',
       })
     })
 
@@ -249,7 +249,10 @@ describe('Subscribe Endpoint Security', () => {
       // Disable double opt-in
       const noDoubleOptIn = {
         ...mockNewsletterSettings,
-        requireDoubleOptIn: false,
+        subscriptionSettings: {
+          ...mockNewsletterSettings.subscriptionSettings,
+          requireDoubleOptIn: false,
+        },
       }
       clearCollections()
       seedCollection('newsletter-settings', [noDoubleOptIn])

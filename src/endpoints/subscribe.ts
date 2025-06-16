@@ -53,7 +53,7 @@ export const createSubscribeEndpoint = (
         
         const settings = settingsResult.docs[0]
 
-        const allowedDomains = settings?.allowedDomains?.map((d: any) => d.domain) || []
+        const allowedDomains = settings?.subscriptionSettings?.allowedDomains?.map((d: any) => d.domain) || []
         if (!isDomainAllowed(trimmedEmail, allowedDomains)) {
           return res.status(400).json({
             success: false,
@@ -70,7 +70,7 @@ export const createSubscribeEndpoint = (
               equals: trimmedEmail.toLowerCase(),
             },
           },
-          // Keep overrideAccess: true for public subscription check
+          overrideAccess: true, // Need to check for duplicates in public endpoint
         })
 
         if (existing.docs.length > 0) {
@@ -97,7 +97,7 @@ export const createSubscribeEndpoint = (
 
         // Check IP rate limiting
         const ipAddress = req.ip || req.connection.remoteAddress
-        const maxPerIP = settings?.maxSubscribersPerIP || 10
+        const maxPerIP = settings?.subscriptionSettings?.maxSubscribersPerIP || 10
 
         const ipSubscribers = await req.payload.find({
           collection: config.subscribersSlug || 'subscribers',
@@ -106,7 +106,7 @@ export const createSubscribeEndpoint = (
               equals: ipAddress,
             },
           },
-          // Keep overrideAccess: true for rate limiting check
+          overrideAccess: true, // Need to check IP limits in public endpoint
         })
 
         if (ipSubscribers.docs.length >= maxPerIP) {
@@ -132,7 +132,7 @@ export const createSubscribeEndpoint = (
           email: trimmedEmail.toLowerCase(),
           name: name ? sanitizeInput(name) : undefined,
           locale: metadata.locale || config.i18n?.defaultLocale || 'en',
-          subscriptionStatus: settings?.requireDoubleOptIn ? 'pending' : 'active',
+          subscriptionStatus: settings?.subscriptionSettings?.requireDoubleOptIn ? 'pending' : 'active',
           source: source || 'api',
           emailPreferences: {
             newsletter: true,
@@ -162,7 +162,7 @@ export const createSubscribeEndpoint = (
         const subscriber = await req.payload.create({
           collection: config.subscribersSlug || 'subscribers',
           data: subscriberData,
-          // Keep overrideAccess: true for public subscription
+          overrideAccess: true, // Public endpoint needs to create subscribers
         })
 
         // Handle survey responses if provided
@@ -171,7 +171,7 @@ export const createSubscribeEndpoint = (
         }
 
         // Send confirmation email if double opt-in
-        if (settings?.requireDoubleOptIn) {
+        if (settings?.subscriptionSettings?.requireDoubleOptIn) {
           // TODO: Send confirmation email with magic link
         }
 
@@ -182,7 +182,7 @@ export const createSubscribeEndpoint = (
             email: subscriber.email,
             subscriptionStatus: subscriber.subscriptionStatus,
           },
-          message: settings?.requireDoubleOptIn 
+          message: settings?.subscriptionSettings?.requireDoubleOptIn 
             ? 'Please check your email to confirm your subscription'
             : 'Successfully subscribed',
         })
