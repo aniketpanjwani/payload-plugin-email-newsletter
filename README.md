@@ -329,7 +329,7 @@ providers: {
 
 ### Broadcast
 
-[Broadcast](https://github.com/socketry/broadcast) is a self-hosted email automation platform.
+[Broadcast](https://sendbroadcast.net/) is a self-hosted email automation platform.
 
 ```typescript
 providers: {
