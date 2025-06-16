@@ -1,0 +1,178 @@
+name: Auto Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '.gitignore'
+      - '.npmignore'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  check-ci:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Check if release needed
+        id: check
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $LATEST_TAG"
+          
+          # Check if there are new commits since the last tag
+          COMMITS_SINCE_TAG=$(git rev-list $LATEST_TAG..HEAD --count 2>/dev/null || echo "999")
+          echo "Commits since last tag: $COMMITS_SINCE_TAG"
+          
+          # Only auto-release if triggered manually or if there are new commits
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || [[ $COMMITS_SINCE_TAG -gt 0 ]]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+  auto-release:
+    needs: check-ci
+    if: needs.check-ci.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.1.0
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Configure Git
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Run tests
+        run: bun run test
+        
+      - name: Build
+        run: bun run build
+        
+      - name: Determine version bump
+        id: version
+        run: |
+          # Default to patch for automatic releases
+          BUMP_TYPE="${{ github.event.inputs.release_type || 'patch' }}"
+          
+          # For automatic releases, analyze commit messages
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
+            # Get commits since last tag
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            
+            # Check commit messages for version hints
+            if git log $LATEST_TAG..HEAD --pretty=format:"%s" | grep -qE "^(feat|feature)(\(.+\))?!:"; then
+              BUMP_TYPE="major"
+            elif git log $LATEST_TAG..HEAD --pretty=format:"%s" | grep -qE "^(feat|feature)(\(.+\))?:"; then
+              BUMP_TYPE="minor"
+            else
+              BUMP_TYPE="patch"
+            fi
+          fi
+          
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Determined version bump: $BUMP_TYPE"
+          
+      - name: Bump version
+        run: |
+          npm version ${{ steps.version.outputs.bump_type }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          
+      - name: Update CHANGELOG
+        run: |
+          # Get the new version
+          VERSION=${{ env.NEW_VERSION }}
+          DATE=$(date +%Y-%m-%d)
+          
+          # Create a temporary file with the new entry
+          echo -e "## [$VERSION] - $DATE\n" > temp_changelog.md
+          
+          # Add commit messages as changelog entries
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LATEST_TAG" ]; then
+            git log --pretty=format:"- %s" >> temp_changelog.md
+          else
+            git log $LATEST_TAG..HEAD --pretty=format:"- %s" >> temp_changelog.md
+          fi
+          
+          echo -e "\n" >> temp_changelog.md
+          
+          # Append the rest of the existing changelog
+          if [ -f CHANGELOG.md ]; then
+            tail -n +2 CHANGELOG.md >> temp_changelog.md
+            mv temp_changelog.md CHANGELOG.md
+          else
+            mv temp_changelog.md CHANGELOG.md
+          fi
+          
+      - name: Commit version bump
+        run: |
+          git add package.json CHANGELOG.md
+          git commit -m "chore: release v${{ env.NEW_VERSION }} [skip ci]"
+          git tag "v${{ env.NEW_VERSION }}"
+          
+      - name: Push changes
+        run: |
+          git push origin main
+          git push origin "v${{ env.NEW_VERSION }}"
+          
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NEW_VERSION }}
+          name: Release v${{ env.NEW_VERSION }}
+          body: |
+            ## Changes in this Release
+            
+            See [CHANGELOG.md](https://github.com/aniketpanjwani/payload-plugin-email-newsletter/blob/main/CHANGELOG.md) for details.
+            
+            ## Installation
+            ```bash
+            npm install payload-plugin-newsletter@${{ env.NEW_VERSION }}
+            ```
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
