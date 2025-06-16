@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2025-06-16
+
+### Security
+- Enhanced input sanitization using DOMPurify to prevent XSS attacks
+- Fixed CSRF protection test implementations
+- Improved HTML sanitization for all user inputs
+
+### Added
+- Comprehensive test infrastructure with Vitest
+- Unit tests for access control utilities and JWT security
+- Security tests for XSS, CSRF, and access control patterns
+- Integration tests for API endpoints
+- Behavior-based email provider mocks for realistic testing
+
+### Changed
+- Updated `sanitizeInput` function to use DOMPurify for proper HTML removal
+- Enhanced test coverage with 44 passing security tests
+- Improved mock implementations to match production behavior
+
+### Fixed
+- HTML content in subscriber names and custom fields is now properly sanitized
+- Mock response objects now include all required methods
+- Test expectations aligned with actual implementation behavior
+
 ## [0.3.1] - 2025-06-15
 
 ### Security
@@ -90,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain restriction options
 - Input validation and sanitization
 
+[0.3.2]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.3.2
 [0.3.1]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.3.1
 [0.3.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.3.0
 [0.2.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.2.0

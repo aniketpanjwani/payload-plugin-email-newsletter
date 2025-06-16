@@ -1,3 +1,5 @@
+import DOMPurify from 'isomorphic-dompurify'
+
 /**
  * Validate email address format
  */
@@ -30,12 +32,16 @@ export function isDomainAllowed(
  * Sanitize user input to prevent XSS
  */
 export function sanitizeInput(input: string): string {
-  return input
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;')
+  if (!input) return ''
+  
+  // Remove all HTML tags and scripts
+  const cleaned = DOMPurify.sanitize(input, { 
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+    KEEP_CONTENT: true
+  })
+  
+  return cleaned.trim()
 }
 
 /**

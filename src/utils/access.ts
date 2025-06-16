@@ -54,20 +54,45 @@ export const adminOrSelf = (config?: NewsletterPluginConfig): Access =>
   ({ req, id }: AccessArgs) => {
     const user = req.user
     
+    // No user = no access
+    if (!user) {
+      // For list operations without ID, return impossible condition
+      if (!id) {
+        return {
+          id: {
+            equals: 'unauthorized-no-access',
+          },
+        }
+      }
+      return false
+    }
+    
     // Admins can access everything
     if (isAdmin(user, config)) {
       return true
     }
     
-    // Magic link authenticated subscribers can access their own data
-    const subscriberId = (req as any).user?.subscriberId
-    if (subscriberId && id) {
+    // Synthetic users (subscribers from magic link) can access their own data
+    if (user.collection === 'subscribers') {
+      // For list operations, scope to their own data
+      if (!id) {
+        return {
+          id: {
+            equals: user.id,
+          },
+        }
+      }
+      // For specific document access, check if it's their own
+      return id === user.id
+    }
+    
+    // Regular users cannot access subscriber data
+    if (!id) {
       return {
         id: {
-          equals: subscriberId,
+          equals: 'unauthorized-no-access',
         },
       }
     }
-    
     return false
   }
