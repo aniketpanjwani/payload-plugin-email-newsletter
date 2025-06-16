@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-06-15
+
+### Security
+- **CRITICAL**: Fixed access control vulnerability where any authenticated user could read, update, or delete any subscriber
+- **CRITICAL**: Fixed access control vulnerability where any authenticated user could modify newsletter settings
+- Added proper admin role checking with support for multiple admin patterns
+- Added configurable admin check function for custom authentication setups
+
+### Added
+- New `access.isAdmin` configuration option for custom admin authentication
+- Flexible admin detection supporting common patterns (roles, isAdmin, role, admin)
+- Access control utility functions for consistent security
+
+### Changed
+- All collection access controls now properly validate admin status
+- Improved security documentation with custom admin configuration examples
+
 ## [0.3.0] - 2025-06-15
 
 ### Added
@@ -73,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Domain restriction options
 - Input validation and sanitization
 
+[0.3.1]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.3.1
 [0.3.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.3.0
 [0.2.0]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.2.0
 [0.1.1]: https://github.com/aniketpanjwani/payload-plugin-email-newsletter/releases/tag/v0.1.1

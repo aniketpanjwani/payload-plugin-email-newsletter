@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
+import { adminOnly } from '../utils/access'
 
 export const createNewsletterSettingsCollection = (
   pluginConfig: NewsletterPluginConfig
@@ -365,10 +366,10 @@ export const createNewsletterSettingsCollection = (
       ],
     },
     access: {
-      read: () => true,
-      create: ({ req: { user } }) => Boolean(user),
-      update: ({ req: { user } }) => Boolean(user),
-      delete: ({ req: { user } }) => Boolean(user),
+      read: () => true, // Settings can be read publicly for validation
+      create: adminOnly(pluginConfig),
+      update: adminOnly(pluginConfig),
+      delete: adminOnly(pluginConfig),
     },
     timestamps: true,
   }

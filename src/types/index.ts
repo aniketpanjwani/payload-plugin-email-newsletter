@@ -43,6 +43,18 @@ export interface NewsletterPluginConfig {
   }
 
   /**
+   * Access control configuration
+   */
+  access?: {
+    /**
+     * Custom function to determine if a user is an admin
+     * @param user - The authenticated user object
+     * @returns true if the user should have admin access
+     */
+    isAdmin?: (user: any) => boolean
+  }
+
+  /**
    * Email provider configuration
    */
   providers: {

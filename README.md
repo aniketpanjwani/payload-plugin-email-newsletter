@@ -424,6 +424,28 @@ Starting from v0.3.0, the plugin implements proper access control for all operat
 - **Newsletter settings**: Only admin users can modify email provider settings and configurations
 - **API endpoints**: All endpoints respect Payload's access control rules
 
+#### Custom Admin Check
+
+The plugin supports multiple admin authentication patterns out of the box:
+- `user.roles.includes('admin')` - Role-based
+- `user.isAdmin === true` - Boolean field
+- `user.role === 'admin'` - Single role field
+- `user.admin === true` - Admin boolean
+
+If your setup uses a different pattern, configure a custom admin check:
+
+```typescript
+newsletterPlugin({
+  access: {
+    isAdmin: (user) => {
+      // Your custom logic
+      return user.customAdminField === true
+    }
+  },
+  // ... other config
+})
+```
+
 ### Best Practices
 
 - Always use environment variables for sensitive data (API keys, JWT secrets)

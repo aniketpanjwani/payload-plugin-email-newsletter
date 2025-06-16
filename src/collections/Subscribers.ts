@@ -1,5 +1,6 @@
-import type { CollectionConfig, Field, CollectionAfterChangeHook, CollectionBeforeDeleteHook, Access, AccessArgs, PayloadRequest } from 'payload'
+import type { CollectionConfig, Field, CollectionAfterChangeHook, CollectionBeforeDeleteHook } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
+import { adminOnly, adminOrSelf } from '../utils/access'
 
 export const createSubscribersCollection = (
   pluginConfig: NewsletterPluginConfig
@@ -295,45 +296,9 @@ export const createSubscribersCollection = (
     },
     access: {
       create: () => true, // Public can subscribe
-      read: (({ req }: AccessArgs) => {
-        const user = (req as PayloadRequest).user
-        // Admins can read all
-        if (user) {
-          return true
-        }
-        // Magic link authenticated subscribers can read their own data
-        const subscriberId = (req as any).user?.subscriberId
-        if (subscriberId) {
-          return {
-            id: {
-              equals: subscriberId,
-            },
-          }
-        }
-        return false
-      }) as Access,
-      update: (({ req }: AccessArgs) => {
-        const user = (req as PayloadRequest).user
-        // Admins can update all
-        if (user?.collection === 'users') {
-          return true
-        }
-        // Subscribers can update their own preferences
-        const subscriberId = (req as any).user?.subscriberId
-        if (subscriberId) {
-          return {
-            id: {
-              equals: subscriberId,
-            },
-          }
-        }
-        return false
-      }) as Access,
-      delete: (({ req }: AccessArgs) => {
-        const user = (req as PayloadRequest).user
-        // Only admins can delete
-        return Boolean(user?.collection === 'users')
-      }) as Access,
+      read: adminOrSelf(pluginConfig),
+      update: adminOrSelf(pluginConfig),
+      delete: adminOnly(pluginConfig),
     },
     timestamps: true,
   }
