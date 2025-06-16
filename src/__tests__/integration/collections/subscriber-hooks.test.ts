@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { CollectionBeforeChangeHook, CollectionAfterChangeHook } from 'payload'
 import { createPayloadRequestMock, clearCollections, seedCollection, createMockAdminUser } from '../../mocks/payload'
-import { mockSubscribers } from '../../mocks/fixtures'
+import { mockSubscribers } from '../../fixtures/subscribers'
 import { createResendMock, createBroadcastMock } from '../../mocks/email-providers'
 import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 

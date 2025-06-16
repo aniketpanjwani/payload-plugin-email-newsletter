@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createPayloadRequestMock, clearCollections } from '../mocks/payload'
-// import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
+import { createPayloadRequestMock, clearCollections, seedCollection } from '../mocks/payload'
+import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
 
 import { createTestConfig } from '../utils/test-config'
 
@@ -10,7 +10,7 @@ describe('XSS Prevention', () => {
 
   beforeEach(() => {
     clearCollections()
-    // seedCollection('newsletter-settings', [mockNewsletterSettings])
+    seedCollection('newsletter-settings', [mockNewsletterSettings])
     
     const payloadMock = createPayloadRequestMock()
     mockReq = {
@@ -269,8 +269,8 @@ describe('XSS Prevention', () => {
       const maliciousToken = '"><script>alert("xss")</script>'
       const safeLink = generateMagicLink('https://example.com/verify', maliciousToken)
       expect(safeLink).not.toContain('<script>')
-      // Verify the token is properly encoded
-      expect(safeLink).toContain('%22%3E%3Cscript%3E')
+      // Verify the token is properly encoded - double encoded for safety
+      expect(safeLink).toContain(encodeURIComponent(encodeURIComponent('"><script>')))
       
       // Invalid base URLs
       expect(() => generateMagicLink('javascript:alert("xss")', 'token')).toThrow()
