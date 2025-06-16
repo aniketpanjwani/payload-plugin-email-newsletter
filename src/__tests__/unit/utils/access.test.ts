@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { isAdmin } from '../../../utils/access'
 import type { NewsletterPluginConfig } from '../../../types'
+import { createTestConfig } from '../../utils/test-config'
 
 describe('Access Control Utilities', () => {
   describe('isAdmin', () => {
@@ -72,11 +73,11 @@ describe('Access Control Utilities', () => {
     })
 
     it('should use custom isAdmin function when provided', () => {
-      const config: NewsletterPluginConfig = {
+      const config = createTestConfig({
         access: {
           isAdmin: (user) => user?.customRole === 'super-admin',
         },
-      }
+      })
 
       const regularAdmin = {
         id: 'user-123',

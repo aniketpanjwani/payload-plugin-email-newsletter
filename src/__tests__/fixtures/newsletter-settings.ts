@@ -11,11 +11,10 @@ export const mockNewsletterSettings = {
     email: 'newsletter@example.com',
     name: 'Test Newsletter',
   },
-  subscriptionSettings: {
-    requireDoubleOptIn: true,
-    allowedDomains: [],
-    maxSubscribersPerIP: 10,
-  },
+  // Settings directly on object, not nested
+  requireDoubleOptIn: true,
+  allowedDomains: [],
+  maxSubscribersPerIP: 10,
   emailTemplates: {
     welcome: {
       enabled: true,

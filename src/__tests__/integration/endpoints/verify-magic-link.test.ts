@@ -1,23 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+// Mock JWT utils before imports
+vi.mock('../../../utils/jwt')
+
 import { createVerifyMagicLinkEndpoint } from '../../../endpoints/verify-magic-link'
 import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifyMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
 import type { NewsletterPluginConfig } from '../../../types'
-
-// Mock JWT utils
-vi.mock('../../../utils/jwt', () => ({
-  verifyMagicLinkToken: vi.fn(),
-  generateSessionToken: vi.fn(),
-}))
+import { createTestConfig } from '../../utils/test-config'
 
 describe('Verify Magic Link Endpoint', () => {
   let endpoint: any
   let mockReq: any
   let mockRes: any
-  const config: NewsletterPluginConfig = {
+  const config = createTestConfig({
     subscribersSlug: 'subscribers',
-  }
+  })
 
   beforeEach(() => {
     clearCollections()
@@ -29,6 +28,7 @@ describe('Verify Magic Link Endpoint', () => {
     mockReq = {
       payload: payloadMock.payload,
       body: {},
+      headers: {},
     }
     
     mockRes = {
@@ -51,7 +51,7 @@ describe('Verify Magic Link Endpoint', () => {
     })
 
     it('should reject invalid tokens', async () => {
-      ;(verifyMagicLinkToken as any).mockImplementation(() => {
+      vi.mocked(verifyMagicLinkToken).mockImplementation(() => {
         throw new Error('Invalid or expired token')
       })
 
@@ -66,9 +66,10 @@ describe('Verify Magic Link Endpoint', () => {
     })
 
     it('should reject tokens for non-existent subscribers', async () => {
-      ;(verifyMagicLinkToken as any).mockReturnValue({
-        subscriberId: 'non-existent',
+      vi.mocked(verifyMagicLinkToken).mockReturnValue({
+subscriberId: 'non-existent',
         email: 'ghost@example.com',
+        type: 'magic-link' as const,
       })
 
       mockReq.body = { token: 'valid-token' }
@@ -82,9 +83,10 @@ describe('Verify Magic Link Endpoint', () => {
     })
 
     it('should reject tokens with mismatched email', async () => {
-      ;(verifyMagicLinkToken as any).mockReturnValue({
-        subscriberId: 'sub-1',
-        email: 'wrong@example.com', // Doesn't match subscriber email
+      vi.mocked(verifyMagicLinkToken).mockReturnValue({
+subscriberId: 'sub-1',
+        email: 'wrong@example.com', // Doesn't match subscriber email,
+        type: 'magic-link' as const,
       })
 
       mockReq.body = { token: 'valid-token' }
@@ -98,9 +100,10 @@ describe('Verify Magic Link Endpoint', () => {
     })
 
     it('should reject unsubscribed users', async () => {
-      ;(verifyMagicLinkToken as any).mockReturnValue({
-        subscriberId: 'sub-3', // Unsubscribed user
+      vi.mocked(verifyMagicLinkToken).mockReturnValue({
+subscriberId: 'sub-3', // Unsubscribed user
         email: 'unsubscribed@example.com',
+        type: 'magic-link' as const,
       })
 
       mockReq.body = { token: 'valid-token' }
@@ -116,11 +119,12 @@ describe('Verify Magic Link Endpoint', () => {
 
   describe('Successful Verification', () => {
     it('should activate pending subscribers', async () => {
-      ;(verifyMagicLinkToken as any).mockReturnValue({
-        subscriberId: 'sub-2', // Pending subscriber
+      vi.mocked(verifyMagicLinkToken).mockReturnValue({
+subscriberId: 'sub-2', // Pending subscriber
         email: 'pending@example.com',
+        type: 'magic-link' as const,
       })
-      ;(generateSessionToken as any).mockReturnValue('session-token-123')
+      vi.mocked(generateSessionToken).mockReturnValue('session-token-123')
 
       mockReq.body = { token: 'valid-token' }
       await endpoint.handler(mockReq, mockRes)
@@ -151,11 +155,12 @@ describe('Verify Magic Link Endpoint', () => {
     })
 
     it('should clear magic link tokens after use', async () => {
-      ;(verifyMagicLinkToken as any).mockReturnValue({
-        subscriberId: 'sub-2',
+      vi.mocked(verifyMagicLinkToken).mockReturnValue({
+subscriberId: 'sub-2',
         email: 'pending@example.com',
+        type: 'magic-link' as const,
       })
-      ;(generateSessionToken as any).mockReturnValue('session-token-123')
+      vi.mocked(generateSessionToken).mockReturnValue('session-token-123')
 
       mockReq.body = { token: 'valid-token' }
       await endpoint.handler(mockReq, mockRes)
@@ -174,11 +179,12 @@ describe('Verify Magic Link Endpoint', () => {
     })
 
     it('should generate synthetic user for operations', async () => {
-      ;(verifyMagicLinkToken as any).mockReturnValue({
-        subscriberId: 'sub-1',
+      vi.mocked(verifyMagicLinkToken).mockReturnValue({
+subscriberId: 'sub-1',
         email: 'active@example.com',
+        type: 'magic-link' as const,
       })
-      ;(generateSessionToken as any).mockReturnValue('session-token-123')
+      vi.mocked(generateSessionToken).mockReturnValue('session-token-123')
 
       mockReq.body = { token: 'valid-token' }
       await endpoint.handler(mockReq, mockRes)

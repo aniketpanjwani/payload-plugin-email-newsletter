@@ -25,8 +25,11 @@ export const createSubscribeEndpoint = (
           metadata = {}
         } = req.body
 
+        // Trim email before validation
+        const trimmedEmail = email?.trim()
+
         // Validate input
-        const validation = validateSubscriberData({ email, name, source })
+        const validation = validateSubscriberData({ email: trimmedEmail, name, source })
         if (!validation.valid) {
           return res.status(400).json({
             success: false,
@@ -51,7 +54,7 @@ export const createSubscribeEndpoint = (
         const settings = settingsResult.docs[0]
 
         const allowedDomains = settings?.allowedDomains?.map((d: any) => d.domain) || []
-        if (!isDomainAllowed(email, allowedDomains)) {
+        if (!isDomainAllowed(trimmedEmail, allowedDomains)) {
           return res.status(400).json({
             success: false,
             error: 'Email domain not allowed',
@@ -64,7 +67,7 @@ export const createSubscribeEndpoint = (
           collection: config.subscribersSlug || 'subscribers',
           where: {
             email: {
-              equals: email.toLowerCase(),
+              equals: trimmedEmail.toLowerCase(),
             },
           },
           // Keep overrideAccess: true for public subscription check
@@ -115,11 +118,18 @@ export const createSubscribeEndpoint = (
 
         // Extract UTM parameters
         const referer = req.headers.referer || req.headers.referrer || ''
-        const utmParams = extractUTMParams(new URL(referer).searchParams)
+        let utmParams = {}
+        if (referer) {
+          try {
+            utmParams = extractUTMParams(new URL(referer).searchParams)
+          } catch (e) {
+            // Invalid URL, ignore UTM params
+          }
+        }
 
         // Prepare subscriber data
         const subscriberData: any = {
-          email: email.toLowerCase(),
+          email: trimmedEmail.toLowerCase(),
           name: name ? sanitizeInput(name) : undefined,
           locale: metadata.locale || config.i18n?.defaultLocale || 'en',
           subscriptionStatus: settings?.requireDoubleOptIn ? 'pending' : 'active',

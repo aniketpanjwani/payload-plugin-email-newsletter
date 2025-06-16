@@ -10,8 +10,36 @@ collections.set('subscribers', new Map())
 collections.set('newsletter-settings', new Map())
 collections.set('users', new Map())
 
+// Helper to filter sensitive fields based on user permissions
+const filterSensitiveFields = (doc: any, collection: string, user: any): any => {
+  if (!doc) return doc
+  
+  const filtered = { ...doc }
+  
+  // For subscribers collection
+  if (collection === 'subscribers') {
+    // Non-admin users shouldn't see sensitive fields
+    if (!user?.roles?.includes('admin')) {
+      delete filtered.magicLinkToken
+      delete filtered.magicLinkTokenExpiry
+      delete filtered.magicLinkUsedAt
+      delete filtered.signupMetadata
+    }
+  }
+  
+  // For newsletter settings
+  if (collection === 'newsletter-settings') {
+    // Non-admin users shouldn't see API keys (though they shouldn't have access at all)
+    if (!user?.roles?.includes('admin')) {
+      delete filtered.providerApiKey
+    }
+  }
+  
+  return filtered
+}
+
 // Create mock Payload instance
-export const createPayloadMock = (): Partial<Payload> => {
+export const createPayloadMock = (): any => {
   return {
     collections: {
       subscribers: {
@@ -52,6 +80,10 @@ export const createPayloadMock = (): Partial<Payload> => {
           if (!user || !user.roles?.includes('admin')) {
             throw new Error('Unauthorized')
           }
+          // Enforce singleton pattern
+          if (collectionData.size > 0) {
+            throw new Error('Newsletter settings already exist')
+          }
         } else if (!user) {
           throw new Error('Unauthorized')
         }
@@ -85,28 +117,77 @@ export const createPayloadMock = (): Partial<Payload> => {
       }
 
       // Simulate access control
-      // Newsletter settings allow public read access
-      if (!overrideAccess && !user && collection !== 'newsletter-settings') {
-        throw new Error('Unauthorized')
+      if (!overrideAccess) {
+        // Newsletter settings require admin for read
+        if (collection === 'newsletter-settings') {
+          if (!user || !user.roles?.includes('admin')) {
+            return {
+              docs: [],
+              totalDocs: 0,
+              limit: 10,
+              totalPages: 0,
+              page: 1,
+              pagingCounter: 1,
+              hasPrevPage: false,
+              hasNextPage: false,
+              prevPage: null,
+              nextPage: null,
+            }
+          }
+        }
+        // Users collection - subscribers cannot access
+        else if (collection === 'users') {
+          if (user?.collection === 'subscribers') {
+            throw new Error('Unauthorized')
+          }
+          if (!user) {
+            throw new Error('Unauthorized')
+          }
+        }
+        // Subscribers can only see their own data
+        else if (collection === 'subscribers' && user?.collection === 'subscribers') {
+          // Will filter below to only show own data
+        }
+        // Other collections require authentication
+        else if (!user) {
+          throw new Error('Unauthorized')
+        }
       }
 
       let docs = Array.from(collectionData.values())
+
+      // Apply access control filters
+      if (!overrideAccess && collection === 'subscribers' && user?.collection === 'subscribers') {
+        // Subscribers can only see their own data
+        docs = docs.filter(doc => doc.id === user.id)
+      }
 
       // Simple where clause implementation
       if (where) {
         docs = docs.filter(doc => {
           return Object.entries(where).every(([key, value]) => {
-            if (typeof value === 'object' && value.equals) {
-              return doc[key] === value.equals
+            // Handle nested fields like 'signupMetadata.ipAddress'
+            const keys = key.split('.')
+            let fieldValue = doc
+            for (const k of keys) {
+              fieldValue = fieldValue?.[k]
+              if (fieldValue === undefined) break
             }
-            return doc[key] === value
+            
+            if (typeof value === 'object' && value !== null && 'equals' in value) {
+              return fieldValue === (value as any).equals
+            }
+            return fieldValue === value
           })
         })
       }
 
+      // Filter sensitive fields from results
+      const filteredDocs = docs.map(doc => filterSensitiveFields(doc, collection, user))
+
       return {
-        docs,
-        totalDocs: docs.length,
+        docs: filteredDocs,
+        totalDocs: filteredDocs.length,
         limit: 10,
         totalPages: 1,
         page: 1,
@@ -124,14 +205,33 @@ export const createPayloadMock = (): Partial<Payload> => {
       }
 
       // Simulate access control
-      // Newsletter settings allow public read access
-      if (!overrideAccess && !user && collection !== 'newsletter-settings') {
-        throw new Error('Unauthorized')
+      if (!overrideAccess) {
+        // Newsletter settings require admin for read
+        if (collection === 'newsletter-settings') {
+          if (!user || !user.roles?.includes('admin')) {
+            return null
+          }
+        }
+        // Subscribers can only read their own data
+        else if (collection === 'subscribers') {
+          if (!user) {
+            throw new Error('Unauthorized')
+          }
+          if (user.collection === 'subscribers' && user.id !== id) {
+            return null
+          }
+        }
+        // Other collections require authentication
+        else if (!user) {
+          throw new Error('Unauthorized')
+        }
       }
 
       const doc = collectionData.get(id)
-      // Return null for non-existent documents (like real Payload)
-      return doc || null
+      if (!doc) return null
+      
+      // Filter sensitive fields based on permissions
+      return filterSensitiveFields(doc, collection, user)
     }),
     update: vi.fn(async ({ collection, id, data, user, overrideAccess = true }) => {
       const collectionData = collections.get(collection)
@@ -146,7 +246,36 @@ export const createPayloadMock = (): Partial<Payload> => {
           if (!user || !user.roles?.includes('admin')) {
             throw new Error('Unauthorized')
           }
-        } else if (!user) {
+        } 
+        // Subscribers can only update their own data
+        else if (collection === 'subscribers') {
+          if (!user) {
+            throw new Error('Unauthorized')
+          }
+          if (user.collection === 'subscribers' && user.id !== id) {
+            throw new Error('Unauthorized')
+          }
+          // Subscribers cannot modify protected fields
+          if (user.collection === 'subscribers') {
+            const protectedFields = ['email', 'emailProviderId', 'signupMetadata']
+            const hasProtectedField = protectedFields.some(field => field in data)
+            if (hasProtectedField) {
+              throw new Error('Cannot modify protected fields')
+            }
+            // Special case: allow clearing magic link tokens (setting to null)
+            if ('magicLinkToken' in data && data.magicLinkToken !== null) {
+              throw new Error('Cannot modify magic link token')
+            }
+            if ('magicLinkTokenExpiry' in data && data.magicLinkTokenExpiry !== null) {
+              throw new Error('Cannot modify magic link token expiry')
+            }
+            // Special case: allow subscribers to unsubscribe themselves or activate pending status
+            if (data.subscriptionStatus && data.subscriptionStatus !== 'unsubscribed' && data.subscriptionStatus !== 'active') {
+              throw new Error('Cannot modify subscription status except to unsubscribe or activate')
+            }
+          }
+        }
+        else if (!user) {
           throw new Error('Unauthorized')
         }
       }
@@ -165,6 +294,11 @@ export const createPayloadMock = (): Partial<Payload> => {
       if (data.customField) {
         processedData.customField = sanitizeInput(data.customField)
       }
+      
+      // Encrypt API keys for newsletter settings
+      if (collection === 'newsletter-settings' && data.providerApiKey) {
+        processedData.providerApiKey = `encrypted:${Buffer.from(data.providerApiKey).toString('base64')}`
+      }
 
       const updated = {
         ...existing,
@@ -182,12 +316,20 @@ export const createPayloadMock = (): Partial<Payload> => {
 
       // Simulate access control
       if (!overrideAccess) {
-        // Newsletter settings require admin for delete operations
+        // Newsletter settings should never be deleted
         if (collection === 'newsletter-settings') {
-          if (!user || !user.roles?.includes('admin')) {
+          throw new Error('Newsletter settings cannot be deleted')
+        } 
+        // Subscribers can only delete their own data
+        else if (collection === 'subscribers') {
+          if (!user) {
             throw new Error('Unauthorized')
           }
-        } else if (!user) {
+          if (user.collection === 'subscribers' && user.id !== id) {
+            throw new Error('Unauthorized')
+          }
+        }
+        else if (!user) {
           throw new Error('Unauthorized')
         }
       }
@@ -206,7 +348,7 @@ export const createPayloadMock = (): Partial<Payload> => {
         return { success: true }
       }),
     },
-  } as Partial<Payload>
+  }
 }
 
 // Create mock PayloadRequest
@@ -259,6 +401,16 @@ export const createMockAdminUser = (overrides: any = {}) => {
     email: 'admin@example.com',
     collection: 'users',
     roles: ['admin'],
+    ...overrides,
+  }
+}
+
+export const createMockNonAdminUser = (overrides: any = {}) => {
+  return {
+    id: 'user-456',
+    email: 'user@example.com',
+    collection: 'users',
+    roles: ['user'],
     ...overrides,
   }
 }

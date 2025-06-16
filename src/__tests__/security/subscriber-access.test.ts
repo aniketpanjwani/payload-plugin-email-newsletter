@@ -3,10 +3,11 @@ import { adminOnly, adminOrSelf } from '../../utils/access'
 import type { PayloadRequest } from 'payload'
 import type { NewsletterPluginConfig } from '../../types'
 import { createMockUser, createMockAdminUser } from '../mocks/payload'
+import { createTestConfig } from '../utils/test-config'
 
 describe('Subscriber Access Control Security', () => {
   let mockReq: Partial<PayloadRequest>
-  const mockConfig: NewsletterPluginConfig = {}
+  const mockConfig = createTestConfig()
 
   beforeEach(() => {
     mockReq = {
@@ -33,11 +34,11 @@ describe('Subscriber Access Control Security', () => {
     })
 
     it('should respect custom admin function', () => {
-      const customConfig: NewsletterPluginConfig = {
+      const customConfig = createTestConfig({
         access: {
           isAdmin: (user) => user?.customRole === 'manager',
         },
-      }
+      })
 
       // Regular admin should be denied
       mockReq.user = createMockAdminUser()

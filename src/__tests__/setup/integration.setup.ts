@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 
 // MongoDB Memory Server instance
@@ -7,7 +7,7 @@ let mongoServer: MongoMemoryServer | undefined
 // Mock environment variables
 process.env.JWT_SECRET = 'test-jwt-secret'
 process.env.PAYLOAD_SECRET = 'test-payload-secret'
-process.env.NODE_ENV = 'test'
+// Node env is set by vitest config
 
 // Setup MongoDB Memory Server
 beforeAll(async () => {

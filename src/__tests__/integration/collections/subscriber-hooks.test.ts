@@ -2,22 +2,24 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { CollectionBeforeChangeHook, CollectionAfterChangeHook } from 'payload'
 import { createPayloadRequestMock, seedCollection, clearCollections, createMockAdminUser } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
-import { createResendMock } from '../../mocks/email-providers'
+import { createResendMock, createBroadcastMock } from '../../mocks/email-providers'
 import type { NewsletterPluginConfig } from '../../../types'
+import { createTestConfig } from '../../utils/test-config'
+import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 
-// Mock email service
-vi.mock('../../../services/email', () => ({
-  getEmailService: vi.fn(),
-}))
+// Comment out email service mock as the module doesn't exist
+// vi.mock('../../../services/email', () => ({
+//   getEmailService: vi.fn(),
+// }))
 
-import { getEmailService } from '../../../services/email'
+// import { getEmailService } from '../../../services/email'
 
 describe('Subscriber Collection Hooks Security', () => {
   let mockReq: any
   let mockEmailService: any
-  const config: NewsletterPluginConfig = {
+  const config = createTestConfig({
     subscribersSlug: 'subscribers',
-  }
+  })
 
   beforeEach(() => {
     clearCollections()
@@ -30,7 +32,7 @@ describe('Subscriber Collection Hooks Security', () => {
     }
     
     mockEmailService = createResendMock()
-    ;(getEmailService as any).mockResolvedValue(mockEmailService)
+    // ;(getEmailService as any).mockResolvedValue(mockEmailService)
     
     vi.clearAllMocks()
   })
@@ -44,12 +46,12 @@ describe('Subscriber Collection Hooks Security', () => {
         return data
       }
 
-      const result = await beforeChangeHook({
+      const result = await beforeChangeHook(createBeforeChangeArgs({
         data: { email: '  USER@EXAMPLE.COM  ', name: 'Test' },
         req: mockReq,
         operation: 'create',
         originalDoc: null,
-      })
+      }))
 
       expect(result.email).toBe('user@example.com')
     })
@@ -63,12 +65,12 @@ describe('Subscriber Collection Hooks Security', () => {
       }
 
       await expect(
-        beforeChangeHook({
+        beforeChangeHook(createBeforeChangeArgs({
           data: { email: 'newemail@example.com' },
           req: mockReq,
           operation: 'update',
           originalDoc: { email: 'oldemail@example.com' },
-        })
+        }))
       ).rejects.toThrow('Email cannot be changed')
     })
 
@@ -93,22 +95,22 @@ describe('Subscriber Collection Hooks Security', () => {
       }
 
       // Valid transition
-      const result1 = await beforeChangeHook({
+      const result1 = await beforeChangeHook(createBeforeChangeArgs({
         data: { subscriptionStatus: 'active' },
         req: mockReq,
         operation: 'update',
         originalDoc: { subscriptionStatus: 'pending' },
-      })
+      }))
       expect(result1.subscriptionStatus).toBe('active')
 
       // Invalid transition
       await expect(
-        beforeChangeHook({
+        beforeChangeHook(createBeforeChangeArgs({
           data: { subscriptionStatus: 'pending' },
           req: mockReq,
           operation: 'update',
           originalDoc: { subscriptionStatus: 'active' },
-        })
+        }))
       ).rejects.toThrow('Invalid status transition')
     })
 
@@ -131,21 +133,21 @@ describe('Subscriber Collection Hooks Security', () => {
       }
 
       // Unsubscribing
-      const result1 = await beforeChangeHook({
+      const result1 = await beforeChangeHook(createBeforeChangeArgs({
         data: { subscriptionStatus: 'unsubscribed' },
         req: mockReq,
         operation: 'update',
         originalDoc: { subscriptionStatus: 'active' },
-      })
+      }))
       expect(result1.unsubscribedAt).toBeInstanceOf(Date)
 
       // Re-subscribing
-      const result2 = await beforeChangeHook({
+      const result2 = await beforeChangeHook(createBeforeChangeArgs({
         data: { subscriptionStatus: 'pending', unsubscribedAt: new Date() },
         req: mockReq,
         operation: 'update',
         originalDoc: { subscriptionStatus: 'unsubscribed' },
-      })
+      }))
       expect(result2.unsubscribedAt).toBeNull()
     })
 
@@ -173,12 +175,12 @@ describe('Subscriber Collection Hooks Security', () => {
       }])
 
       await expect(
-        beforeChangeHook({
+        beforeChangeHook(createBeforeChangeArgs({
           data: { email: 'existing@example.com' },
           req: mockReq,
           operation: 'create',
           originalDoc: null,
-        })
+        }))
       ).rejects.toThrow('Email already exists')
     })
   })
@@ -187,14 +189,8 @@ describe('Subscriber Collection Hooks Security', () => {
     it('should sync with email provider on create', async () => {
       const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req, operation }) => {
         if (operation === 'create') {
-          const emailService = await getEmailService({
-            provider: 'resend',
-            apiKey: 'test-key',
-            fromEmail: 'test@example.com',
-            fromName: 'Test',
-          })
-          
-          await emailService.emails.send({
+          // Simulate email service behavior without importing
+          await mockEmailService.emails.send({
             from: 'test@example.com',
             to: [doc.email],
             subject: 'Welcome',
@@ -204,12 +200,12 @@ describe('Subscriber Collection Hooks Security', () => {
         return doc
       }
 
-      await afterChangeHook({
+      await afterChangeHook(createAfterChangeArgs({
         doc: { id: 'new-sub', email: 'new@example.com' },
         req: mockReq,
         operation: 'create',
         previousDoc: null,
-      })
+      }))
 
       expect(mockEmailService.emails.send).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -224,14 +220,8 @@ describe('Subscriber Collection Hooks Security', () => {
       const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req, operation }) => {
         if (operation === 'create') {
           try {
-            const emailService = await getEmailService({
-              provider: 'resend',
-              apiKey: 'test-key',
-              fromEmail: 'test@example.com',
-              fromName: 'Test',
-            })
-            
-            await emailService.emails.send({
+            // Simulate email service behavior without importing
+            await mockEmailService.emails.send({
               from: 'test@example.com',
               to: [doc.email],
               subject: 'Welcome',
@@ -247,12 +237,12 @@ describe('Subscriber Collection Hooks Security', () => {
         return doc
       }
 
-      const result = await afterChangeHook({
+      const result = await afterChangeHook(createAfterChangeArgs({
         doc: { id: 'new-sub', email: 'new@example.com' },
         req: mockReq,
         operation: 'create',
         previousDoc: null,
-      })
+      }))
 
       expect(result.emailProviderSyncStatus).toBe('failed')
     })
@@ -277,12 +267,12 @@ describe('Subscriber Collection Hooks Security', () => {
 
       mockReq.payload.update.mockResolvedValueOnce({ success: true })
 
-      await afterChangeHook({
+      await afterChangeHook(createAfterChangeArgs({
         doc: { id: 'sub-123', subscriptionStatus: 'active' },
         req: mockReq,
         operation: 'update',
         previousDoc: { subscriptionStatus: 'pending' },
-      })
+      }))
 
       expect(mockReq.payload.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -314,40 +304,34 @@ describe('Subscriber Collection Hooks Security', () => {
         beforeDeleteHook({
           req: mockReq,
           id: 'sub-1', // Active subscriber
+          collection: {} as any,
         })
       ).rejects.toThrow('Only admins can delete active subscribers')
 
       // Admin should be allowed
       mockReq.user = createMockAdminUser()
-      await expect(
-        beforeDeleteHook({
-          req: mockReq,
-          id: 'sub-1',
-        })
-      ).resolves.not.toThrow()
+      // Should not throw for admin
+      await beforeDeleteHook({
+        req: mockReq,
+        id: 'sub-1',
+        collection: {} as any,
+      })
     })
 
     it('should clean up email provider data on delete', async () => {
+      const mockBroadcast = createBroadcastMock()
+      
       const afterDeleteHook = async ({ doc, req }: any) => {
         try {
-          const emailService = await getEmailService({
-            provider: 'broadcast',
-            apiKey: 'test-key',
-            fromEmail: 'test@example.com',
-            fromName: 'Test',
-          })
-          
+          // Simulate email service behavior without importing
           // Remove from email provider
           if (doc.emailProviderId) {
-            await emailService.contacts.delete(doc.emailProviderId)
+            await mockBroadcast.contacts.delete(doc.emailProviderId)
           }
         } catch (error) {
           console.error('Failed to remove from email provider:', error)
         }
       }
-
-      const mockBroadcast = createBroadcastMock()
-      ;(getEmailService as any).mockResolvedValue(mockBroadcast)
 
       await afterDeleteHook({
         doc: { id: 'sub-123', email: 'test@example.com', emailProviderId: 'contact-123' },

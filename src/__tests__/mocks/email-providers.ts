@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { EmailProviderConfig } from '../../types'
+import type { EmailProvider } from '../../types'
 
 // Mock successful email response
 const mockSuccessResponse = {
@@ -139,21 +139,20 @@ export const createBroadcastMock = () => {
   return broadcastMock
 }
 
-// Factory function to create email provider mock based on config
-export const createEmailProviderMock = (config: EmailProviderConfig) => {
-  switch (config.provider) {
+// Factory function to create email provider mock based on provider type
+export const createEmailProviderMock = (provider: 'resend' | 'broadcast') => {
+  switch (provider) {
     case 'resend':
       return createResendMock()
     case 'broadcast':
       return createBroadcastMock()
     default:
-      throw new Error(`Unknown email provider: ${config.provider}`)
+      throw new Error(`Unknown email provider: ${provider}`)
   }
 }
 
-// Mock email provider config
-export const mockEmailProviderConfig: EmailProviderConfig = {
-  provider: 'resend',
+// Mock resend provider config
+export const mockResendProviderConfig = {
   apiKey: 'test-api-key',
   fromEmail: 'test@example.com',
   fromName: 'Test Newsletter',

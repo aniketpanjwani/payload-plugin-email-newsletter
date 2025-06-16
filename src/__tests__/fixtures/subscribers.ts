@@ -9,6 +9,12 @@ export const mockSubscribers = [
       newsletter: true,
       announcements: true,
     },
+    signupMetadata: {
+      ipAddress: '192.168.1.1',
+      userAgent: 'Mozilla/5.0',
+      source: 'website',
+      utmParams: {}
+    },
     createdAt: new Date('2024-01-01').toISOString(),
     updatedAt: new Date('2024-01-01').toISOString(),
   },

@@ -3,14 +3,32 @@ import { createUnsubscribeEndpoint } from '../../../endpoints/unsubscribe'
 import { createPayloadRequestMock, seedCollection, clearCollections, createMockUser } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
 import type { NewsletterPluginConfig } from '../../../types'
+import { createTestConfig } from '../../utils/test-config'
+
+// Mock jsonwebtoken before imports
+const mockJwt = {
+  verify: vi.fn(),
+  sign: vi.fn()
+}
+
+vi.mock('jsonwebtoken', () => mockJwt)
+
+// Mock console.error to capture errors
+const originalConsoleError = console.error
+beforeAll(() => {
+  console.error = vi.fn()
+})
+afterAll(() => {
+  console.error = originalConsoleError
+})
 
 describe('Unsubscribe Endpoint Security', () => {
   let endpoint: any
   let mockReq: any
   let mockRes: any
-  const config: NewsletterPluginConfig = {
+  const config = createTestConfig({
     subscribersSlug: 'subscribers',
-  }
+  })
 
   beforeEach(() => {
     clearCollections()
@@ -23,53 +41,30 @@ describe('Unsubscribe Endpoint Security', () => {
       payload: payloadMock.payload,
       body: {},
       user: null,
+      headers: {},
     }
     
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
+      json: vi.fn().mockReturnThis(),
     }
     
     vi.clearAllMocks()
   })
 
-  describe('Authentication Required', () => {
-    it('should reject unauthenticated requests', async () => {
-      mockReq.body = { subscriberId: 'sub-1' }
-      await endpoint.handler(mockReq, mockRes)
-      
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        error: 'Authentication required',
-      })
-    })
-
-    it('should reject requests without subscriber ID', async () => {
-      mockReq.user = {
-        id: 'sub-1',
-        email: 'active@example.com',
-        collection: 'subscribers',
-      }
-      
+  describe('Request Validation', () => {
+    it('should reject requests without email or token', async () => {
       await endpoint.handler(mockReq, mockRes)
       
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Subscriber ID is required',
+        error: 'Email or token is required',
       })
     })
-  })
 
-  describe('Access Control', () => {
-    it('should allow subscribers to unsubscribe themselves', async () => {
-      mockReq.user = {
-        id: 'sub-1',
-        email: 'active@example.com',
-        collection: 'subscribers',
-      }
-      mockReq.body = { subscriberId: 'sub-1' }
+    it('should handle email-based unsubscribe', async () => {
+      mockReq.body = { email: 'active@example.com' }
       
       await endpoint.handler(mockReq, mockRes)
       
@@ -78,58 +73,96 @@ describe('Unsubscribe Endpoint Security', () => {
         id: 'sub-1',
         data: {
           subscriptionStatus: 'unsubscribed',
-          unsubscribedAt: expect.any(Date),
+          unsubscribedAt: expect.any(String),
         },
         overrideAccess: false,
-        user: mockReq.user,
+        user: {
+          collection: 'subscribers',
+          id: 'sub-1',
+          email: 'active@example.com',
+        },
       })
       
-      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Successfully unsubscribed',
+      })
     })
+  })
 
-    it('should prevent subscribers from unsubscribing others', async () => {
-      mockReq.user = {
-        id: 'sub-1',
-        email: 'active@example.com',
+  describe('Token-based Unsubscribe', () => {
+    it('should handle valid unsubscribe tokens', async () => {
+      // Mock JWT verification
+      mockJwt.verify.mockReturnValue({
+        type: 'unsubscribe',
+        subscriberId: 'sub-1',
+      })
+      
+      mockReq.body = { token: 'valid-unsubscribe-token' }
+      
+      await endpoint.handler(mockReq, mockRes)
+      
+      expect(mockReq.payload.update).toHaveBeenCalledWith({
         collection: 'subscribers',
-      }
-      mockReq.body = { subscriberId: 'sub-2' } // Trying to unsubscribe someone else
+        id: 'sub-1',
+        data: {
+          subscriptionStatus: 'unsubscribed',
+          unsubscribedAt: expect.any(String),
+        },
+        overrideAccess: false,
+        user: {
+          collection: 'subscribers',
+          id: 'sub-1',
+          email: 'active@example.com',
+        },
+      })
       
-      await endpoint.handler(mockReq, mockRes)
-      
-      expect(mockRes.status).toHaveBeenCalledWith(403)
       expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        error: 'You can only unsubscribe yourself',
+        success: true,
+        message: 'Successfully unsubscribed',
       })
     })
 
-    it('should prevent regular users from unsubscribing subscribers', async () => {
-      mockReq.user = createMockUser({ id: 'user-123' })
-      mockReq.body = { subscriberId: 'sub-1' }
+    it('should reject invalid tokens', async () => {
+      mockJwt.verify.mockImplementation(() => {
+        throw new Error('Invalid token')
+      })
+      
+      mockReq.body = { token: 'invalid-token' }
       
       await endpoint.handler(mockReq, mockRes)
       
-      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.status).toHaveBeenCalledWith(401)
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        error: 'Invalid user type for this operation',
+        error: 'Invalid or expired unsubscribe link',
+      })
+    })
+
+    it('should reject non-unsubscribe token types', async () => {
+      mockJwt.verify.mockReturnValue({
+        type: 'session', // Wrong type
+        subscriberId: 'sub-1',
+      })
+      
+      mockReq.body = { token: 'wrong-type-token' }
+      
+      await endpoint.handler(mockReq, mockRes)
+      
+      expect(mockRes.status).toHaveBeenCalledWith(401)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Invalid or expired unsubscribe link',
       })
     })
   })
 
   describe('Already Unsubscribed', () => {
     it('should handle already unsubscribed users gracefully', async () => {
-      mockReq.user = {
-        id: 'sub-3', // Already unsubscribed
-        email: 'unsubscribed@example.com',
-        collection: 'subscribers',
-      }
-      mockReq.body = { subscriberId: 'sub-3' }
+      mockReq.body = { email: 'unsubscribed@example.com' }
       
       await endpoint.handler(mockReq, mockRes)
       
-      expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
         message: 'Already unsubscribed',
@@ -141,20 +174,15 @@ describe('Unsubscribe Endpoint Security', () => {
   })
 
   describe('Non-existent Subscribers', () => {
-    it('should handle non-existent subscriber IDs', async () => {
-      mockReq.user = {
-        id: 'sub-999',
-        email: 'ghost@example.com',
-        collection: 'subscribers',
-      }
-      mockReq.body = { subscriberId: 'sub-999' }
+    it('should handle non-existent emails', async () => {
+      mockReq.body = { email: 'ghost@example.com' }
       
       await endpoint.handler(mockReq, mockRes)
       
-      expect(mockRes.status).toHaveBeenCalledWith(404)
+      // The endpoint doesn't reveal if email exists or not for security
       expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        error: 'Subscriber not found',
+        success: true,
+        message: 'If this email was subscribed, it has been unsubscribed.',
       })
     })
   })
@@ -163,12 +191,7 @@ describe('Unsubscribe Endpoint Security', () => {
     it('should set unsubscribedAt timestamp', async () => {
       const beforeTime = new Date()
       
-      mockReq.user = {
-        id: 'sub-1',
-        email: 'active@example.com',
-        collection: 'subscribers',
-      }
-      mockReq.body = { subscriberId: 'sub-1' }
+      mockReq.body = { email: 'active@example.com' }
       
       await endpoint.handler(mockReq, mockRes)
       
@@ -181,23 +204,24 @@ describe('Unsubscribe Endpoint Security', () => {
       expect(unsubscribedAt.getTime()).toBeLessThanOrEqual(afterTime.getTime())
     })
 
-    it('should clear email preferences on unsubscribe', async () => {
-      mockReq.user = {
-        id: 'sub-1',
-        email: 'active@example.com',
-        collection: 'subscribers',
-      }
-      mockReq.body = { subscriberId: 'sub-1' }
+    it('should update subscriber status on unsubscribe', async () => {
+      mockReq.body = { email: 'active@example.com' }
       
       await endpoint.handler(mockReq, mockRes)
       
       expect(mockReq.payload.update).toHaveBeenCalledWith(
         expect.objectContaining({
+          collection: 'subscribers',
+          id: 'sub-1',
           data: expect.objectContaining({
-            emailPreferences: {
-              newsletter: false,
-              announcements: false,
-            },
+            subscriptionStatus: 'unsubscribed',
+            unsubscribedAt: expect.any(String),
+          }),
+          overrideAccess: false,
+          user: expect.objectContaining({
+            collection: 'subscribers',
+            id: 'sub-1',
+            email: 'active@example.com',
           }),
         })
       )

@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPayloadRequestMock, seedCollection, clearCollections } from '../mocks/payload'
 import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
 import type { NewsletterPluginConfig } from '../../types'
+import { createTestConfig } from '../utils/test-config'
 
 describe('XSS Prevention', () => {
   let mockReq: any
-  const config: NewsletterPluginConfig = {}
+  const config = createTestConfig()
 
   beforeEach(() => {
     clearCollections()
