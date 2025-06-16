@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { adminOnly, adminOrSelf } from '../../utils/access'
 import type { PayloadRequest } from 'payload'
-import type { NewsletterPluginConfig } from '../../types'
+
 import { createMockUser, createMockAdminUser } from '../mocks/payload'
 import { createTestConfig } from '../utils/test-config'
 

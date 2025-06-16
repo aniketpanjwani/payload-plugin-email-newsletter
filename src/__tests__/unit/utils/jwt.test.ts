@@ -6,7 +6,7 @@ import {
   verifySessionToken,
   generateMagicLinkURL,
 } from '../../../utils/jwt'
-import type { NewsletterPluginConfig } from '../../../types'
+
 import { createTestConfig } from '../../utils/test-config'
 
 describe('JWT Utilities Security', () => {

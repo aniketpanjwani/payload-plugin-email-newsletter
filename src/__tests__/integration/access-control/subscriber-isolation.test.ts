@@ -12,7 +12,7 @@ describe('Subscriber Data Isolation', () => {
   let subscriberA: any
   let subscriberB: any
   
-  const config = createTestConfig({
+  const _config = createTestConfig({
     subscribersSlug: 'subscribers'
   })
 

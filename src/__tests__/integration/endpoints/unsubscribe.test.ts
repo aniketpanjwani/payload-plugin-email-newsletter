@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createUnsubscribeEndpoint } from '../../../endpoints/unsubscribe'
-import { createPayloadRequestMock, seedCollection, clearCollections, createMockUser } from '../../mocks/payload'
+import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
-import type { NewsletterPluginConfig } from '../../../types'
+
 import { createTestConfig } from '../../utils/test-config'
 
 // Mock jsonwebtoken before imports

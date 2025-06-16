@@ -3,7 +3,6 @@ import type { CollectionBeforeChangeHook, CollectionAfterChangeHook } from 'payl
 import { createPayloadRequestMock, seedCollection, clearCollections, createMockAdminUser } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
 import { createResendMock, createBroadcastMock } from '../../mocks/email-providers'
-import type { NewsletterPluginConfig } from '../../../types'
 import { createTestConfig } from '../../utils/test-config'
 import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 
@@ -17,7 +16,7 @@ import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-
 describe('Subscriber Collection Hooks Security', () => {
   let mockReq: any
   let mockEmailService: any
-  const config = createTestConfig({
+  const _config = createTestConfig({
     subscribersSlug: 'subscribers',
   })
 
@@ -39,7 +38,7 @@ describe('Subscriber Collection Hooks Security', () => {
 
   describe('beforeChange Hook', () => {
     it('should normalize email addresses', async () => {
-      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req, operation }) => {
+      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req: _req, operation }) => {
         if (operation === 'create' && data.email) {
           data.email = data.email.trim().toLowerCase()
         }
@@ -57,7 +56,7 @@ describe('Subscriber Collection Hooks Security', () => {
     })
 
     it('should prevent email changes on update', async () => {
-      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req, operation, originalDoc }) => {
+      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req: _req, operation, originalDoc }) => {
         if (operation === 'update' && data.email && originalDoc?.email !== data.email) {
           throw new Error('Email cannot be changed')
         }
@@ -75,7 +74,7 @@ describe('Subscriber Collection Hooks Security', () => {
     })
 
     it('should validate subscription status transitions', async () => {
-      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req, operation, originalDoc }) => {
+      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req: _req, operation, originalDoc }) => {
         if (operation === 'update' && data.subscriptionStatus) {
           const oldStatus = originalDoc?.subscriptionStatus
           const newStatus = data.subscriptionStatus
@@ -115,7 +114,7 @@ describe('Subscriber Collection Hooks Security', () => {
     })
 
     it('should set timestamps appropriately', async () => {
-      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req, operation }) => {
+      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req: _req, operation }) => {
         const now = new Date()
         
         if (operation === 'update') {
@@ -152,9 +151,9 @@ describe('Subscriber Collection Hooks Security', () => {
     })
 
     it('should prevent duplicate emails on create', async () => {
-      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req, operation }) => {
+      const beforeChangeHook: CollectionBeforeChangeHook = async ({ data, req: _req, operation }) => {
         if (operation === 'create' && data.email) {
-          const existing = await req.payload.find({
+          const existing = await _req.payload.find({
             collection: 'subscribers',
             where: {
               email: { equals: data.email },
@@ -187,7 +186,7 @@ describe('Subscriber Collection Hooks Security', () => {
 
   describe('afterChange Hook', () => {
     it('should sync with email provider on create', async () => {
-      const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req, operation }) => {
+      const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req: _req, operation }) => {
         if (operation === 'create') {
           // Simulate email service behavior without importing
           await mockEmailService.emails.send({
@@ -217,7 +216,7 @@ describe('Subscriber Collection Hooks Security', () => {
     it('should handle email provider sync failures gracefully', async () => {
       mockEmailService.emails.send.mockRejectedValueOnce(new Error('Provider error'))
 
-      const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req, operation }) => {
+      const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req: _req, operation }) => {
         if (operation === 'create') {
           try {
             // Simulate email service behavior without importing
@@ -248,12 +247,12 @@ describe('Subscriber Collection Hooks Security', () => {
     })
 
     it('should clean up magic link tokens after verification', async () => {
-      const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req, operation, previousDoc }) => {
+      const afterChangeHook: CollectionAfterChangeHook = async ({ doc, req: _req, operation, previousDoc }) => {
         if (operation === 'update' && 
             previousDoc?.subscriptionStatus === 'pending' && 
             doc.subscriptionStatus === 'active') {
           // Clear any magic link tokens
-          await req.payload.update({
+          await _req.payload.update({
             collection: 'subscribers',
             id: doc.id,
             data: {
@@ -287,13 +286,13 @@ describe('Subscriber Collection Hooks Security', () => {
 
   describe('beforeDelete Hook', () => {
     it('should prevent deletion of active subscribers by non-admins', async () => {
-      const beforeDeleteHook = async ({ req, id }: any) => {
-        const subscriber = await req.payload.findByID({
+      const beforeDeleteHook = async ({ req: _req, id }: any) => {
+        const subscriber = await _req.payload.findByID({
           collection: 'subscribers',
           id,
         })
         
-        if (subscriber?.subscriptionStatus === 'active' && !req.user?.roles?.includes('admin')) {
+        if (subscriber?.subscriptionStatus === 'active' && !_req.user?.roles?.includes('admin')) {
           throw new Error('Only admins can delete active subscribers')
         }
       }
@@ -321,7 +320,7 @@ describe('Subscriber Collection Hooks Security', () => {
     it('should clean up email provider data on delete', async () => {
       const mockBroadcast = createBroadcastMock()
       
-      const afterDeleteHook = async ({ doc, req }: any) => {
+      const afterDeleteHook = async ({ doc, req: _req }: any) => {
         try {
           // Simulate email service behavior without importing
           // Remove from email provider

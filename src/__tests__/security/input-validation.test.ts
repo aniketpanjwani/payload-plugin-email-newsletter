@@ -4,22 +4,20 @@ import {
   sanitizeInput, 
   validateSubscriberData,
   isDomainAllowed,
-  normalizeEmail,
-  isValidSource
+  normalizeEmail
 } from '../../utils/validation'
 import { 
   createPayloadRequestMock, 
-  seedCollection, 
   clearCollections 
 } from '../mocks/payload'
 
 describe('Input Validation Security', () => {
-  let mockPayload: any
+  let _mockPayload: any
   
   beforeEach(() => {
     clearCollections()
     const payloadMock = createPayloadRequestMock()
-    mockPayload = payloadMock.payload
+    _mockPayload = payloadMock.payload
     vi.clearAllMocks()
   })
 
@@ -231,7 +229,7 @@ describe('Input Validation Security', () => {
       pathTraversals.forEach(path => {
         const sanitized = sanitizeInput(path)
         // Should not contain traversal patterns
-        expect(sanitized).not.toMatch(/\.\.[\/\\]/)
+        expect(sanitized).not.toMatch(/\.\.[/\\]/)
         expect(sanitized).not.toContain('file://')
       })
     })

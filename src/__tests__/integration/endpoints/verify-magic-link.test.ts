@@ -7,14 +7,14 @@ import { createVerifyMagicLinkEndpoint } from '../../../endpoints/verify-magic-l
 import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifyMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
-import type { NewsletterPluginConfig } from '../../../types'
+
 import { createTestConfig } from '../../utils/test-config'
 
 describe('Verify Magic Link Endpoint', () => {
   let endpoint: any
   let mockReq: any
   let mockRes: any
-  const config = createTestConfig({
+  const _config = createTestConfig({
     subscribersSlug: 'subscribers',
   })
 

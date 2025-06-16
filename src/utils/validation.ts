@@ -48,7 +48,8 @@ export function normalizeEmail(email: string): string {
   const parts = email.toLowerCase().trim().split('@')
   if (parts.length !== 2) return email.toLowerCase().trim()
   
-  let [localPart, domain] = parts
+  let [localPart] = parts
+  const [, domain] = parts
   
   // Remove dots from local part (Gmail-style)
   localPart = localPart.replace(/\./g, '')

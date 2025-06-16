@@ -4,10 +4,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('../../../utils/jwt')
 
 import { createPreferencesEndpoint, createUpdatePreferencesEndpoint } from '../../../endpoints/preferences'
-import { createPayloadRequestMock, seedCollection, clearCollections, createMockUser, createMockAdminUser } from '../../mocks/payload'
+import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
 import { verifySessionToken } from '../../../utils/jwt'
-import type { NewsletterPluginConfig } from '../../../types'
+
 import { createTestConfig } from '../../utils/test-config'
 
 describe('Preferences Endpoint Security', () => {

@@ -11,9 +11,9 @@ vi.mock('../../../utils/jwt')
 
 describe('Magic Link Security', () => {
   let mockPayload: any
-  let mockReq: any
+  let _mockReq: any
   
-  const config = createTestConfig({
+  const _config = createTestConfig({
     subscribersSlug: 'subscribers',
     magicLinkExpiration: 3600 // 1 hour
   })

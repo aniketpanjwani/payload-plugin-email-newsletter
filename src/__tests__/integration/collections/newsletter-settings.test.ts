@@ -3,15 +3,14 @@ import {
   createPayloadRequestMock, 
   seedCollection, 
   clearCollections,
-  createMockAdminUser,
-  createMockNonAdminUser
+  createMockAdminUser
 } from '../../mocks/payload'
 import { createTestConfig } from '../../utils/test-config'
 import { createBeforeChangeArgs, createAfterChangeArgs } from '../../utils/hook-test-utils'
 
 describe('Newsletter Settings Collection Hooks Security', () => {
   let mockReq: any
-  const config = createTestConfig({
+  const _config = createTestConfig({
     settingsSlug: 'newsletter-settings'
   })
 
@@ -27,7 +26,7 @@ describe('Newsletter Settings Collection Hooks Security', () => {
 
   describe('Access Control Hooks', () => {
     it('should only allow users from users collection to modify settings', async () => {
-      const beforeChangeHook = async ({ data, req, operation }: any) => {
+      const beforeChangeHook = async ({ data, req }: any) => {
         // Match actual implementation
         if (!req.user || req.user.collection !== 'users') {
           throw new Error('Only administrators can modify newsletter settings')
@@ -64,9 +63,9 @@ describe('Newsletter Settings Collection Hooks Security', () => {
         { id: 'settings-2', name: 'Config 2', active: false }
       ])
 
-      const beforeChangeHook = async ({ data, req, operation }: any) => {
+      const beforeChangeHook = async ({ data, req: _req, operation }: any) => {
         // Match actual implementation
-        if (!req.user || req.user.collection !== 'users') {
+        if (!_req.user || _req.user.collection !== 'users') {
           throw new Error('Only administrators can modify newsletter settings')
         }
         
@@ -74,20 +73,20 @@ describe('Newsletter Settings Collection Hooks Security', () => {
         if (data?.active && operation === 'update' && data.id) {
           // In real implementation, this would use a where clause
           // For testing, we'll simulate the behavior
-          const allSettings = await req.payload.find({
+          const allSettings = await _req.payload.find({
             collection: slug,
             overrideAccess: false,
-            user: req.user
+            user: _req.user
           })
           
           for (const doc of allSettings.docs) {
             if (doc.id !== data.id && doc.active) {
-              await req.payload.update({
+              await _req.payload.update({
                 collection: slug,
                 id: doc.id,
                 data: { active: false },
                 overrideAccess: false,
-                user: req.user
+                user: _req.user
               })
             }
           }

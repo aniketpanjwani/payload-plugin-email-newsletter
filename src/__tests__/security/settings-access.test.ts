@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
-import type { NewsletterPluginConfig } from '../../types'
+
 import { createMockUser, createMockAdminUser, createPayloadRequestMock, clearCollections, seedCollection } from '../mocks/payload'
 import { mockNewsletterSettings } from '../fixtures/newsletter-settings'
 import { createTestConfig } from '../utils/test-config'
@@ -128,7 +128,7 @@ describe('Newsletter Settings Access Control Security', () => {
       
       // Mock the beforeChange hook behavior
       const beforeChangeHook = vi.fn(({ req, operation }) => {
-        if (operation !== 'read' && !req.user?.roles?.includes('admin')) {
+        if (operation !== 'read' && !_req.user?.roles?.includes('admin')) {
           throw new Error('Unauthorized: Only admins can modify newsletter settings')
         }
       })

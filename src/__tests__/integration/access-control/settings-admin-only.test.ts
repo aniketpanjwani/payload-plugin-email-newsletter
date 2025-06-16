@@ -14,7 +14,7 @@ describe('Newsletter Settings Admin-Only Access', () => {
   let regularUser: any
   let subscriberUser: any
   
-  const config = createTestConfig({
+  const _config = createTestConfig({
     settingsSlug: 'newsletter-settings'
   })
 

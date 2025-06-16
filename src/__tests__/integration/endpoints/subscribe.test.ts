@@ -3,7 +3,7 @@ import { createSubscribeEndpoint } from '../../../endpoints/subscribe'
 import { createPayloadRequestMock, seedCollection, clearCollections } from '../../mocks/payload'
 import { mockNewsletterSettings } from '../../fixtures/newsletter-settings'
 import { createResendMock } from '../../mocks/email-providers'
-import type { NewsletterPluginConfig } from '../../../types'
+
 import { createTestConfig } from '../../utils/test-config'
 
 // Comment out email service mock as the module doesn't exist
@@ -18,7 +18,7 @@ describe('Subscribe Endpoint Security', () => {
   let mockReq: any
   let mockRes: any
   let mockEmailService: any
-  const config = createTestConfig({
+  const _config = createTestConfig({
     subscribersSlug: 'subscribers',
     settingsSlug: 'newsletter-settings',
   })

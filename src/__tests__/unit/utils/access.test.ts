@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { isAdmin } from '../../../utils/access'
-import type { NewsletterPluginConfig } from '../../../types'
+
 import { createTestConfig } from '../../utils/test-config'
 
 describe('Access Control Utilities', () => {

@@ -122,7 +122,7 @@ export const createSubscribeEndpoint = (
         if (referer) {
           try {
             utmParams = extractUTMParams(new URL(referer).searchParams)
-          } catch (e) {
+          } catch {
             // Invalid URL, ignore UTM params
           }
         }

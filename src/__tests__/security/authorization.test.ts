@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   createPayloadRequestMock, 
-  seedCollection, 
   clearCollections,
   createMockAdminUser,
   createMockNonAdminUser
@@ -15,7 +14,7 @@ describe('Authorization Security', () => {
   let adminUser: any
   let regularUser: any
   let subscriberUser: any
-  let anonymousUser = null
+  const anonymousUser = null
   
   beforeEach(() => {
     clearCollections()

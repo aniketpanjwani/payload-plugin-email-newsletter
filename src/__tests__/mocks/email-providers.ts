@@ -1,8 +1,7 @@
 import { vi } from 'vitest'
-import type { EmailProvider } from '../../types'
 
 // Mock successful email response
-const mockSuccessResponse = {
+const _mockSuccessResponse = {
   data: {
     id: 'test-email-id',
     from: 'test@example.com',

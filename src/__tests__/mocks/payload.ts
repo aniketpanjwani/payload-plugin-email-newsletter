@@ -92,7 +92,7 @@ export const createPayloadMock = (): any => {
       const id = `${collection}-${Date.now()}-${Math.random()}`
       
       // Sanitize subscriber data
-      let processedData = { ...data }
+      const processedData = { ...data }
       if (collection === 'subscribers' && data.name) {
         processedData.name = sanitizeInput(data.name)
       }
@@ -271,7 +271,7 @@ export const createPayloadMock = (): any => {
       }
 
       // Sanitize subscriber data on update
-      let processedData = { ...data }
+      const processedData = { ...data }
       if (collection === 'subscribers' && data.name) {
         processedData.name = sanitizeInput(data.name)
       }
@@ -331,7 +331,7 @@ export const createPayloadMock = (): any => {
       return existing
     }),
     email: {
-      sendEmail: vi.fn(async (options) => {
+      sendEmail: vi.fn(async (_options) => {
         // Mock email sending
         return { success: true }
       }),
