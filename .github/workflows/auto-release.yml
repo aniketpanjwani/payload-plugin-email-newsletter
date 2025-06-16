@@ -19,6 +19,11 @@ on:
       - '.github/**'
       - '.gitignore'
       - '.npmignore'
+      - '**/__tests__/**'
+      - '**/*.test.ts'
+      - '**/*.test.tsx'
+      - '**/fixtures/**'
+      - '**/mocks/**'
 
 permissions:
   contents: write
@@ -45,11 +50,18 @@ jobs:
           COMMITS_SINCE_TAG=$(git rev-list $LATEST_TAG..HEAD --count 2>/dev/null || echo "999")
           echo "Commits since last tag: $COMMITS_SINCE_TAG"
           
-          # Only auto-release if triggered manually or if there are new commits
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || [[ $COMMITS_SINCE_TAG -gt 0 ]]; then
+          # Check if this is just a CI fix or test-only change
+          SIGNIFICANT_CHANGES=$(git diff $LATEST_TAG..HEAD --name-only | grep -v -E '(test|spec|\.md$|\.github|fixtures|mocks)' | wc -l)
+          echo "Significant changes: $SIGNIFICANT_CHANGES"
+          
+          # Only auto-release if:
+          # 1. Manually triggered OR
+          # 2. There are new commits AND they include significant changes
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || [[ $COMMITS_SINCE_TAG -gt 0 && $SIGNIFICANT_CHANGES -gt 0 ]]; then
             echo "should_release=true" >> $GITHUB_OUTPUT
           else
             echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "Skipping release - only test/doc changes detected"
           fi
 
   auto-release:
