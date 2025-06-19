@@ -1,4 +1,7 @@
-# Changelog
+## [0.4.5] - 2025-06-19
+
+- fix: add tsup build system for proper ESM/CJS dual package support
+
 
 All notable changes to this project will be documented in this file.
 
