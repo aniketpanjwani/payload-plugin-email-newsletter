@@ -3,35 +3,57 @@
   "version": "0.4.4",
   "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./client": {
-      "import": "./src/exports/client.ts",
-      "types": "./src/exports/client.ts",
-      "default": "./src/exports/client.ts"
+      "import": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
     },
     "./types": {
-      "import": "./src/exports/types.ts",
-      "types": "./src/exports/types.ts",
-      "default": "./src/exports/types.ts"
+      "import": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/types.js"
+      },
+      "require": {
+        "types": "./dist/types.d.cts",
+        "default": "./dist/types.cjs"
+      }
     },
     "./components": {
-      "import": "./src/exports/components.ts",
-      "types": "./src/exports/components.ts",
-      "default": "./src/exports/components.ts"
+      "import": {
+        "types": "./dist/components.d.ts",
+        "default": "./dist/components.js"
+      },
+      "require": {
+        "types": "./dist/components.d.cts",
+        "default": "./dist/components.cjs"
+      }
     }
   },
   "scripts": {
-    "build": "bun run build:swc && bun run build:types",
+    "build": "tsup",
+    "build:legacy": "bun run build:swc && bun run build:types",
     "build:swc": "swc ./src -d ./dist --copy-files --ignore '**/*.test.ts' --ignore '**/*.test.tsx' --ignore '**/__tests__/**'",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
-    "dev": "bun run build:swc --watch",
+    "dev": "tsup --watch",
     "clean": "rimraf dist",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
@@ -116,6 +138,7 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "rimraf": "^6.0.0",
+    "tsup": "^8.3.5",
     "typescript": "^5.5.0",
     "vitest": "^3.2.3"
   },
