@@ -1,12 +1,31 @@
-## [0.4.5] - 2025-06-19
-
-- fix: add tsup build system for proper ESM/CJS dual package support
-
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.5.0] - 2025-06-20
+
+### Changed
+- **BREAKING**: Changed newsletter settings from a collection back to a global configuration
+  - Settings are now accessed as a single global config instead of multiple documents
+  - Removed the "name" and "active" fields as they're no longer needed for globals
+  - Settings now appear as a single page in the admin UI instead of a list view
+  - Updated all code to use `payload.findGlobal()` instead of `payload.find()`
+  
+### Migration Required
+- Users with existing newsletter-settings collections will need to manually copy their active configuration to the new global settings
+- After migration, the old newsletter-settings collection can be removed from the database
+
+### Fixed
+- Resolved user confusion around having multiple settings documents when only one could be active
+- Settings now follow the standard Payload pattern for configuration globals
+
+## [0.4.5] - 2025-06-19
+
+### Fixed
+- Added tsup build system for proper ESM/CJS dual package support
 
 ## [0.4.4] - 2025-06-16
 

@@ -37,21 +37,13 @@ export const createSubscribeEndpoint = (
           })
         }
 
-        // Check domain restrictions from active settings
+        // Check domain restrictions from global settings
         // Settings are public info needed for validation, but we can still respect access control
-        const settingsResult = await req.payload.find({
-          collection: config.settingsSlug || 'newsletter-settings',
-          where: {
-            active: {
-              equals: true,
-            },
-          },
-          limit: 1,
+        const settings = await req.payload.findGlobal({
+          slug: config.settingsSlug || 'newsletter-settings',
           overrideAccess: false,
           // No user context for public endpoint
         })
-        
-        const settings = settingsResult.docs[0]
 
         const allowedDomains = settings?.subscriptionSettings?.allowedDomains?.map((d: any) => d.domain) || []
         if (!isDomainAllowed(trimmedEmail, allowedDomains)) {

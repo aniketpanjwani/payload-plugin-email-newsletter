@@ -1,7 +1,7 @@
 import type { Config } from 'payload'
 import type { NewsletterPluginConfig } from './types'
 import { createSubscribersCollection } from './collections/Subscribers'
-import { createNewsletterSettingsCollection } from './collections/NewsletterSettings'
+import { createNewsletterSettingsGlobal } from './globals/NewsletterSettings'
 import { createEmailService } from './providers'
 import { createNewsletterEndpoints } from './endpoints'
 import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
@@ -33,12 +33,12 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     return incomingConfig
   }
 
-  // Create plugin collections
+  // Create plugin collections and globals
   const subscribersCollection = createSubscribersCollection(config)
-  const settingsCollection = createNewsletterSettingsCollection(config)
+  const settingsGlobal = createNewsletterSettingsGlobal(config)
 
   // Build collections array
-  let collections = [...(incomingConfig.collections || []), subscribersCollection, settingsCollection]
+  let collections = [...(incomingConfig.collections || []), subscribersCollection]
 
   // Extend collections with newsletter scheduling fields if enabled
   if (config.features?.newsletterScheduling?.enabled) {
@@ -69,6 +69,7 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     collections,
     globals: [
       ...(incomingConfig.globals || []),
+      settingsGlobal,
     ],
     endpoints: [
       ...(incomingConfig.endpoints || []),
@@ -77,18 +78,10 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     onInit: async (payload) => {
       // Initialize email service
       try {
-        // Get active settings from collection
-        const settingsResult = await payload.find({
-          collection: config.settingsSlug || 'newsletter-settings',
-          where: {
-            active: {
-              equals: true,
-            },
-          },
-          limit: 1,
+        // Get settings from global
+        const settings = await payload.findGlobal({
+          slug: config.settingsSlug || 'newsletter-settings',
         })
-        
-        const settings = settingsResult.docs[0]
 
         let emailServiceConfig: any
         

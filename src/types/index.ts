@@ -14,7 +14,7 @@ export interface NewsletterPluginConfig {
   subscribersSlug?: string
   
   /**
-   * Slug for the newsletter settings collection
+   * Slug for the newsletter settings global
    * @default 'newsletter-settings'
    */
   settingsSlug?: string
