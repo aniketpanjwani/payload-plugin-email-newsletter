@@ -336,7 +336,7 @@ export const createPayloadMock = (): any => {
         return { success: true }
       }),
     },
-    findGlobal: vi.fn(async ({ slug, user, overrideAccess = true }) => {
+    findGlobal: vi.fn(async ({ slug, user: _user, overrideAccess = true }) => {
       // Mock global settings - newsletter-settings is now a global
       if (slug === 'newsletter-settings') {
         // Simulate access control
