@@ -68,20 +68,23 @@ export class BroadcastProvider implements EmailProvider {
 
   async addContact(contact: Subscriber): Promise<void> {
     try {
-      const response = await fetch(`${this.apiUrl}/api/v1/contacts`, {
+      const [firstName, ...lastNameParts] = (contact.name || '').split(' ')
+      const lastName = lastNameParts.join(' ')
+
+      const response = await fetch(`${this.apiUrl}/api/v1/subscribers.json`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: contact.email,
-          name: contact.name,
-          status: contact.subscriptionStatus === 'active' ? 'subscribed' : 'unsubscribed',
-          metadata: {
-            locale: contact.locale,
+          subscriber: {
+            email: contact.email,
+            first_name: firstName || undefined,
+            last_name: lastName || undefined,
+            tags: [`lang:${contact.locale || 'en'}`],
+            is_active: contact.subscriptionStatus === 'active',
             source: contact.source,
-            ...contact.utmParameters,
           },
         }),
       })
@@ -103,7 +106,7 @@ export class BroadcastProvider implements EmailProvider {
     try {
       // First, try to find the contact
       const searchResponse = await fetch(
-        `${this.apiUrl}/api/v1/contacts?email=${encodeURIComponent(contact.email)}`,
+        `${this.apiUrl}/api/v1/subscribers/find.json?email=${encodeURIComponent(contact.email)}`,
         {
           headers: {
             'Authorization': `Bearer ${this.token}`,
@@ -117,29 +120,31 @@ export class BroadcastProvider implements EmailProvider {
         return
       }
 
-      const contacts = await searchResponse.json()
-      const existingContact = contacts.data?.[0]
+      const existingContact = await searchResponse.json()
 
-      if (!existingContact) {
+      if (!existingContact || !existingContact.id) {
         await this.addContact(contact)
         return
       }
 
+      const [firstName, ...lastNameParts] = (contact.name || '').split(' ')
+      const lastName = lastNameParts.join(' ')
+
       // Update existing contact
-      const response = await fetch(`${this.apiUrl}/api/v1/contacts/${existingContact.id}`, {
-        method: 'PUT',
+      const response = await fetch(`${this.apiUrl}/api/v1/subscribers.json`, {
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: contact.email,
-          name: contact.name,
-          status: contact.subscriptionStatus === 'active' ? 'subscribed' : 'unsubscribed',
-          metadata: {
-            locale: contact.locale,
+          subscriber: {
+            first_name: firstName || undefined,
+            last_name: lastName || undefined,
+            tags: [`lang:${contact.locale || 'en'}`],
+            is_active: contact.subscriptionStatus === 'active',
             source: contact.source,
-            ...contact.utmParameters,
           },
         }),
       })
@@ -161,7 +166,7 @@ export class BroadcastProvider implements EmailProvider {
     try {
       // First, find the contact
       const searchResponse = await fetch(
-        `${this.apiUrl}/api/v1/contacts?email=${encodeURIComponent(email)}`,
+        `${this.apiUrl}/api/v1/subscribers/find.json?email=${encodeURIComponent(email)}`,
         {
           headers: {
             'Authorization': `Bearer ${this.token}`,
@@ -174,19 +179,20 @@ export class BroadcastProvider implements EmailProvider {
         return
       }
 
-      const contacts = await searchResponse.json()
-      const contact = contacts.data?.[0]
+      const contact = await searchResponse.json()
 
-      if (!contact) {
+      if (!contact || !contact.id) {
         return
       }
 
-      // Delete the contact
-      const response = await fetch(`${this.apiUrl}/api/v1/contacts/${contact.id}`, {
-        method: 'DELETE',
+      // Deactivate the contact
+      const response = await fetch(`${this.apiUrl}/api/v1/subscribers/deactivate.json`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ email }),
       })
 
       if (!response.ok) {
