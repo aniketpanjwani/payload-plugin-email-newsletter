@@ -1,4 +1,7 @@
-## [0.6.0] - 2025-06-20
+## [0.6.1] - 2025-06-20
+
+- fix: update Broadcast provider to use correct API endpoints
+
 
 - fix: resolve ESLint error for unused variable in test mock
 - fix: update tests to support newsletter settings as global
