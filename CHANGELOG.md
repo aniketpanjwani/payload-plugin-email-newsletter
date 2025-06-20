@@ -1,4 +1,9 @@
-# Changelog
+## [0.6.0] - 2025-06-20
+
+- fix: resolve ESLint error for unused variable in test mock
+- fix: update tests to support newsletter settings as global
+- feat: convert newsletter settings from collection to global
+
 
 All notable changes to this project will be documented in this file.
 
