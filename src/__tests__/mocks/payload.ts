@@ -336,6 +336,56 @@ export const createPayloadMock = (): any => {
         return { success: true }
       }),
     },
+    findGlobal: vi.fn(async ({ slug, user, overrideAccess = true }) => {
+      // Mock global settings - newsletter-settings is now a global
+      if (slug === 'newsletter-settings') {
+        // Simulate access control
+        if (!overrideAccess) {
+          // Global settings can be read publicly
+        }
+        
+        // Check if we have any settings in the old collection mock (for test compatibility)
+        const settingsCollection = collections.get('newsletter-settings')
+        if (settingsCollection && settingsCollection.size > 0) {
+          // Return the first (active) settings from the collection
+          const settings = Array.from(settingsCollection.values()).find(s => s.active) || Array.from(settingsCollection.values())[0]
+          return settings
+        }
+        
+        // Return default mock global settings
+        return {
+          id: 'global-newsletter-settings',
+          provider: 'resend',
+          resendSettings: {
+            apiKey: 'test-api-key',
+            audienceIds: [
+              { locale: 'en', production: 'aud_prod_123', development: 'aud_dev_123' }
+            ]
+          },
+          fromAddress: 'test@example.com',
+          fromName: 'Test Newsletter',
+          subscriptionSettings: {
+            requireDoubleOptIn: false,
+            allowedDomains: [],
+            maxSubscribersPerIP: 10
+          },
+          emailTemplates: {
+            welcome: {
+              enabled: true,
+              subject: 'Welcome!',
+              preheader: 'Thanks for joining'
+            },
+            magicLink: {
+              subject: 'Your login link',
+              preheader: 'Click to sign in',
+              expirationTime: '7d'
+            }
+          }
+        }
+      }
+      
+      throw new Error(`Global ${slug} not found`)
+    }),
   }
 }
 
