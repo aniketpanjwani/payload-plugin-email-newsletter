@@ -1,7 +1,21 @@
-import type { NextApiRequest } from 'next'
-import type { GetServerSidePropsContext } from 'next'
 import type { PayloadRequest } from 'payload'
 import jwt from 'jsonwebtoken'
+
+// Next.js types - these are optional and only used when Next.js is available
+interface NextApiRequest {
+  cookies?: { [key: string]: string }
+  headers?: { [key: string]: string | string[] | undefined }
+  [key: string]: any
+}
+
+interface GetServerSidePropsContext {
+  req: {
+    cookies?: { [key: string]: string }
+    headers?: { [key: string]: string | string[] | undefined }
+    [key: string]: any
+  }
+  [key: string]: any
+}
 
 interface TokenPayload {
   id: string
@@ -116,7 +130,7 @@ export const requireAuth = <P extends { [key: string]: any }>(
     return {
       props: {
         subscriber,
-      } as unknown as { props: P },
+      } as any as P,
     }
   }
 }
