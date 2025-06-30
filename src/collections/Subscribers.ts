@@ -1,6 +1,7 @@
 import type { CollectionConfig, Field, CollectionAfterChangeHook, CollectionBeforeDeleteHook } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { adminOnly, adminOrSelf } from '../utils/access'
+import { renderEmail } from '../emails/render'
 
 export const createSubscribersCollection = (
   pluginConfig: NewsletterPluginConfig
@@ -233,9 +234,30 @@ export const createSubscribersCollection = (
             // Send welcome email if active
             if (doc.subscriptionStatus === 'active' && emailService) {
               try {
-                // TODO: Send welcome email
-              } catch {
-                // Failed to send welcome email
+                // Get settings for site name
+                const settings = await req.payload.findGlobal({
+                  slug: pluginConfig.settingsSlug || 'newsletter-settings',
+                })
+                
+                // Render welcome email
+                const serverURL = req.payload.config.serverURL || process.env.PAYLOAD_PUBLIC_SERVER_URL || ''
+                const html = await renderEmail('welcome', {
+                  email: doc.email,
+                  siteName: settings?.brandSettings?.siteName || 'Newsletter',
+                  preferencesUrl: `${serverURL}/account/preferences`, // This could be customized
+                })
+                
+                // Send email
+                await emailService.send({
+                  to: doc.email,
+                  subject: settings?.brandSettings?.siteName ? `Welcome to ${settings.brandSettings.siteName}!` : 'Welcome!',
+                  html,
+                })
+                
+                console.log(`Welcome email sent to: ${doc.email}`)
+              } catch (error) {
+                console.error('Failed to send welcome email:', error)
+                // Don't fail the subscription if welcome email fails
               }
             }
 
