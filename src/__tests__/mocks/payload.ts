@@ -395,6 +395,12 @@ export const createPayloadRequestMock = (
 ): Partial<PayloadRequest> => {
   const payload = createPayloadMock()
   
+  // Add missing config property that the endpoint expects
+  payload.config = {
+    serverURL: 'http://localhost:3000',
+    ...payload.config
+  }
+  
   return {
     payload: payload as Payload,
     user: null,

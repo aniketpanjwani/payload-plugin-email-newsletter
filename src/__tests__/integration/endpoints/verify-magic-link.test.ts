@@ -32,6 +32,7 @@ describe('Verify Magic Link Endpoint', () => {
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn(),
+      cookie: vi.fn().mockReturnThis(),
     }
     
     vi.clearAllMocks()
