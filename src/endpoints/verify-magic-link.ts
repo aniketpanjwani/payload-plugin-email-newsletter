@@ -4,6 +4,7 @@ import {
   verifyMagicLinkToken, 
   generateSessionToken 
 } from '../utils/jwt'
+import { renderEmail } from '../emails/render'
 
 export const createVerifyMagicLinkEndpoint = (
   config: NewsletterPluginConfig
@@ -71,6 +72,7 @@ export const createVerifyMagicLinkEndpoint = (
         }
 
         // Update subscription status if pending
+        let isNewlyActivated = false
         if (subscriber.subscriptionStatus === 'pending') {
           await req.payload.update({
             collection: config.subscribersSlug || 'subscribers',
@@ -81,6 +83,7 @@ export const createVerifyMagicLinkEndpoint = (
             overrideAccess: false,
             user: syntheticUser,
           })
+          isNewlyActivated = true
         }
 
         // Clear the magic link token
@@ -100,6 +103,43 @@ export const createVerifyMagicLinkEndpoint = (
           String(subscriber.id),
           subscriber.email
         )
+
+        // Send welcome email if newly activated
+        if (isNewlyActivated) {
+          try {
+            // Get email service
+            const emailService = (req.payload as any).newsletterEmailService
+            
+            if (emailService) {
+              // Get settings for site name
+              const settings = await req.payload.findGlobal({
+                slug: config.settingsSlug || 'newsletter-settings',
+              })
+              
+              // Render welcome email
+              const serverURL = req.payload.config.serverURL || process.env.PAYLOAD_PUBLIC_SERVER_URL || ''
+              const html = await renderEmail('welcome', {
+                email: subscriber.email,
+                siteName: settings?.brandSettings?.siteName || 'Newsletter',
+                preferencesUrl: `${serverURL}/account/preferences`, // This could be customized
+              })
+              
+              // Send email
+              await emailService.send({
+                to: subscriber.email,
+                subject: settings?.brandSettings?.siteName ? `Welcome to ${settings.brandSettings.siteName}!` : 'Welcome!',
+                html,
+              })
+              
+              // Welcome email sent successfully
+            } else {
+              console.warn('Email service not initialized, cannot send welcome email')
+            }
+          } catch (error) {
+            console.error('Failed to send welcome email:', error)
+            // Don't fail the verification if welcome email fails
+          }
+        }
 
         res.json({
           success: true,

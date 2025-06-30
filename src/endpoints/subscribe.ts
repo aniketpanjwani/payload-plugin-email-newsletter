@@ -6,6 +6,8 @@ import {
   validateSubscriberData,
   extractUTMParams 
 } from '../utils/validation'
+import { generateMagicLinkToken, generateMagicLinkURL } from '../utils/jwt'
+import { renderEmail } from '../emails/render'
 
 export const createSubscribeEndpoint = (
   config: NewsletterPluginConfig
@@ -164,7 +166,45 @@ export const createSubscribeEndpoint = (
 
         // Send confirmation email if double opt-in
         if (settings?.subscriptionSettings?.requireDoubleOptIn) {
-          // TODO: Send confirmation email with magic link
+          try {
+            // Generate magic link token
+            const token = generateMagicLinkToken(
+              String(subscriber.id),
+              subscriber.email,
+              config
+            )
+            
+            // Generate magic link URL
+            const serverURL = req.payload.config.serverURL || process.env.PAYLOAD_PUBLIC_SERVER_URL || ''
+            const magicLinkURL = generateMagicLinkURL(token, serverURL, config)
+            
+            // Get email service
+            const emailService = (req.payload as any).newsletterEmailService
+            
+            if (emailService) {
+              // Render email
+              const html = await renderEmail('magic-link', {
+                magicLink: magicLinkURL,
+                email: subscriber.email,
+                siteName: settings?.brandSettings?.siteName || 'Newsletter',
+                expiresIn: config.auth?.tokenExpiration || '7d',
+              })
+              
+              // Send email
+              await emailService.send({
+                to: subscriber.email,
+                subject: settings?.brandSettings?.siteName ? `Verify your email for ${settings.brandSettings.siteName}` : 'Verify your email',
+                html,
+              })
+              
+              // Magic link email sent successfully
+            } else {
+              console.warn('Email service not initialized, cannot send magic link')
+            }
+          } catch (error) {
+            console.error('Failed to send magic link email:', error)
+            // Don't fail the subscription if email fails
+          }
         }
 
         res.json({
