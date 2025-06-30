@@ -1,4 +1,7 @@
-## [0.7.1] - 2025-06-30
+## [0.8.0] - 2025-06-30
+
+- feat: complete welcome email implementation in afterCreate hook
+
 
 ### Fixed
 - Fixed CI test runner error by adding explicit Rollup dependency for Linux platforms
