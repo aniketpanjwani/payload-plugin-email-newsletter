@@ -1,3 +1,11 @@
+## [0.7.1] - 2025-06-30
+
+### Fixed
+- Fixed CI test runner error by adding explicit Rollup dependency for Linux platforms
+- Fixed verify magic link endpoint test by adding missing cookie method to response mock
+- Fixed test execution by adding missing payload config properties to mocks
+- Improved test reliability by updating mock objects to match real implementation
+
 ## [0.7.0] - 2025-06-30
 
 ### Added
