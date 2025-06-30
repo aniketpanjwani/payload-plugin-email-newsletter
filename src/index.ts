@@ -138,3 +138,6 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
 }
 
 export { newsletterPlugin as default }
+
+// Export session utilities
+export * from './utilities/session'

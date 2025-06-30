@@ -286,6 +286,149 @@ Get or update subscriber preferences (requires magic link auth)
 ### POST `/api/newsletter/unsubscribe`
 Unsubscribe an email address
 
+### POST `/api/newsletter/signin`
+Request a magic link for existing subscribers
+
+```typescript
+// Request
+{
+  "email": "user@example.com"
+}
+
+// Response
+{
+  "success": true,
+  "message": "Check your email for the sign-in link"
+}
+```
+
+### GET `/api/newsletter/me`
+Get current authenticated subscriber (requires authentication)
+
+```typescript
+// Response
+{
+  "success": true,
+  "subscriber": {
+    "id": "123",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "status": "active",
+    "preferences": { /* preferences */ }
+  }
+}
+```
+
+### POST `/api/newsletter/signout`
+Sign out the current subscriber
+
+```typescript
+// Response
+{
+  "success": true,
+  "message": "Signed out successfully"
+}
+```
+
+## Authentication
+
+The plugin provides complete magic link authentication for subscribers:
+
+### Client-Side Authentication
+
+Use the `useNewsletterAuth` hook in your React components:
+
+```tsx
+import { useNewsletterAuth } from 'payload-plugin-newsletter/client'
+
+function MyComponent() {
+  const { 
+    subscriber, 
+    isAuthenticated, 
+    isLoading, 
+    signOut, 
+    refreshAuth 
+  } = useNewsletterAuth()
+  
+  if (isLoading) return <div>Loading...</div>
+  
+  if (!isAuthenticated) {
+    return <div>Please sign in to manage your preferences</div>
+  }
+  
+  return (
+    <div>
+      <p>Welcome {subscriber.email}!</p>
+      <button onClick={signOut}>Sign Out</button>
+    </div>
+  )
+}
+```
+
+### Server-Side Authentication
+
+For Next.js applications, use the session utilities:
+
+```typescript
+import { requireAuth, getServerSideAuth } from 'payload-plugin-newsletter'
+
+// Protect a page - redirects to /auth/signin if not authenticated
+export const getServerSideProps = requireAuth()
+
+// Or with custom logic
+export const getServerSideProps = requireAuth(async (context) => {
+  // Your custom logic here
+  const data = await fetchData()
+  return { props: { data } }
+})
+
+// Manual authentication check
+export const getServerSideProps = async (context) => {
+  const { subscriber, isAuthenticated } = await getServerSideAuth(context)
+  
+  if (!isAuthenticated) {
+    // Handle unauthenticated state
+  }
+  
+  return {
+    props: { subscriber }
+  }
+}
+```
+
+### Authentication Flow
+
+1. **Subscribe**: New users receive a magic link email to verify their email
+2. **Sign In**: Existing subscribers can request a new magic link via `/api/newsletter/signin`
+3. **Verify**: Clicking the magic link verifies the email and creates a session
+4. **Session**: Sessions are stored in httpOnly cookies (30-day expiry by default)
+5. **Sign Out**: Clears the session cookie
+
+### Configuration
+
+```typescript
+newsletterPlugin({
+  auth: {
+    enabled: true, // Enable/disable authentication
+    tokenExpiration: '7d', // Magic link validity
+    magicLinkPath: '/newsletter/verify', // Verification redirect path
+  },
+  // Email templates can be customized
+  emails: {
+    magicLink: {
+      subject: 'Sign in to {{siteName}}',
+    },
+    welcome: {
+      enabled: true,
+      subject: 'Welcome to {{siteName}}!',
+    },
+    signIn: {
+      subject: 'Sign in to your account',
+    },
+  },
+})
+```
+
 ## Newsletter Scheduling
 
 If you enable newsletter scheduling, the plugin adds scheduling fields to your articles collection:

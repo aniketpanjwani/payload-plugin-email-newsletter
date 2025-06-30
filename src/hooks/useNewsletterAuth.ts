@@ -4,128 +4,108 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Subscriber } from '../types'
 
 export interface UseNewsletterAuthOptions {
-  sessionTokenKey?: string
-  apiEndpoint?: string
+  // Reserved for future use
 }
 
 export interface UseNewsletterAuthReturn {
   subscriber: Subscriber | null
-  loading: boolean
-  error: Error | null
   isAuthenticated: boolean
-  login: (token: string) => Promise<void>
-  logout: () => void
-  refreshSubscriber: () => Promise<void>
+  isLoading: boolean
+  loading: boolean // Alias for backward compatibility
+  error: Error | null
+  signOut: () => Promise<void>
+  logout: () => Promise<void> // Alias for backward compatibility
+  refreshAuth: () => Promise<void>
+  refreshSubscriber: () => Promise<void> // Alias for backward compatibility
+  login: (token: string) => Promise<void> // For backward compatibility
 }
 
 export function useNewsletterAuth(
-  options: UseNewsletterAuthOptions = {}
+  _options: UseNewsletterAuthOptions = {}
 ): UseNewsletterAuthReturn {
-  const {
-    sessionTokenKey = 'newsletter_session',
-    apiEndpoint = '/api/newsletter/preferences',
-  } = options
-
   const [subscriber, setSubscriber] = useState<Subscriber | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  // Get session token from localStorage
-  const getSessionToken = useCallback(() => {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem(sessionTokenKey)
-  }, [sessionTokenKey])
-
-  // Set session token in localStorage
-  const setSessionToken = useCallback((token: string | null) => {
-    if (typeof window === 'undefined') return
-    if (token) {
-      localStorage.setItem(sessionTokenKey, token)
-    } else {
-      localStorage.removeItem(sessionTokenKey)
-    }
-  }, [sessionTokenKey])
-
-  // Fetch subscriber data
-  const fetchSubscriber = useCallback(async (token: string) => {
+  const checkAuth = useCallback(async () => {
     try {
-      const response = await fetch(apiEndpoint, {
+      const response = await fetch('/api/newsletter/me', {
+        method: 'GET',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       })
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token is invalid, clear it
-          setSessionToken(null)
-          throw new Error('Session expired')
+      if (response.ok) {
+        const data = await response.json()
+        setSubscriber(data.subscriber)
+        setError(null)
+      } else {
+        setSubscriber(null)
+        if (response.status !== 401) {
+          setError(new Error('Failed to check authentication'))
         }
-        throw new Error('Failed to fetch subscriber')
       }
-
-      const data = await response.json()
-      setSubscriber(data.subscriber)
-      setError(null)
     } catch (err) {
+      console.error('Auth check failed:', err)
       setError(err instanceof Error ? err : new Error('An error occurred'))
       setSubscriber(null)
-      throw err
-    }
-  }, [apiEndpoint, setSessionToken])
-
-  // Initial load
-  useEffect(() => {
-    const token = getSessionToken()
-    if (token) {
-      fetchSubscriber(token)
-        .catch(() => {
-          // Error is already handled in fetchSubscriber
-        })
-        .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
-  // Login with session token
-  const login = useCallback(async (token: string) => {
-    setLoading(true)
-    setError(null)
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  const signOut = useCallback(async () => {
     try {
-      setSessionToken(token)
-      await fetchSubscriber(token)
+      const response = await fetch('/api/newsletter/signout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        setSubscriber(null)
+        setError(null)
+      } else {
+        throw new Error('Failed to sign out')
+      }
     } catch (err) {
-      setSessionToken(null)
+      console.error('Sign out error:', err)
+      setError(err instanceof Error ? err : new Error('Sign out failed'))
       throw err
-    } finally {
-      setLoading(false)
     }
-  }, [fetchSubscriber, setSessionToken])
+  }, [])
 
-  // Logout
-  const logout = useCallback(() => {
-    setSessionToken(null)
-    setSubscriber(null)
-    setError(null)
-  }, [setSessionToken])
+  const refreshAuth = useCallback(async () => {
+    setIsLoading(true)
+    await checkAuth()
+  }, [checkAuth])
 
-  // Refresh subscriber data
-  const refreshSubscriber = useCallback(async () => {
-    const token = getSessionToken()
-    if (!token) {
-      throw new Error('Not authenticated')
-    }
-    await fetchSubscriber(token)
-  }, [fetchSubscriber, getSessionToken])
+  // Backward compatibility: login function that accepts a token
+  // In the new implementation, authentication is handled via cookies
+  const login = useCallback(async (_token: string) => {
+    // Token is now handled server-side via cookies
+    // Just refresh the auth state
+    await refreshAuth()
+  }, [refreshAuth])
 
   return {
     subscriber,
-    loading,
-    error,
     isAuthenticated: !!subscriber,
-    login,
-    logout,
-    refreshSubscriber,
+    isLoading,
+    loading: isLoading, // Alias for backward compatibility
+    error,
+    signOut,
+    logout: signOut, // Alias for backward compatibility
+    refreshAuth,
+    refreshSubscriber: refreshAuth, // Alias for backward compatibility
+    login, // For backward compatibility
   }
 }

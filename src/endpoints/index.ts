@@ -4,6 +4,9 @@ import { createSubscribeEndpoint } from './subscribe'
 import { createVerifyMagicLinkEndpoint } from './verify-magic-link'
 import { createPreferencesEndpoint, createUpdatePreferencesEndpoint } from './preferences'
 import { createUnsubscribeEndpoint } from './unsubscribe'
+import { createSigninEndpoint } from './signin'
+import { createMeEndpoint } from './me'
+import { createSignoutEndpoint } from './signout'
 
 export function createNewsletterEndpoints(
   config: NewsletterPluginConfig
@@ -18,7 +21,10 @@ export function createNewsletterEndpoints(
     endpoints.push(
       createVerifyMagicLinkEndpoint(config),
       createPreferencesEndpoint(config),
-      createUpdatePreferencesEndpoint(config)
+      createUpdatePreferencesEndpoint(config),
+      createSigninEndpoint(config),
+      createMeEndpoint(config),
+      createSignoutEndpoint(config)
     )
   }
 

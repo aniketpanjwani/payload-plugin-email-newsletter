@@ -1,7 +1,44 @@
+## [0.7.0] - 2025-06-30
+
+### Added
+- Complete magic link authentication implementation
+  - Magic link email sending for subscriber verification
+  - Welcome email sent after successful verification  
+  - Sign-in endpoint (`POST /api/newsletter/signin`) for existing subscribers
+  - Rate limiting on sign-in endpoint (5 attempts per 15 minutes)
+  - Session cookie management (30-day expiry)
+- Authentication endpoints
+  - `GET /api/newsletter/me` - Check authentication status
+  - `POST /api/newsletter/signout` - Clear authentication session
+- Client-side authentication hook (`useNewsletterAuth`)
+  - Cookie-based authentication (replaces localStorage)
+  - Provides subscriber data, auth state, and sign out functionality
+  - Maintains backward compatibility with existing API
+- Server-side session utilities
+  - `getTokenFromRequest` - Extract JWT from cookies
+  - `verifyToken` - Verify JWT tokens
+  - `getServerSideAuth` - SSR authentication helper
+  - `requireAuth` - Page protection middleware
+  - `isAuthenticated` - Simple auth check
+- React Email templates
+  - MagicLink email template
+  - Welcome email template
+  - SignIn email template (alias for MagicLink)
+
+### Changed
+- Email sending now uses React Email for better formatting and consistency
+- Authentication now uses httpOnly cookies instead of localStorage for better security
+- Verify endpoint now sets session cookie upon successful verification
+
+### Fixed
+- Completed TODO items for email sending in subscribe and verify endpoints
+- Added missing email sending functionality throughout the plugin
+
 ## [0.6.1] - 2025-06-20
 
 - fix: update Broadcast provider to use correct API endpoints
 
+## [0.6.0] - 2025-06-20
 
 - fix: resolve ESLint error for unused variable in test mock
 - fix: update tests to support newsletter settings as global
