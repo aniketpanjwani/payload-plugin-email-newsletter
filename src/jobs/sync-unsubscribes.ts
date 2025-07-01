@@ -1,27 +1,23 @@
-import type { PayloadHandler } from 'payload'
+import type { TaskConfig } from 'payload'
 import type { NewsletterPluginConfig } from '../types/index'
-
-interface UnsubscribeSyncJob {
-  id: string
-  name: string
-  queue?: string
-  handler: PayloadHandler
-}
 
 export const createUnsubscribeSyncJob = (
   pluginConfig: NewsletterPluginConfig
-): UnsubscribeSyncJob => {
+): TaskConfig<any> => {
   return {
-    id: 'sync-unsubscribes',
-    name: 'Sync Unsubscribes from Email Service',
-    queue: pluginConfig.features?.unsubscribeSync?.queue || 'newsletter-sync',
-    handler: async (req: any) => {
+    slug: 'sync-unsubscribes',
+    label: 'Sync Unsubscribes from Email Service',
+    handler: async ({ req }) => {
       const subscribersSlug = pluginConfig.subscribersSlug || 'subscribers'
       const emailService = (req.payload as any).newsletterEmailService
       
       if (!emailService) {
         console.error('Email service not configured')
-        return
+        return {
+          output: {
+            syncedCount: 0
+          }
+        }
       }
 
       let syncedCount = 0
@@ -143,6 +139,12 @@ export const createUnsubscribeSyncJob = (
       } catch (error) {
         console.error('Unsubscribe sync error:', error)
         throw error
+      }
+      
+      return {
+        output: {
+          syncedCount
+        }
       }
     },
   }

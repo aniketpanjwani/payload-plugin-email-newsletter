@@ -86,14 +86,29 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
         syncJob,
       ],
       // Add cron schedule if specified
-      autoRun: config.features?.unsubscribeSync?.schedule ? [
-        ...(incomingConfig.jobs?.autoRun || []),
-        {
-          cron: config.features.unsubscribeSync.schedule,
-          queue: 'newsletter-sync',
-          limit: 100,
-        },
-      ] : incomingConfig.jobs?.autoRun,
+      autoRun: config.features?.unsubscribeSync?.schedule ? (
+        Array.isArray(incomingConfig.jobs?.autoRun) 
+          ? [...incomingConfig.jobs.autoRun, {
+              cron: config.features.unsubscribeSync.schedule,
+              queue: 'newsletter-sync',
+              limit: 100,
+            }]
+          : typeof incomingConfig.jobs?.autoRun === 'function'
+            ? async (payload: any) => {
+                const autoRunFn = incomingConfig.jobs!.autoRun as (payload: any) => any[] | Promise<any[]>
+                const existingConfigs = await autoRunFn(payload)
+                return [...existingConfigs, {
+                  cron: config.features!.unsubscribeSync!.schedule,
+                  queue: 'newsletter-sync',
+                  limit: 100,
+                }]
+              }
+            : [{
+                cron: config.features!.unsubscribeSync!.schedule,
+                queue: 'newsletter-sync',
+                limit: 100,
+              }]
+      ) : incomingConfig.jobs?.autoRun,
     } : incomingConfig.jobs,
     onInit: async (payload) => {
       // Initialize email service
