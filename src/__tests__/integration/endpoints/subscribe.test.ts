@@ -1,3 +1,7 @@
+// Set environment variables before any imports
+process.env.JWT_SECRET = 'test-jwt-secret'
+process.env.PAYLOAD_SECRET = 'test-payload-secret'
+
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createSubscribeEndpoint } from '../../../endpoints/subscribe'
 import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
@@ -30,14 +34,9 @@ describe('Subscribe Endpoint Security', () => {
     
     mockReq = {
       payload: payloadMock.payload,
-      body: {},
+      data: {},
       ip: '127.0.0.1',
-      headers: {},
-    }
-    
-    mockRes = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
+      headers: new Headers(),
     }
     
     // Setup email service mock
@@ -49,10 +48,11 @@ describe('Subscribe Endpoint Security', () => {
 
   describe('Input Validation', () => {
     it('should reject requests without email', async () => {
-      await endpoint.handler(mockReq, mockRes)
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(400)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         errors: ['Email is required'],
       })
@@ -69,11 +69,12 @@ describe('Subscribe Endpoint Security', () => {
       ]
 
       for (const email of invalidEmails) {
-        mockReq.body = { email }
-        await endpoint.handler(mockReq, mockRes)
+        mockReq.data = { email }
+        const response = await endpoint.handler(mockReq)
         
-        expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({
+        expect(response.status).toBe(400)
+        const responseData = await response.json()
+        expect(responseData).toEqual({
           success: false,
           errors: ['Invalid email format'],
         })
@@ -81,12 +82,12 @@ describe('Subscribe Endpoint Security', () => {
     })
 
     it('should sanitize email input', async () => {
-      mockReq.body = { 
+      mockReq.data = { 
         email: '  NewUser@EXAMPLE.com  ',
         name: '<script>alert("xss")</script>Test User',
       }
       
-      await endpoint.handler(mockReq, mockRes)
+      await endpoint.handler(mockReq)
       
       // First check if the endpoint was successful
       // if (mockRes.status.mock.calls.length > 0) {
@@ -126,11 +127,12 @@ describe('Subscribe Endpoint Security', () => {
       }
       seedCollection('subscribers', ipSubscribers)
 
-      mockReq.body = { email: 'newuser@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'newuser@example.com' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(429)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(429)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Too many subscriptions from this IP address',
       })
@@ -149,10 +151,11 @@ describe('Subscribe Endpoint Security', () => {
         }])
       }
 
-      mockReq.body = { email: 'newuser@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'newuser@example.com' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.json).toHaveBeenCalledWith(
+      const responseData = await response.json()
+      expect(responseData).toEqual(
         expect.objectContaining({
           success: true,
         })
@@ -167,11 +170,12 @@ describe('Subscribe Endpoint Security', () => {
       // This test documents that the endpoint needs to be updated to use
       // overrideAccess: true for reading public settings like domain restrictions
       
-      mockReq.body = { email: 'user@blocked.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'user@blocked.com' }
+      const response = await endpoint.handler(mockReq)
       
       // Without settings, domain restrictions are not enforced
-      expect(mockRes.json).toHaveBeenCalledWith(
+      const responseData = await response.json()
+      expect(responseData).toEqual(
         expect.objectContaining({
           success: true,
         })
@@ -187,11 +191,12 @@ describe('Subscribe Endpoint Security', () => {
         subscriptionStatus: 'active',
       }])
 
-      mockReq.body = { email: 'existing@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'existing@example.com' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(400)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Already subscribed',
         subscriber: expect.objectContaining({
@@ -207,11 +212,12 @@ describe('Subscribe Endpoint Security', () => {
         subscriptionStatus: 'unsubscribed',
       }])
 
-      mockReq.body = { email: 'comeback@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'comeback@example.com' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(400)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'This email has been unsubscribed. Please contact support to resubscribe.',
       })
@@ -220,8 +226,8 @@ describe('Subscribe Endpoint Security', () => {
 
   describe('Double Opt-In', () => {
     it('should send confirmation email when double opt-in is enabled', async () => {
-      mockReq.body = { email: 'newuser@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'newuser@example.com' }
+      const response = await endpoint.handler(mockReq)
       
       // TODO comment in implementation - email not sent yet
       expect(mockEmailService.emails.send).not.toHaveBeenCalled()
@@ -236,7 +242,8 @@ describe('Subscribe Endpoint Security', () => {
         })
       )
       
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.any(Object),
         message: 'Please check your email to confirm your subscription',
@@ -255,8 +262,8 @@ describe('Subscribe Endpoint Security', () => {
       clearCollections()
       seedCollection('newsletter-settings', [noDoubleOptIn])
 
-      mockReq.body = { email: 'instant@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'instant@example.com' }
+      await endpoint.handler(mockReq)
       
       expect(mockReq.payload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -273,11 +280,12 @@ describe('Subscribe Endpoint Security', () => {
       // Since email sending is not implemented, test database failures
       mockReq.payload.create.mockRejectedValueOnce(new Error('Database error'))
 
-      mockReq.body = { email: 'test@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'test@example.com' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(500)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Failed to subscribe. Please try again.',
       })
@@ -286,11 +294,12 @@ describe('Subscribe Endpoint Security', () => {
     it('should not leak internal errors to users', async () => {
       mockReq.payload.create.mockRejectedValueOnce(new Error('Database connection failed'))
 
-      mockReq.body = { email: 'test@example.com' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { email: 'test@example.com' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(500)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Failed to subscribe. Please try again.',
       })

@@ -1,16 +1,12 @@
+// Set environment variables before any imports
+process.env.JWT_SECRET = 'test-jwt-secret'
+process.env.PAYLOAD_SECRET = 'test-payload-secret'
+
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
-
-// Mock the JWT module
-vi.mock('../../../utils/jwt', () => ({
-  verifySessionToken: vi.fn(),
-  generateSessionToken: vi.fn(),
-}))
-
-// Import after mocking
 import { createPreferencesEndpoint, createUpdatePreferencesEndpoint } from '../../../endpoints/preferences'
-import { verifySessionToken } from '../../../utils/jwt'
+import { generateSessionToken } from '../../../utils/jwt'
 
 describe('Preferences Endpoint Security', () => {
   let getEndpoint: any
@@ -31,16 +27,11 @@ describe('Preferences Endpoint Security', () => {
     
     mockReq = {
       payload: payloadMock.payload,
-      body: {},
+      data: {},
       user: null,
       method: 'GET',
-      headers: {},
+      headers: new Headers(),
       query: {},
-    }
-    
-    mockRes = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
     }
     
     vi.clearAllMocks()
@@ -48,28 +39,26 @@ describe('Preferences Endpoint Security', () => {
 
   describe('GET - Read Preferences', () => {
     it('should require authentication', async () => {
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(401)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Authorization required',
       })
     })
 
     it('should allow subscribers to read their own preferences', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-        subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
       
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.objectContaining({
           email: 'active@example.com',
@@ -82,21 +71,18 @@ describe('Preferences Endpoint Security', () => {
     })
 
     it('should prevent reading other subscribers preferences', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
       mockReq.query = { subscriberId: 'sub-2' }
       
       // The preferences endpoint doesn't check query params - it only returns the token owner's data
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
       // Should return sub-1's data, not sub-2's
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.objectContaining({
           id: 'sub-1',
@@ -106,18 +92,15 @@ subscriberId: 'sub-1',
     })
 
     it('should return subscriber data based on token', async () => {
-      // Mock JWT verification for sub-2
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-2',
-        email: 'pending@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token for sub-2
+      const sessionToken = generateSessionToken('sub-2', 'pending@example.com')
       
-      mockReq.headers.authorization = 'Bearer admin-token'
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
       
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.objectContaining({
           email: 'pending@example.com',
@@ -132,38 +115,35 @@ subscriberId: 'sub-2',
     })
 
     it('should require authentication', async () => {
-      mockReq.body = {
+      mockReq.data = {
         emailPreferences: {
           newsletter: false,
         },
       }
       
-      await postEndpoint.handler(mockReq, mockRes)
+      const response = await postEndpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(401)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Authorization required',
       })
     })
 
     it('should allow subscribers to update their own preferences', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
-      mockReq.body = {
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
+      mockReq.data = {
         emailPreferences: {
           newsletter: false,
           announcements: true,
         },
       }
       
-      await postEndpoint.handler(mockReq, mockRes)
+      await postEndpoint.handler(mockReq)
       
       expect(mockReq.payload.update).toHaveBeenCalledWith({
         collection: 'subscribers',
@@ -185,22 +165,18 @@ subscriberId: 'sub-1',
     })
 
     it('should only update preferences for token owner', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
-      mockReq.body = {
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
+      mockReq.data = {
         subscriberId: 'sub-2', // This should be ignored
         emailPreferences: {
           newsletter: false,
         },
       }
       
-      await postEndpoint.handler(mockReq, mockRes)
+      await postEndpoint.handler(mockReq)
       
       // Should update sub-1, not sub-2
       expect(mockReq.payload.update).toHaveBeenCalledWith(
@@ -211,41 +187,34 @@ subscriberId: 'sub-1',
     })
 
     it('should validate preference structure', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-        subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
-      mockReq.body = {
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
+      mockReq.data = {
         emailPreferences: {
           newsletter: 'yes', // Should be boolean
           unknownField: true, // Should be filtered out
         },
       }
       
-      await postEndpoint.handler(mockReq, mockRes)
+      const response = await postEndpoint.handler(mockReq)
       
       // The endpoint doesn't validate preference types - it passes them through
       // This test documents that additional validation would be beneficial
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.any(Object),
       })
     })
 
     it('should prevent updating protected fields', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
-      mockReq.body = {
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
+      mockReq.data = {
         email: 'newemail@example.com', // Should not be allowed
         subscriptionStatus: 'active', // Should not be allowed
         emailPreferences: {
@@ -253,7 +222,7 @@ subscriberId: 'sub-1',
         },
       }
       
-      await postEndpoint.handler(mockReq, mockRes)
+      await postEndpoint.handler(mockReq)
       
       // Should only update allowed fields
       expect(mockReq.payload.update).toHaveBeenCalledWith(
@@ -273,39 +242,33 @@ subscriberId: 'sub-1',
 
   describe('Error Handling', () => {
     it('should handle non-existent subscribers', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-999',
-        email: 'ghost@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token for non-existent subscriber
+      const sessionToken = generateSessionToken('sub-999', 'ghost@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
       
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(404)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Subscriber not found',
       })
     })
 
     it('should handle database errors gracefully', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token
+      const sessionToken = generateSessionToken('sub-1', 'active@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
       mockReq.payload.findByID.mockRejectedValueOnce(new Error('Database error'))
       
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(500)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Failed to get preferences',
       })
@@ -314,18 +277,15 @@ subscriberId: 'sub-1',
 
   describe('Unsubscribed Users', () => {
     it('should allow unsubscribed users to view preferences', async () => {
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-subscriberId: 'sub-3',
-        email: 'unsubscribed@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token for unsubscribed user
+      const sessionToken = generateSessionToken('sub-3', 'unsubscribed@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
       
-      await getEndpoint.handler(mockReq, mockRes)
+      const response = await getEndpoint.handler(mockReq)
       
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.objectContaining({
           subscriptionStatus: 'unsubscribed',
@@ -336,25 +296,22 @@ subscriberId: 'sub-3',
     it('should prevent unsubscribed users from updating preferences', async () => {
       mockReq.method = 'POST'
       
-      // Mock JWT verification
-      vi.mocked(verifySessionToken).mockReturnValue({
-        subscriberId: 'sub-3',
-        email: 'unsubscribed@example.com',
-        type: 'session' as const,
-      })
+      // Create a real session token for unsubscribed user
+      const sessionToken = generateSessionToken('sub-3', 'unsubscribed@example.com')
       
-      mockReq.headers.authorization = 'Bearer valid-token'
-      mockReq.body = {
+      mockReq.headers.set('authorization', `Bearer ${sessionToken}`)
+      mockReq.data = {
         emailPreferences: {
           newsletter: true,
         },
       }
       
-      await postEndpoint.handler(mockReq, mockRes)
+      const response = await postEndpoint.handler(mockReq)
       
       // The endpoint currently allows unsubscribed users to update preferences
       // This test documents that additional validation would be beneficial
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
         subscriber: expect.any(Object),
       })

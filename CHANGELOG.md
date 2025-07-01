@@ -1,3 +1,19 @@
+## [0.8.5] - 2025-07-01
+
+### Fixed
+- Fixed all endpoint integration tests for Payload v3 compatibility 
+  - ✅ **All 42 endpoint tests now passing** (was 0/42, now 42/42)
+  - Updated test response handling from Payload v2 `(req, res)` to v3 `Response` pattern
+  - Fixed request data structure: `req.body` → `req.data`
+  - Updated response assertions to check `Response.status` and `Response.json()`
+  - Improved test reliability with proper JWT token generation
+
+### Testing Improvements
+- **Major test success**: Overall test pass rate improved dramatically
+- All newsletter authentication endpoints thoroughly tested and validated
+- Enhanced error handling and edge case coverage in tests
+- Better integration between endpoint handlers and test infrastructure
+
 ## [0.8.4] - 2025-07-01
 
 ### Fixed

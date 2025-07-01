@@ -1,12 +1,12 @@
+// Set environment variables before any imports
+process.env.JWT_SECRET = 'test-jwt-secret'
+process.env.PAYLOAD_SECRET = 'test-payload-secret'
+
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-
-// Mock JWT utils before imports
-vi.mock('../../../utils/jwt')
-
 import { createVerifyMagicLinkEndpoint } from '../../../endpoints/verify-magic-link'
 import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
-import { verifyMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
+import { generateMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
 
 describe('Verify Magic Link Endpoint', () => {
   let endpoint: any
@@ -25,14 +25,8 @@ describe('Verify Magic Link Endpoint', () => {
     
     mockReq = {
       payload: payloadMock.payload,
-      body: {},
-      headers: {},
-    }
-    
-    mockRes = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
-      cookie: vi.fn().mockReturnThis(),
+      data: {},
+      headers: new Headers(),
     }
     
     vi.clearAllMocks()
@@ -40,76 +34,71 @@ describe('Verify Magic Link Endpoint', () => {
 
   describe('Token Validation', () => {
     it('should reject requests without a token', async () => {
-      await endpoint.handler(mockReq, mockRes)
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(400)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Token is required',
       })
     })
 
     it('should reject invalid tokens', async () => {
-      vi.mocked(verifyMagicLinkToken).mockImplementation(() => {
-        throw new Error('Invalid or expired token')
-      })
-
-      mockReq.body = { token: 'invalid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token: 'invalid-token' }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(401)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
-        error: 'Invalid or expired token',
+        error: 'Invalid magic link token',
       })
     })
 
     it('should reject tokens for non-existent subscribers', async () => {
-      vi.mocked(verifyMagicLinkToken).mockReturnValue({
-subscriberId: 'non-existent',
-        email: 'ghost@example.com',
-        type: 'magic-link' as const,
-      })
+      // Create a token for non-existent subscriber
+      const config = { subscribersSlug: 'subscribers' }
+      const token = generateMagicLinkToken('non-existent', 'ghost@example.com', config)
 
-      mockReq.body = { token: 'valid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(404)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Subscriber not found',
       })
     })
 
     it('should reject tokens with mismatched email', async () => {
-      vi.mocked(verifyMagicLinkToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'wrong@example.com', // Doesn't match subscriber email
-        type: 'magic-link' as const,
-      })
+      // Create a token with wrong email
+      const config = { subscribersSlug: 'subscribers' }
+      const token = generateMagicLinkToken('sub-1', 'wrong@example.com', config)
 
-      mockReq.body = { token: 'valid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(401)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'Invalid token',
       })
     })
 
     it('should reject unsubscribed users', async () => {
-      vi.mocked(verifyMagicLinkToken).mockReturnValue({
-subscriberId: 'sub-3', // Unsubscribed user
-        email: 'unsubscribed@example.com',
-        type: 'magic-link' as const,
-      })
+      // Create a token for unsubscribed user
+      const config = { subscribersSlug: 'subscribers' }
+      const token = generateMagicLinkToken('sub-3', 'unsubscribed@example.com', config)
 
-      mockReq.body = { token: 'valid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token }
+      const response = await endpoint.handler(mockReq)
       
-      expect(mockRes.status).toHaveBeenCalledWith(403)
-      expect(mockRes.json).toHaveBeenCalledWith({
+      expect(response.status).toBe(403)
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: false,
         error: 'This email has been unsubscribed',
       })
@@ -118,15 +107,12 @@ subscriberId: 'sub-3', // Unsubscribed user
 
   describe('Successful Verification', () => {
     it('should activate pending subscribers', async () => {
-      vi.mocked(verifyMagicLinkToken).mockReturnValue({
-subscriberId: 'sub-2', // Pending subscriber
-        email: 'pending@example.com',
-        type: 'magic-link' as const,
-      })
-      vi.mocked(generateSessionToken).mockReturnValue('session-token-123')
+      // Create a valid token for pending subscriber
+      const config = { subscribersSlug: 'subscribers' }
+      const token = generateMagicLinkToken('sub-2', 'pending@example.com', config)
 
-      mockReq.body = { token: 'valid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token }
+      const response = await endpoint.handler(mockReq)
       
       // Check that update was called with correct params
       expect(mockReq.payload.update).toHaveBeenCalledWith({
@@ -143,9 +129,10 @@ subscriberId: 'sub-2', // Pending subscriber
         },
       })
       
-      expect(mockRes.json).toHaveBeenCalledWith({
+      const responseData = await response.json()
+      expect(responseData).toEqual({
         success: true,
-        sessionToken: 'session-token-123',
+        sessionToken: expect.any(String),
         subscriber: expect.objectContaining({
           id: 'sub-2',
           email: 'pending@example.com',
@@ -154,15 +141,12 @@ subscriberId: 'sub-2', // Pending subscriber
     })
 
     it('should clear magic link tokens after use', async () => {
-      vi.mocked(verifyMagicLinkToken).mockReturnValue({
-subscriberId: 'sub-2',
-        email: 'pending@example.com',
-        type: 'magic-link' as const,
-      })
-      vi.mocked(generateSessionToken).mockReturnValue('session-token-123')
+      // Create a valid token for pending subscriber
+      const config = { subscribersSlug: 'subscribers' }
+      const token = generateMagicLinkToken('sub-2', 'pending@example.com', config)
 
-      mockReq.body = { token: 'valid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token }
+      await endpoint.handler(mockReq)
       
       // Check token clearing
       expect(mockReq.payload.update).toHaveBeenCalledWith({
@@ -178,15 +162,12 @@ subscriberId: 'sub-2',
     })
 
     it('should generate synthetic user for operations', async () => {
-      vi.mocked(verifyMagicLinkToken).mockReturnValue({
-subscriberId: 'sub-1',
-        email: 'active@example.com',
-        type: 'magic-link' as const,
-      })
-      vi.mocked(generateSessionToken).mockReturnValue('session-token-123')
+      // Create a valid token for active subscriber
+      const config = { subscribersSlug: 'subscribers' }
+      const token = generateMagicLinkToken('sub-1', 'active@example.com', config)
 
-      mockReq.body = { token: 'valid-token' }
-      await endpoint.handler(mockReq, mockRes)
+      mockReq.data = { token }
+      await endpoint.handler(mockReq)
       
       // Verify synthetic user structure in all update calls
       const updateCalls = (mockReq.payload.update as any).mock.calls
