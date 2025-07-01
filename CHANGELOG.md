@@ -1,3 +1,27 @@
+## [0.8.0] - 2025-07-01
+
+### Added
+- Complete welcome email implementation with customizable templates
+  - Welcome emails are now sent automatically after subscriber verification
+  - Support for custom React Email templates via the `hooks.afterSubscribe` configuration
+  - Built-in welcome email template with modern styling
+- Unsubscribe sync feature for bidirectional synchronization
+  - Poll email services (Broadcast/Resend) for unsubscribed users
+  - Automatically update subscriber status in Payload
+  - Configurable sync schedule via cron expressions
+  - Support for manual triggering via Payload jobs system
+  - New `afterUnsubscribeSync` hook for custom logic after sync
+- Payload Jobs Queue integration for background tasks
+
+### Changed
+- Improved afterCreate hook to properly send welcome emails
+- Enhanced plugin configuration with new `features.unsubscribeSync` options
+
+### Documentation
+- Added comprehensive unsubscribe sync documentation
+- Added release process documentation
+- Updated README with new features
+
 ## [0.7.1] - 2025-06-30
 
 ### Fixed
