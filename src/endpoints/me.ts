@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, ExtendedPayloadRequest } from '../types'
 import { verifySessionToken } from '../utils/jwt'
 
 export const createMeEndpoint = (
@@ -8,7 +8,7 @@ export const createMeEndpoint = (
   return {
     path: '/newsletter/me',
     method: 'get',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
         // Get token from cookie
         const token = req.cookies?.['newsletter-auth']

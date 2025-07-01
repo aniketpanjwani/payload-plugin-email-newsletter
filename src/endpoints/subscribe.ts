@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, Subscriber, SubscribeRequestData, ExtendedPayloadRequest } from '../types'
 import { 
   isDomainAllowed, 
   sanitizeInput, 
@@ -15,7 +15,7 @@ export const createSubscribeEndpoint = (
   return {
     path: '/newsletter/subscribe',
     method: 'post',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
         const { 
           email, 
@@ -25,7 +25,7 @@ export const createSubscribeEndpoint = (
           leadMagnet,
           surveyResponses,
           metadata = {}
-        } = req.data
+        } = req.data as SubscribeRequestData
 
         // Trim email before validation
         const trimmedEmail = email?.trim()
@@ -47,7 +47,7 @@ export const createSubscribeEndpoint = (
           // No user context for public endpoint
         })
 
-        const allowedDomains = settings?.subscriptionSettings?.allowedDomains?.map((d: any) => d.domain) || []
+        const allowedDomains = settings?.subscriptionSettings?.allowedDomains?.map((d: { domain: string }) => d.domain) || []
         if (!isDomainAllowed(trimmedEmail, allowedDomains)) {
           return Response.json({
             success: false,
@@ -90,7 +90,7 @@ export const createSubscribeEndpoint = (
         }
 
         // Check IP rate limiting
-        const ipAddress = req.ip || req.connection.remoteAddress
+        const ipAddress = req.ip || req.connection?.remoteAddress
         const maxPerIP = settings?.subscriptionSettings?.maxSubscribersPerIP || 10
 
         const ipSubscribers = await req.payload.find({
@@ -111,7 +111,7 @@ export const createSubscribeEndpoint = (
         }
 
         // Extract UTM parameters
-        const referer = req.headers.referer || req.headers.referrer || ''
+        const referer = req.headers.get('referer') || req.headers.get('referrer') || ''
         let utmParams = {}
         if (referer) {
           try {
@@ -122,7 +122,7 @@ export const createSubscribeEndpoint = (
         }
 
         // Prepare subscriber data
-        const subscriberData: any = {
+        const subscriberData: Partial<Subscriber> = {
           email: trimmedEmail.toLowerCase(),
           name: name ? sanitizeInput(name) : undefined,
           locale: metadata.locale || config.i18n?.defaultLocale || 'en',
@@ -135,7 +135,7 @@ export const createSubscribeEndpoint = (
           },
           signupMetadata: {
             ipAddress,
-            userAgent: req.headers['user-agent'],
+            userAgent: req.headers.get('user-agent') || undefined,
             referrer: referer,
             signupPage: metadata.signupPage || referer,
           },
@@ -179,7 +179,7 @@ export const createSubscribeEndpoint = (
             const magicLinkURL = generateMagicLinkURL(token, serverURL, config)
             
             // Get email service
-            const emailService = (req.payload as any).newsletterEmailService
+            const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
             
             if (emailService) {
               // Render email

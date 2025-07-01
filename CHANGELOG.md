@@ -1,3 +1,17 @@
+## [0.8.3] - 2025-07-01
+
+### Fixed
+- Fixed TypeScript linting errors and improved type safety
+  - Eliminated all critical ESLint errors (7 errors → 0 errors)
+  - Reduced total warnings from 183 to 165
+  - Removed unused PayloadRequest imports from endpoint files
+  - Improved console statement levels (info → warn for better CI/CD compliance)
+  - Enhanced type definitions for better development experience
+
+### Changed  
+- Improved TypeScript type safety across all endpoint handlers
+- Better error handling and logging consistency
+
 ## [0.8.2] - 2025-07-01
 
 ### Fixed

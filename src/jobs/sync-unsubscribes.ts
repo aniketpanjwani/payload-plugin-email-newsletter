@@ -1,15 +1,15 @@
-import type { TaskConfig } from 'payload'
+import type { TaskConfig, PayloadRequest } from 'payload'
 import type { NewsletterPluginConfig } from '../types/index'
 
 export const createUnsubscribeSyncJob = (
   pluginConfig: NewsletterPluginConfig
-): TaskConfig<any> => {
+): TaskConfig => {
   return {
     slug: 'sync-unsubscribes',
     label: 'Sync Unsubscribes from Email Service',
-    handler: async ({ req }) => {
+    handler: async ({ req }: { req: PayloadRequest }) => {
       const subscribersSlug = pluginConfig.subscribersSlug || 'subscribers'
-      const emailService = (req.payload as any).newsletterEmailService
+      const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
       
       if (!emailService) {
         console.error('Email service not configured')
@@ -25,7 +25,7 @@ export const createUnsubscribeSyncJob = (
       try {
         // For Broadcast: Poll all subscribers
         if (emailService.getProvider() === 'broadcast') {
-          console.log('Starting Broadcast unsubscribe sync...')
+          console.warn('Starting Broadcast unsubscribe sync...')
           
           // Get Broadcast configuration
           const broadcastConfig = pluginConfig.providers?.broadcast
@@ -90,7 +90,7 @@ export const createUnsubscribeSyncJob = (
                     },
                   })
                   syncedCount++
-                  console.log(`Unsubscribed: ${broadcastSub.email}`)
+                  console.warn(`Unsubscribed: ${broadcastSub.email}`)
                 }
               }
             }
@@ -103,12 +103,12 @@ export const createUnsubscribeSyncJob = (
             }
           }
 
-          console.log(`Broadcast sync complete. Unsubscribed ${syncedCount} contacts.`)
+          console.warn(`Broadcast sync complete. Unsubscribed ${syncedCount} contacts.`)
         }
 
         // For Resend: Use Audiences API
         if (emailService.getProvider() === 'resend') {
-          console.log('Starting Resend unsubscribe sync...')
+          console.warn('Starting Resend unsubscribe sync...')
           
           // Note: Resend webhooks are preferred over polling
           // This is a fallback polling implementation
@@ -125,7 +125,7 @@ export const createUnsubscribeSyncJob = (
           // 2. For each audience, list contacts
           // 3. Check unsubscribed status
           
-          console.log('Resend polling implementation needed - webhooks recommended')
+          console.warn('Resend polling implementation needed - webhooks recommended')
         }
 
         // Custom after sync hook

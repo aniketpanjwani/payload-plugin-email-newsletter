@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, UnsubscribeRequestData, ExtendedPayloadRequest } from '../types'
 import { isValidEmail } from '../utils/validation'
 
 export const createUnsubscribeEndpoint = (
@@ -8,9 +8,9 @@ export const createUnsubscribeEndpoint = (
   return {
     path: '/newsletter/unsubscribe',
     method: 'post',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        const { email, token } = req.data
+        const { email, token } = req.data as UnsubscribeRequestData
 
         // Two methods: email or token
         if (!email && !token) {
@@ -29,7 +29,7 @@ export const createUnsubscribeEndpoint = (
             const payload = jwt.verify(
               token,
               process.env.JWT_SECRET || process.env.PAYLOAD_SECRET || ''
-            ) as any
+            ) as { type: string; subscriberId: string; email: string }
 
             if (payload.type !== 'unsubscribe') {
               throw new Error('Invalid token type')
@@ -49,7 +49,7 @@ export const createUnsubscribeEndpoint = (
           }
         } else {
           // Email-based unsubscribe
-          if (!isValidEmail(email)) {
+          if (!email || !isValidEmail(email)) {
             return Response.json({
               success: false,
               error: 'Invalid email format',
@@ -60,7 +60,7 @@ export const createUnsubscribeEndpoint = (
             collection: config.subscribersSlug || 'subscribers',
             where: {
               email: {
-                equals: email.toLowerCase(),
+                equals: email!.toLowerCase(),
               },
             },
           })

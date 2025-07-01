@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, Subscriber, UpdatePreferencesRequestData, ExtendedPayloadRequest } from '../types'
 import { verifySessionToken } from '../utils/jwt'
 
 export const createPreferencesEndpoint = (
@@ -8,10 +8,10 @@ export const createPreferencesEndpoint = (
   return {
     path: '/newsletter/preferences',
     method: 'get',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
         // Get token from Authorization header
-        const authHeader = req.headers.authorization
+        const authHeader = req.headers.get('authorization')
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
           return Response.json({
             success: false,
@@ -79,10 +79,10 @@ export const createUpdatePreferencesEndpoint = (
   return {
     path: '/newsletter/preferences',
     method: 'post',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
         // Get token from Authorization header
-        const authHeader = req.headers.authorization
+        const authHeader = req.headers.get('authorization')
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
           return Response.json({
             success: false,
@@ -103,10 +103,10 @@ export const createUpdatePreferencesEndpoint = (
           }, { status: 401 })
         }
 
-        const { name, locale, emailPreferences } = req.data
+        const { name, locale, emailPreferences } = req.data as UpdatePreferencesRequestData
 
         // Prepare update data
-        const updateData: any = {}
+        const updateData: Partial<Subscriber> = {}
         
         if (name !== undefined) {
           updateData.name = name

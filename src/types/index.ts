@@ -271,6 +271,17 @@ export interface Subscriber {
     content?: string
     term?: string
   }
+  // Additional fields that may exist in the database
+  signupMetadata?: {
+    ipAddress?: string
+    userAgent?: string
+    referrer?: string
+    signupPage?: string
+  }
+  leadMagnet?: string
+  unsubscribedAt?: string
+  magicLinkToken?: string
+  magicLinkTokenExpiry?: string
   createdAt: string
   updatedAt: string
 }
@@ -404,4 +415,57 @@ export interface SurveyQuestion {
   type: 'text' | 'select' | 'multiselect' | 'radio'
   options?: string[]
   required?: boolean
+}
+
+// Request data interfaces for endpoints
+export interface SubscribeRequestData {
+  email: string
+  name?: string
+  source?: string
+  preferences?: { [key: string]: boolean }
+  leadMagnet?: string
+  surveyResponses?: { [key: string]: string | string[] }
+  metadata?: {
+    locale?: string
+    signupPage?: string
+    [key: string]: unknown
+  }
+}
+
+export interface UnsubscribeRequestData {
+  email?: string
+  token?: string
+}
+
+export interface VerifyMagicLinkRequestData {
+  token: string
+}
+
+export interface SigninRequestData {
+  email: string
+}
+
+export interface UpdatePreferencesRequestData {
+  name?: string
+  locale?: string
+  emailPreferences?: { [key: string]: boolean }
+}
+
+// Extended request types with proper data typing
+export interface ExtendedPayloadRequest {
+  payload: any // TODO: Add proper payload type
+  headers: Headers & {
+    authorization?: string
+    referer?: string
+    referrer?: string
+    'user-agent'?: string
+  }
+  data: unknown
+  ip?: string
+  connection?: {
+    remoteAddress?: string
+  }
+  cookies?: {
+    [key: string]: string
+  }
 }

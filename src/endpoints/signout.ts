@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, ExtendedPayloadRequest } from '../types'
 
 export const createSignoutEndpoint = (
   _config: NewsletterPluginConfig
@@ -7,7 +7,7 @@ export const createSignoutEndpoint = (
   return {
     path: '/newsletter/signout',
     method: 'post',
-    handler: ((req: any) => {
+    handler: ((_req: ExtendedPayloadRequest) => {
       try {
         // In Payload v3, cookies are handled differently
         // The Response object doesn't have a clearCookie method

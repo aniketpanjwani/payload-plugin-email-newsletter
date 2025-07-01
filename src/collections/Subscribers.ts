@@ -222,7 +222,7 @@ export const createSubscribersCollection = (
           // After create logic
           if (operation === 'create') {
             // Add to email service
-            const emailService = (req.payload as any).newsletterEmailService
+            const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
             if (emailService) {
               try {
                 await emailService.addContact(doc)
@@ -254,7 +254,7 @@ export const createSubscribersCollection = (
                   html,
                 })
                 
-                console.log(`Welcome email sent to: ${doc.email}`)
+                console.info(`Welcome email sent to: ${doc.email}`)
               } catch (error) {
                 console.error('Failed to send welcome email:', error)
                 // Don't fail the subscription if welcome email fails
@@ -270,7 +270,7 @@ export const createSubscribersCollection = (
           // After update logic
           if (operation === 'update' && previousDoc) {
             // Update email service if status changed
-            const emailService = (req.payload as any).newsletterEmailService
+            const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
             if (
               doc.subscriptionStatus !== previousDoc.subscriptionStatus &&
               emailService
@@ -301,7 +301,7 @@ export const createSubscribersCollection = (
       beforeDelete: [
         async ({ id, req }) => {
           // Remove from email service
-          const emailService = (req.payload as any).newsletterEmailService
+          const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
           if (emailService) {
             try {
               const doc = await req.payload.findByID({

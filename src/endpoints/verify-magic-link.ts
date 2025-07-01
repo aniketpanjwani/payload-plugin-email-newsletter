@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, VerifyMagicLinkRequestData, ExtendedPayloadRequest } from '../types'
 import { 
   verifyMagicLinkToken, 
   generateSessionToken 
@@ -12,9 +12,9 @@ export const createVerifyMagicLinkEndpoint = (
   return {
     path: '/newsletter/verify-magic-link',
     method: 'post',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        const { token } = req.data
+        const { token } = req.data as VerifyMagicLinkRequestData
 
         if (!token) {
           return Response.json({
@@ -108,7 +108,7 @@ export const createVerifyMagicLinkEndpoint = (
         if (isNewlyActivated) {
           try {
             // Get email service
-            const emailService = (req.payload as any).newsletterEmailService
+            const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
             
             if (emailService) {
               // Get settings for site name

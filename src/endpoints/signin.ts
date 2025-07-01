@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadHandler } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, SigninRequestData, ExtendedPayloadRequest } from '../types'
 import { validateSubscriberData } from '../utils/validation'
 import { generateMagicLinkToken, generateMagicLinkURL } from '../utils/jwt'
 import { renderEmail } from '../emails/render'
@@ -18,9 +18,9 @@ export const createSigninEndpoint = (
   return {
     path: '/newsletter/signin',
     method: 'post',
-    handler: (async (req: any) => {
+    handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        const { email } = req.data
+        const { email } = req.data as SigninRequestData
 
         // Validate email
         const validation = validateSubscriberData({ email })
@@ -74,7 +74,7 @@ export const createSigninEndpoint = (
         const magicLinkURL = generateMagicLinkURL(token, serverURL, config)
 
         // Get email service
-        const emailService = (req.payload as any).newsletterEmailService
+        const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
 
         if (emailService) {
           // Get settings for customization
