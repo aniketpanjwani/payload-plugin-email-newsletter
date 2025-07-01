@@ -8,16 +8,16 @@ export const createUnsubscribeEndpoint = (
   return {
     path: '/newsletter/unsubscribe',
     method: 'post',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
-        const { email, token } = req.body
+        const { email, token } = req.data
 
         // Two methods: email or token
         if (!email && !token) {
-          return res.status(400).json({
+          return Response.json({
             success: false,
             error: 'Email or token is required',
-          })
+          }, { status: 400 })
         }
 
         let subscriber
@@ -42,18 +42,18 @@ export const createUnsubscribeEndpoint = (
               id: payload.subscriberId,
             })
           } catch {
-            return res.status(401).json({
+            return Response.json({
               success: false,
               error: 'Invalid or expired unsubscribe link',
-            })
+            }, { status: 401 })
           }
         } else {
           // Email-based unsubscribe
           if (!isValidEmail(email)) {
-            return res.status(400).json({
+            return Response.json({
               success: false,
               error: 'Invalid email format',
-            })
+            }, { status: 400 })
           }
 
           const result = await req.payload.find({
@@ -67,7 +67,7 @@ export const createUnsubscribeEndpoint = (
 
           if (result.docs.length === 0) {
             // Don't reveal if email exists or not
-            return res.json({
+            return Response.json({
               success: true,
               message: 'If this email was subscribed, it has been unsubscribed.',
             })
@@ -77,7 +77,7 @@ export const createUnsubscribeEndpoint = (
         }
 
         if (!subscriber) {
-          return res.json({
+          return Response.json({
             success: true,
             message: 'If this email was subscribed, it has been unsubscribed.',
           })
@@ -85,7 +85,7 @@ export const createUnsubscribeEndpoint = (
 
         // Check if already unsubscribed
         if (subscriber.subscriptionStatus === 'unsubscribed') {
-          return res.json({
+          return Response.json({
             success: true,
             message: 'Already unsubscribed',
           })
@@ -107,16 +107,16 @@ export const createUnsubscribeEndpoint = (
           },
         })
 
-        res.json({
+        return Response.json({
           success: true,
           message: 'Successfully unsubscribed',
         })
       } catch (error: unknown) {
         console.error('Unsubscribe error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to unsubscribe. Please try again.',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }

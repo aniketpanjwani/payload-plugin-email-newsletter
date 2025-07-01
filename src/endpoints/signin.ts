@@ -18,17 +18,17 @@ export const createSigninEndpoint = (
   return {
     path: '/newsletter/signin',
     method: 'post',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
-        const { email } = req.body
+        const { email } = req.data
 
         // Validate email
         const validation = validateSubscriberData({ email })
         if (!validation.valid) {
-          return res.status(400).json({
+          return Response.json({
             success: false,
             errors: validation.errors,
-          })
+          }, { status: 400 })
         }
 
         // Check rate limit (per email to prevent abuse)
@@ -36,10 +36,10 @@ export const createSigninEndpoint = (
         const allowed = await signinRateLimiter.checkLimit(rateLimitKey)
         
         if (!allowed) {
-          return res.status(429).json({
+          return Response.json({
             success: false,
             error: 'Too many sign-in attempts. Please try again later.',
-          })
+          }, { status: 429 })
         }
 
         // Find existing active subscriber
@@ -54,10 +54,10 @@ export const createSigninEndpoint = (
         })
 
         if (result.docs.length === 0) {
-          return res.status(404).json({
+          return Response.json({
             success: false,
             error: 'Email not found. Please subscribe first.',
-          })
+          }, { status: 404 })
         }
 
         const subscriber = result.docs[0]
@@ -104,16 +104,16 @@ export const createSigninEndpoint = (
           console.warn('Email service not initialized, cannot send sign-in link')
         }
 
-        res.json({
+        return Response.json({
           success: true,
           message: 'Check your email for the sign-in link',
         })
       } catch (error) {
         console.error('Sign-in error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to process sign-in request',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }

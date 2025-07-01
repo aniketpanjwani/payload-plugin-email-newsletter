@@ -1,3 +1,22 @@
+## [0.8.2] - 2025-07-01
+
+### Fixed
+- Fixed newsletter plugin endpoint handlers for Payload v3 compatibility
+  - Updated all endpoint handlers to use new Payload v3 response pattern
+  - Changed handler signatures from `(req, res)` to `(req)` 
+  - Replaced `res.status().json()` with `return Response.json()`
+  - Fixed `req.body` to `req.data` for request data access
+  - Resolves "Cannot read properties of undefined (reading 'status')" error
+
+### Changed
+- All newsletter authentication endpoints now properly work with Payload v3
+- Improved error handling and response consistency across all endpoints
+
+## [0.8.1] - 2025-07-01
+
+### Fixed
+- Minor bug fixes and improvements
+
 ## [0.8.0] - 2025-07-01
 
 ### Added

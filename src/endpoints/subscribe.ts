@@ -15,7 +15,7 @@ export const createSubscribeEndpoint = (
   return {
     path: '/newsletter/subscribe',
     method: 'post',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
         const { 
           email, 
@@ -25,7 +25,7 @@ export const createSubscribeEndpoint = (
           leadMagnet,
           surveyResponses,
           metadata = {}
-        } = req.body
+        } = req.data
 
         // Trim email before validation
         const trimmedEmail = email?.trim()
@@ -33,10 +33,10 @@ export const createSubscribeEndpoint = (
         // Validate input
         const validation = validateSubscriberData({ email: trimmedEmail, name, source })
         if (!validation.valid) {
-          return res.status(400).json({
+          return Response.json({
             success: false,
             errors: validation.errors,
-          })
+          }, { status: 400 })
         }
 
         // Check domain restrictions from global settings
@@ -49,10 +49,10 @@ export const createSubscribeEndpoint = (
 
         const allowedDomains = settings?.subscriptionSettings?.allowedDomains?.map((d: any) => d.domain) || []
         if (!isDomainAllowed(trimmedEmail, allowedDomains)) {
-          return res.status(400).json({
+          return Response.json({
             success: false,
             error: 'Email domain not allowed',
-          })
+          }, { status: 400 })
         }
 
         // Check if already subscribed
@@ -72,13 +72,13 @@ export const createSubscribeEndpoint = (
           
           // If unsubscribed, don't allow resubscription via API
           if (subscriber.subscriptionStatus === 'unsubscribed') {
-            return res.status(400).json({
+            return Response.json({
               success: false,
               error: 'This email has been unsubscribed. Please contact support to resubscribe.',
-            })
+            }, { status: 400 })
           }
 
-          return res.status(400).json({
+          return Response.json({
             success: false,
             error: 'Already subscribed',
             subscriber: {
@@ -86,7 +86,7 @@ export const createSubscribeEndpoint = (
               email: subscriber.email,
               subscriptionStatus: subscriber.subscriptionStatus,
             },
-          })
+          }, { status: 400 })
         }
 
         // Check IP rate limiting
@@ -104,10 +104,10 @@ export const createSubscribeEndpoint = (
         })
 
         if (ipSubscribers.docs.length >= maxPerIP) {
-          return res.status(429).json({
+          return Response.json({
             success: false,
             error: 'Too many subscriptions from this IP address',
-          })
+          }, { status: 429 })
         }
 
         // Extract UTM parameters
@@ -207,7 +207,7 @@ export const createSubscribeEndpoint = (
           }
         }
 
-        res.json({
+        return Response.json({
           success: true,
           subscriber: {
             id: subscriber.id,
@@ -219,10 +219,10 @@ export const createSubscribeEndpoint = (
             : 'Successfully subscribed',
         })
       } catch {
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to subscribe. Please try again.',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }

@@ -7,26 +7,24 @@ export const createSignoutEndpoint = (
   return {
     path: '/newsletter/signout',
     method: 'post',
-    handler: ((req: any, res: any) => {
+    handler: ((req: any) => {
       try {
-        // Clear the auth cookie
-        res.clearCookie('newsletter-auth', {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-        })
+        // In Payload v3, cookies are handled differently
+        // The Response object doesn't have a clearCookie method
+        // We'll need to set the cookie with an expired date
+        const headers = new Headers()
+        headers.append('Set-Cookie', `newsletter-auth=; HttpOnly; Secure=${process.env.NODE_ENV === 'production'}; SameSite=Lax; Path=/; Max-Age=0`)
         
-        res.json({ 
+        return Response.json({ 
           success: true, 
           message: 'Signed out successfully' 
-        })
+        }, { headers })
       } catch (error) {
         console.error('Signout error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to sign out',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }

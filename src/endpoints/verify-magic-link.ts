@@ -12,15 +12,15 @@ export const createVerifyMagicLinkEndpoint = (
   return {
     path: '/newsletter/verify-magic-link',
     method: 'post',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
-        const { token } = req.body
+        const { token } = req.data
 
         if (!token) {
-          return res.status(400).json({
+          return Response.json({
             success: false,
             error: 'Token is required',
-          })
+          }, { status: 400 })
         }
 
         // Verify the magic link token
@@ -28,10 +28,10 @@ export const createVerifyMagicLinkEndpoint = (
         try {
           payload = verifyMagicLinkToken(token)
         } catch (error: unknown) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: error instanceof Error ? error.message : 'Invalid token',
-          })
+          }, { status: 401 })
         }
 
         // Find the subscriber - token verified so we can use admin access for initial lookup
@@ -42,26 +42,26 @@ export const createVerifyMagicLinkEndpoint = (
         })
 
         if (!subscriber) {
-          return res.status(404).json({
+          return Response.json({
             success: false,
             error: 'Subscriber not found',
-          })
+          }, { status: 404 })
         }
 
         // Check if email matches
         if (subscriber.email !== payload.email) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: 'Invalid token',
-          })
+          }, { status: 401 })
         }
 
         // Check if subscriber is active
         if (subscriber.subscriptionStatus === 'unsubscribed') {
-          return res.status(403).json({
+          return Response.json({
             success: false,
             error: 'This email has been unsubscribed',
-          })
+          }, { status: 403 })
         }
 
         // Create synthetic user for subscriber operations
@@ -142,15 +142,10 @@ export const createVerifyMagicLinkEndpoint = (
         }
 
         // Set the session cookie
-        res.cookie('newsletter-auth', sessionToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        })
+        const headers = new Headers()
+        headers.append('Set-Cookie', `newsletter-auth=${sessionToken}; HttpOnly; Secure=${process.env.NODE_ENV === 'production'}; SameSite=Lax; Path=/; Max-Age=${30 * 24 * 60 * 60}`)
 
-        res.json({
+        return Response.json({
           success: true,
           sessionToken,
           subscriber: {
@@ -160,13 +155,13 @@ export const createVerifyMagicLinkEndpoint = (
             locale: subscriber.locale,
             emailPreferences: subscriber.emailPreferences,
           },
-        })
+        }, { headers })
       } catch (error: unknown) {
         console.error('Verify magic link error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to verify magic link',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }

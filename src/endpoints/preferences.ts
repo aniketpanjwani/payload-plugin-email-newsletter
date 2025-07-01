@@ -8,15 +8,15 @@ export const createPreferencesEndpoint = (
   return {
     path: '/newsletter/preferences',
     method: 'get',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
         // Get token from Authorization header
         const authHeader = req.headers.authorization
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: 'Authorization required',
-          })
+          }, { status: 401 })
         }
 
         const token = authHeader.substring(7)
@@ -26,10 +26,10 @@ export const createPreferencesEndpoint = (
         try {
           payload = verifySessionToken(token)
         } catch (error: unknown) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: error instanceof Error ? error.message : 'Invalid token',
-          })
+          }, { status: 401 })
         }
 
         // Get subscriber - use synthetic user to ensure access control
@@ -45,13 +45,13 @@ export const createPreferencesEndpoint = (
         })
 
         if (!subscriber) {
-          return res.status(404).json({
+          return Response.json({
             success: false,
             error: 'Subscriber not found',
-          })
+          }, { status: 404 })
         }
 
-        res.json({
+        return Response.json({
           success: true,
           subscriber: {
             id: subscriber.id,
@@ -64,10 +64,10 @@ export const createPreferencesEndpoint = (
         })
       } catch (error: unknown) {
         console.error('Get preferences error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to get preferences',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }
@@ -79,15 +79,15 @@ export const createUpdatePreferencesEndpoint = (
   return {
     path: '/newsletter/preferences',
     method: 'post',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
         // Get token from Authorization header
         const authHeader = req.headers.authorization
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: 'Authorization required',
-          })
+          }, { status: 401 })
         }
 
         const token = authHeader.substring(7)
@@ -97,13 +97,13 @@ export const createUpdatePreferencesEndpoint = (
         try {
           payload = verifySessionToken(token)
         } catch (error: unknown) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: error instanceof Error ? error.message : 'Invalid token',
-          })
+          }, { status: 401 })
         }
 
-        const { name, locale, emailPreferences } = req.body
+        const { name, locale, emailPreferences } = req.data
 
         // Prepare update data
         const updateData: any = {}
@@ -133,7 +133,7 @@ export const createUpdatePreferencesEndpoint = (
           },
         })
 
-        res.json({
+        return Response.json({
           success: true,
           subscriber: {
             id: subscriber.id,
@@ -146,10 +146,10 @@ export const createUpdatePreferencesEndpoint = (
         })
       } catch (error: unknown) {
         console.error('Update preferences error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Failed to update preferences',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }

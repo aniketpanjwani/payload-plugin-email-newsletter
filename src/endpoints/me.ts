@@ -8,16 +8,16 @@ export const createMeEndpoint = (
   return {
     path: '/newsletter/me',
     method: 'get',
-    handler: (async (req: any, res: any) => {
+    handler: (async (req: any) => {
       try {
         // Get token from cookie
         const token = req.cookies?.['newsletter-auth']
         
         if (!token) {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: 'Not authenticated',
-          })
+          }, { status: 401 })
         }
 
         // Verify the session token
@@ -25,10 +25,10 @@ export const createMeEndpoint = (
         try {
           payload = verifySessionToken(token)
         } catch {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: 'Invalid or expired session',
-          })
+          }, { status: 401 })
         }
 
         // Get fresh subscriber data
@@ -39,13 +39,13 @@ export const createMeEndpoint = (
         })
 
         if (!subscriber || subscriber.subscriptionStatus !== 'active') {
-          return res.status(401).json({
+          return Response.json({
             success: false,
             error: 'Not authenticated',
-          })
+          }, { status: 401 })
         }
 
-        res.json({
+        return Response.json({
           success: true,
           subscriber: {
             id: subscriber.id,
@@ -62,10 +62,10 @@ export const createMeEndpoint = (
         })
       } catch (error) {
         console.error('Me endpoint error:', error)
-        res.status(500).json({
+        return Response.json({
           success: false,
           error: 'Internal server error',
-        })
+        }, { status: 500 })
       }
     }) as PayloadHandler,
   }
