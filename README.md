@@ -15,6 +15,7 @@ A complete newsletter management plugin for [Payload CMS](https://github.com/pay
 - 🌍 **Internationalization** - Multi-language support built-in
 - 📊 **Analytics Ready** - UTM tracking and signup metadata collection
 - ⚙️ **Admin UI Configuration** - Manage email settings through Payload admin panel
+- 🔄 **Bidirectional Sync** - Sync unsubscribes from email services back to Payload
 
 ## Quick Start
 
@@ -448,6 +449,28 @@ This adds a "Newsletter Scheduling" group to your articles with:
 - Audience segment selection
 - Send status tracking
 
+## Unsubscribe Sync
+
+The plugin supports bidirectional synchronization of unsubscribe states between Payload and your email service:
+
+```typescript
+features: {
+  unsubscribeSync: {
+    enabled: true,
+    schedule: '0 * * * *', // Hourly sync
+    queue: 'newsletter-sync' // Optional custom queue name
+  }
+}
+```
+
+This feature:
+- Polls your email service for unsubscribed users
+- Updates their status in Payload automatically
+- Supports both Broadcast and Resend providers
+- Can run on a schedule or be triggered manually
+
+For more details, see the [Unsubscribe Sync documentation](./docs/unsubscribe-sync.md).
+
 ## Email Providers
 
 ### Resend
@@ -561,7 +584,7 @@ newsletterPlugin({
 
 ### Access Control
 
-Starting from v0.3.0, the plugin implements proper access control for all operations:
+The plugin implements proper access control for all operations:
 
 - **Subscriber data**: Users can only access and modify their own data via magic link authentication
 - **Newsletter settings**: Only admin users can modify email provider settings and configurations
@@ -620,6 +643,15 @@ for (const subscriber of existingSubscribers) {
 ## Contributing
 
 We welcome contributions! Please see our [feedback and contribution guide](./FEEDBACK.md).
+
+### Release Process
+
+This project uses a developer-controlled release process:
+- **Version bumps happen locally** - You control when and what type
+- **CI/CD publishes automatically** - When it detects a version change
+- **No bot commits** - Your local repo stays in sync
+
+See [Release Documentation](./docs/RELEASE.md) for details.
 
 ## License
 
