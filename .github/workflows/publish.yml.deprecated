@@ -1,0 +1,6 @@
+# DEPRECATED: This workflow has been replaced by auto-release.yml
+# 
+# This workflow was triggered by version tags but is no longer needed
+# as auto-release.yml handles all release scenarios.
+#
+# Kept for reference only.

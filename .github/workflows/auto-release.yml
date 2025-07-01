@@ -1,10 +1,10 @@
-name: Auto Release
+name: Release
 
 on:
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release type'
+        description: 'Release type (minor/major releases require manual trigger)'
         required: true
         default: 'patch'
         type: choice
@@ -24,10 +24,17 @@ on:
       - '**/*.test.tsx'
       - '**/fixtures/**'
       - '**/mocks/**'
+      - 'docs/**'
+      - 'scripts/**'
 
 permissions:
   contents: write
   packages: write
+
+# Prevent multiple releases from running at the same time
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   check-ci:
@@ -101,26 +108,27 @@ jobs:
       - name: Determine version bump
         id: version
         run: |
-          # Default to patch for automatic releases
-          BUMP_TYPE="${{ github.event.inputs.release_type || 'patch' }}"
-          
-          # For automatic releases, analyze commit messages
-          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]]; then
-            # Get commits since last tag
+          # For manual triggers, use the specified release type
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BUMP_TYPE="${{ github.event.inputs.release_type }}"
+          else
+            # For automatic triggers (push), ONLY do patch releases
+            # Minor and major releases must be triggered manually
+            BUMP_TYPE="patch"
+            
+            # Optional: Check if commits indicate a feature/breaking change
+            # and add a warning comment if so
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
             
-            # Check commit messages for version hints
             if git log $LATEST_TAG..HEAD --pretty=format:"%s" | grep -qE "^(feat|feature)(\(.+\))?!:"; then
-              BUMP_TYPE="major"
+              echo "⚠️ Breaking change detected! Consider manual major release."
             elif git log $LATEST_TAG..HEAD --pretty=format:"%s" | grep -qE "^(feat|feature)(\(.+\))?:"; then
-              BUMP_TYPE="minor"
-            else
-              BUMP_TYPE="patch"
+              echo "⚠️ New feature detected! Consider manual minor release."
             fi
           fi
           
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
-          echo "Determined version bump: $BUMP_TYPE"
+          echo "Version bump type: $BUMP_TYPE (auto releases are always patch)"
           
       - name: Bump version
         run: |

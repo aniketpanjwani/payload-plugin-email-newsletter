@@ -1,4 +1,8 @@
-name: Release to npm
+# DEPRECATED: This workflow has been replaced by auto-release.yml
+# To prevent accidental triggers, this workflow is disabled.
+# Delete this file after confirming auto-release.yml works correctly.
+
+name: Release (DEPRECATED - DO NOT USE) to npm
 
 on:
   release:

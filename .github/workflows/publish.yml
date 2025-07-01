@@ -1,9 +1,14 @@
-name: Publish to npm
+# DEPRECATED: This workflow has been replaced by auto-release.yml
+# To prevent accidental triggers, this workflow is disabled.
+# Delete this file after confirming auto-release.yml works correctly.
+
+name: Publish to npm (DEPRECATED - DO NOT USE)
 
 on:
-  push:
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0.0, v0.1.1
+  workflow_dispatch: # Only manual trigger to prevent accidents
+  # push:
+  #   tags:
+  #     - 'v*' # Disabled to prevent duplicate releases
 
 permissions:
   contents: write # Allow creating releases
