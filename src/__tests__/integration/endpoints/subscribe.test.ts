@@ -18,7 +18,6 @@ import { createResendMock } from '../../mocks/email-providers'
 describe('Subscribe Endpoint Security', () => {
   let endpoint: any
   let mockReq: any
-  let mockRes: any
   let mockEmailService: any
   const config = {
     subscribersSlug: 'subscribers',

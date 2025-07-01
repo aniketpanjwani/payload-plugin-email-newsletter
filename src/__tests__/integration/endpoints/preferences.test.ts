@@ -12,7 +12,6 @@ describe('Preferences Endpoint Security', () => {
   let getEndpoint: any
   let postEndpoint: any
   let mockReq: any
-  let mockRes: any
   const config = {
     subscribersSlug: 'subscribers',
   }

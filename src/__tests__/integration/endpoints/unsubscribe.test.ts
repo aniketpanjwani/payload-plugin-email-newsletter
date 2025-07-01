@@ -19,7 +19,6 @@ import { mockSubscribers } from '../../fixtures/subscribers'
 describe('Unsubscribe Endpoint Security', () => {
   let endpoint: any
   let mockReq: any
-  let mockRes: any
   const config = {
     subscribersSlug: 'subscribers',
   }

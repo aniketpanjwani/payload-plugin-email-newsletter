@@ -6,12 +6,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createVerifyMagicLinkEndpoint } from '../../../endpoints/verify-magic-link'
 import { createPayloadRequestMock, clearCollections, seedCollection } from '../../mocks/payload'
 import { mockSubscribers } from '../../fixtures/subscribers'
-import { generateMagicLinkToken, generateSessionToken } from '../../../utils/jwt'
+import { generateMagicLinkToken } from '../../../utils/jwt'
 
 describe('Verify Magic Link Endpoint', () => {
   let endpoint: any
   let mockReq: any
-  let mockRes: any
   const config = {
     subscribersSlug: 'subscribers',
   }

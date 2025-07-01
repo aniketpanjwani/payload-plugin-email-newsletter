@@ -254,7 +254,7 @@ export const createSubscribersCollection = (
                   html,
                 })
                 
-                console.info(`Welcome email sent to: ${doc.email}`)
+                console.warn(`Welcome email sent to: ${doc.email}`)
               } catch (error) {
                 console.error('Failed to send welcome email:', error)
                 // Don't fail the subscription if welcome email fails
