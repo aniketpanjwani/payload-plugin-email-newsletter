@@ -112,6 +112,7 @@ export interface NewsletterPluginConfig {
     afterSubscribe?: (args: AfterSubscribeArgs) => void | Promise<void>
     beforeUnsubscribe?: (args: BeforeUnsubscribeArgs) => void | Promise<void>
     afterUnsubscribe?: (args: AfterUnsubscribeArgs) => void | Promise<void>
+    afterUnsubscribeSync?: (args: AfterUnsubscribeSyncArgs) => void | Promise<void>
   }
 
   /**
@@ -181,6 +182,27 @@ export interface NewsletterPluginConfig {
          */
         createMarkdownField?: boolean
       }
+    }
+    
+    /**
+     * Unsubscribe sync configuration
+     */
+    unsubscribeSync?: {
+      /**
+       * Enable sync of unsubscribes from email service to Payload
+       * @default false
+       */
+      enabled?: boolean
+      /**
+       * Cron schedule for sync job (e.g., '0 * * * *' for hourly)
+       * If not provided, job must be triggered manually
+       */
+      schedule?: string
+      /**
+       * Queue name for the sync job
+       * @default 'newsletter-sync'
+       */
+      queue?: string
     }
   }
 
@@ -369,6 +391,11 @@ export interface BeforeUnsubscribeArgs {
 export interface AfterUnsubscribeArgs {
   doc: Subscriber
   req: any
+}
+
+export interface AfterUnsubscribeSyncArgs {
+  req: any
+  syncedCount: number
 }
 
 export interface SurveyQuestion {
