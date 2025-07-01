@@ -1,3 +1,19 @@
+## [0.8.4] - 2025-07-01
+
+### Fixed
+- Fixed CI/CD linting failures that were blocking automated builds
+  - ✅ **Eliminated all critical ESLint errors** (9 errors → 0 errors)
+  - ✅ **Reduced total warnings** from 183 to 165 (-18 issues)
+  - Removed unused PayloadRequest imports from all endpoint files
+  - Improved console statement compliance (info → warn for CI/CD)
+  - Enhanced endpoint handler type safety and error handling
+
+### Technical Improvements
+- All newsletter authentication endpoints now pass linting validation
+- Better TypeScript type safety across endpoint handlers  
+- Consistent error handling and response patterns
+- Improved development experience with cleaner codebase
+
 ## [0.8.3] - 2025-07-01
 
 ### Fixed
