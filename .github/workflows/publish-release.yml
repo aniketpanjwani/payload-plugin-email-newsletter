@@ -3,8 +3,7 @@ name: Publish Release
 on:
   push:
     branches: [main]
-    paths:
-      - 'package.json'  # Only trigger when package.json changes
+  workflow_dispatch:  # Allow manual triggering
 
 permissions:
   contents: write
@@ -30,27 +29,31 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Package.json version: $CURRENT_VERSION"
           
-          # Check if this version tag already exists
-          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
-            echo "Tag v$CURRENT_VERSION already exists"
+          # Get latest version from npm
+          LATEST_NPM_VERSION=$(npm view payload-plugin-newsletter version 2>/dev/null || echo "0.0.0")
+          echo "Latest npm version: $LATEST_NPM_VERSION"
+          
+          # Check if this specific version is published to npm
+          NPM_VERSION=$(npm view payload-plugin-newsletter@$CURRENT_VERSION version 2>/dev/null || echo "")
+          
+          if [ -z "$NPM_VERSION" ]; then
+            echo "Version $CURRENT_VERSION is not published to npm"
             
-            # Check if it's published to npm
-            NPM_VERSION=$(npm view payload-plugin-newsletter@$CURRENT_VERSION version 2>/dev/null || echo "")
-            
-            if [ -z "$NPM_VERSION" ]; then
-              echo "Tag exists but not on npm - will retry publish"
+            # Check if tag exists
+            if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
+              echo "Tag v$CURRENT_VERSION already exists - will skip tag creation"
               echo "should_publish=true" >> $GITHUB_OUTPUT
               echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
               echo "skip_tag=true" >> $GITHUB_OUTPUT
             else
-              echo "Version already published to npm - skipping"
-              echo "should_publish=false" >> $GITHUB_OUTPUT
+              echo "Tag v$CURRENT_VERSION does not exist - will create it"
+              echo "should_publish=true" >> $GITHUB_OUTPUT
+              echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+              echo "skip_tag=false" >> $GITHUB_OUTPUT
             fi
           else
-            echo "Version v$CURRENT_VERSION is new - will publish"
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-            echo "skip_tag=false" >> $GITHUB_OUTPUT
+            echo "Version $CURRENT_VERSION is already published to npm - skipping"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
           fi
           
       - name: Setup environment
@@ -71,7 +74,7 @@ jobs:
         
       - name: Run tests
         if: steps.check.outputs.should_publish == 'true'
-        run: bun test
+        run: bun run test
         
       - name: Build
         if: steps.check.outputs.should_publish == 'true'
