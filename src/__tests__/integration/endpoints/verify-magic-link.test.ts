@@ -25,6 +25,7 @@ describe('Verify Magic Link Endpoint', () => {
     mockReq = {
       payload: payloadMock.payload,
       data: {},
+      json: async () => mockReq.data,
       headers: new Headers(),
     }
     

@@ -10,7 +10,8 @@ export const createUnsubscribeEndpoint = (
     method: 'post',
     handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        const { email, token } = req.data as UnsubscribeRequestData
+        const data = await req.json()
+        const { email, token } = data as UnsubscribeRequestData
 
         // Two methods: email or token
         if (!email && !token) {

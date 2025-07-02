@@ -17,6 +17,7 @@ export const createSubscribeEndpoint = (
     method: 'post',
     handler: (async (req: ExtendedPayloadRequest) => {
       try {
+        const data = await req.json()
         const { 
           email, 
           name, 
@@ -25,7 +26,7 @@ export const createSubscribeEndpoint = (
           leadMagnet,
           surveyResponses,
           metadata = {}
-        } = req.data as SubscribeRequestData
+        } = data as SubscribeRequestData
 
         // Trim email before validation
         const trimmedEmail = email?.trim()

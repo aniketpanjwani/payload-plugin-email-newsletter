@@ -14,7 +14,8 @@ export const createVerifyMagicLinkEndpoint = (
     method: 'post',
     handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        const { token } = req.data as VerifyMagicLinkRequestData
+        const data = await req.json()
+        const { token } = data as VerifyMagicLinkRequestData
 
         if (!token) {
           return Response.json({

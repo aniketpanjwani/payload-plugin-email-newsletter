@@ -20,7 +20,8 @@ export const createSigninEndpoint = (
     method: 'post',
     handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        const { email } = req.data as SigninRequestData
+        const data = await req.json()
+        const { email } = data as SigninRequestData
 
         // Validate email
         const validation = validateSubscriberData({ email })

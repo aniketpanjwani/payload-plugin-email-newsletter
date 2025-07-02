@@ -34,6 +34,7 @@ describe('Subscribe Endpoint Security', () => {
     mockReq = {
       payload: payloadMock.payload,
       data: {},
+      json: async () => mockReq.data,
       ip: '127.0.0.1',
       headers: new Headers(),
     }

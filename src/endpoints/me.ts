@@ -10,8 +10,15 @@ export const createMeEndpoint = (
     method: 'get',
     handler: (async (req: ExtendedPayloadRequest) => {
       try {
-        // Get token from cookie
-        const token = req.cookies?.['newsletter-auth']
+        // Get token from cookie header
+        const cookieHeader = req.headers.get('cookie') || ''
+        const cookies = Object.fromEntries(
+          cookieHeader.split('; ').map(c => {
+            const [key, ...value] = c.split('=')
+            return [key, value.join('=')]
+          })
+        )
+        const token = cookies['newsletter-auth']
         
         if (!token) {
           return Response.json({

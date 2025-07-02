@@ -33,6 +33,7 @@ describe('Unsubscribe Endpoint Security', () => {
     mockReq = {
       payload: payloadMock.payload,
       data: {},
+      json: async () => mockReq.data,
       user: null,
       headers: new Headers(),
     }

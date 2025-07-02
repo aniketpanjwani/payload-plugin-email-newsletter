@@ -1,3 +1,19 @@
+## [0.8.6] - 2025-07-02
+
+### Fixed
+- **Critical**: Fixed all endpoint handlers for Payload v3 compatibility
+  - ✅ Updated request body access from `req.data` to `await req.json()`
+  - ✅ Fixed cookie access from `req.cookies` to parsing from headers
+  - ✅ All endpoints now properly handle request data
+  - Affects: signin, subscribe, unsubscribe, preferences, verify-magic-link, me endpoints
+- **Resolves**: "Cannot destructure property 'email' of 'req.data' as it is undefined" error
+- **Resolves**: "Cannot read properties of undefined (reading 'newsletter-auth')" error
+
+### Technical Details
+- Updated all POST endpoints to use `const data = await req.json()` per Payload v3 patterns
+- Updated cookie parsing to read from `req.headers.get('cookie')` instead of `req.cookies`
+- All endpoint handlers now follow official Payload v3 REST API documentation patterns
+
 ## [0.8.5] - 2025-07-01
 
 ### Fixed

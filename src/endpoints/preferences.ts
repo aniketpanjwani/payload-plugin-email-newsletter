@@ -103,7 +103,8 @@ export const createUpdatePreferencesEndpoint = (
           }, { status: 401 })
         }
 
-        const { name, locale, emailPreferences } = req.data as UpdatePreferencesRequestData
+        const data = await req.json()
+        const { name, locale, emailPreferences } = data as UpdatePreferencesRequestData
 
         // Prepare update data
         const updateData: Partial<Subscriber> = {}
