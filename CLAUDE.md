@@ -144,6 +144,11 @@ This project uses **Bun** as the preferred package manager and runtime.
 4. Update documentation
 5. Make progressive commits
 
+### When Updating CHANGELOG.md
+1. First check the current date with: `date +"%Y-%m-%d"`
+2. Use the actual current date in changelog entries
+3. Follow semantic versioning principles
+
 ### When Reviewing Reference Code
 - Extract patterns, not implementations
 - Generalize any specific logic

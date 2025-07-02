@@ -1,4 +1,10 @@
-## [0.8.6] - 2025-07-02
+## [0.8.7] - 2025-07-01
+
+### Fixed
+- Fixed TypeScript errors with ExtendedPayloadRequest interface
+- Added TypeScript checking to CI/CD pipeline to prevent publishing with type errors
+
+## [0.8.6] - 2025-07-01
 
 ### Fixed
 - **Critical**: Fixed all endpoint handlers for Payload v3 compatibility

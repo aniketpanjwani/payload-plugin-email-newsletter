@@ -452,15 +452,9 @@ export interface UpdatePreferencesRequestData {
 }
 
 // Extended request types with proper data typing
-export interface ExtendedPayloadRequest {
+export interface ExtendedPayloadRequest extends Request {
   payload: any // TODO: Add proper payload type
-  headers: Headers & {
-    authorization?: string
-    referer?: string
-    referrer?: string
-    'user-agent'?: string
-  }
-  data: unknown
+  data?: unknown
   ip?: string
   connection?: {
     remoteAddress?: string
@@ -468,4 +462,6 @@ export interface ExtendedPayloadRequest {
   cookies?: {
     [key: string]: string
   }
+  // Headers are inherited from Request, but we document common ones for reference
+  // Access via: req.headers.get('authorization'), req.headers.get('referer'), etc.
 }
