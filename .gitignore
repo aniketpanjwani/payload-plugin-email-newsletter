@@ -53,3 +53,6 @@ feature_design/
 .next
 .nuxt
 .svelte-kit
+
+# Claude development instructions
+CLAUDE.md
