@@ -5,6 +5,8 @@
 
 A complete newsletter management plugin for [Payload CMS](https://github.com/payloadcms/payload) that provides subscriber management, magic link authentication, and email service integration out of the box.
 
+> **Important**: Version 0.8.7+ includes critical fixes for Payload v3 compatibility. If you're using Payload v3, please ensure you're on at least version 0.8.7 of this plugin.
+
 ## Features
 
 - 📧 **Complete Subscriber Management** - Ready-to-use subscriber collection with all essential fields

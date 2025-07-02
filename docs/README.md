@@ -2,6 +2,8 @@
 
 Welcome to the comprehensive documentation for the Payload Newsletter Plugin. This plugin provides complete newsletter management capabilities for Payload CMS projects.
 
+> **⚠️ Payload v3 Users**: Please ensure you're using plugin version 0.8.7 or higher for full compatibility. See the [Payload v3 Migration Guide](./guides/payload-v3-migration.md) for important information.
+
 ## Documentation Structure
 
 ### 📚 [Getting Started](./getting-started/)
@@ -19,6 +21,7 @@ Welcome to the comprehensive documentation for the Payload Newsletter Plugin. Th
 
 ### 📖 [Guides](./guides/)
 - [Email Providers](./guides/email-providers.md)
+- [Payload v3 Migration](./guides/payload-v3-migration.md) - **Important for v3 users**
 - [Authentication](./guides/authentication.md)
 - [Subscriber Management](./guides/subscriber-management.md)
 - [Sending Newsletters](./guides/sending-newsletters.md)

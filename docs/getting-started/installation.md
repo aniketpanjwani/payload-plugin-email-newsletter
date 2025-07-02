@@ -36,10 +36,14 @@ The plugin requires these peer dependencies (should already be installed with Pa
 
 ## Version Compatibility
 
-| Plugin Version | Payload Version | Node Version |
-|----------------|-----------------|--------------|
-| 0.4.x          | 3.x             | 18, 20       |
-| 0.3.x          | 3.x             | 18, 20       |
+| Plugin Version | Payload Version | Node Version | Notes |
+|----------------|-----------------|--------------|-------|
+| 0.8.7+         | 3.x             | 18, 20       | Critical fixes for Payload v3 endpoints |
+| 0.8.6          | 3.x             | 18, 20       | ⚠️ Has compatibility issues - upgrade to 0.8.7+ |
+| 0.4.x - 0.8.5  | 3.x             | 18, 20       | May have endpoint compatibility issues |
+| 0.3.x          | 3.x             | 18, 20       | Early version |
+
+> **Important**: If you're using Payload v3, please use version 0.8.7 or higher. Earlier versions have endpoint compatibility issues that cause "Cannot destructure property 'email' of 'req.data' as it is undefined" errors.
 
 ## TypeScript Setup
 
