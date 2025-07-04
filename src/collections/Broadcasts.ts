@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { BroadcastStatus } from '../types'
+import { createEmailContentField } from '../fields/emailContent'
+import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 
 export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig): CollectionConfig => {
   const hasProviders = !!(pluginConfig.providers?.broadcast || pluginConfig.providers?.resend)
@@ -49,12 +51,18 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           description: 'Preview text shown in email clients'
         },
       },
-      {
-        name: 'content',
-        type: 'richText',
-        required: true,
+      createEmailContentField({
         admin: {
-          description: 'Email content'
+          description: 'Email content',
+        },
+      }),
+      {
+        name: 'emailPreview',
+        type: 'ui',
+        admin: {
+          components: {
+            Field: '/src/components/Broadcasts/EmailPreviewField',
+          },
         },
       },
       {
@@ -243,7 +251,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             if (!provider) return doc
 
             // Convert rich text to HTML
-            const htmlContent = await richTextToHtml(doc.content)
+            const htmlContent = await convertToEmailSafeHtml(doc.content)
 
             // Create broadcast in provider
             const providerBroadcast = await provider.create({
@@ -309,7 +317,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             if (data.subject !== originalDoc.subject) updates.subject = data.subject
             if (data.preheader !== originalDoc.preheader) updates.preheader = data.preheader
             if (data.content !== originalDoc.content) {
-              updates.content = await richTextToHtml(data.content)
+              updates.content = await convertToEmailSafeHtml(data.content)
             }
             if (data.settings?.trackOpens !== originalDoc.settings?.trackOpens) {
               updates.trackOpens = data.settings.trackOpens
@@ -384,43 +392,3 @@ async function getProvider(providerType: string, config: NewsletterPluginConfig)
   return null
 }
 
-// Helper to convert rich text to HTML
-async function richTextToHtml(richText: any): Promise<string> {
-  // This is a simplified conversion - in production you'd use a proper converter
-  if (!richText || !richText.root?.children) return ''
-  
-  const convertNode = (node: any): string => {
-    if (node.type === 'text') {
-      let text = node.text || ''
-      if (node.bold) text = `<strong>${text}</strong>`
-      if (node.italic) text = `<em>${text}</em>`
-      if (node.underline) text = `<u>${text}</u>`
-      if (node.strikethrough) text = `<s>${text}</s>`
-      if (node.code) text = `<code>${text}</code>`
-      return text
-    }
-    
-    const children = node.children?.map(convertNode).join('') || ''
-    
-    switch (node.type) {
-      case 'paragraph':
-        return `<p>${children}</p>`
-      case 'heading':
-        const level = node.tag || 'h2'
-        return `<${level}>${children}</${level}>`
-      case 'list':
-        const tag = node.listType === 'ordered' ? 'ol' : 'ul'
-        return `<${tag}>${children}</${tag}>`
-      case 'listitem':
-        return `<li>${children}</li>`
-      case 'link':
-        return `<a href="${node.url}">${children}</a>`
-      case 'blockquote':
-        return `<blockquote>${children}</blockquote>`
-      default:
-        return children
-    }
-  }
-  
-  return richText.root.children.map(convertNode).join('')
-}
