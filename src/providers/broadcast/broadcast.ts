@@ -567,7 +567,7 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
     }
   }
 
-  async getAnalytics(id: string): Promise<BroadcastAnalytics> {
+  async getAnalytics(_id: string): Promise<BroadcastAnalytics> {
     // TODO: Broadcast analytics API is not documented in the CRUD API
     // This would need additional API documentation
     throw new BroadcastProviderError(
@@ -597,7 +597,7 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
       // Try to list broadcasts with limit 1 to validate API access
       await this.list({ limit: 1 })
       return true
-    } catch (error) {
+    } catch {
       return false
     }
   }

@@ -233,7 +233,7 @@ export abstract class BaseBroadcastProvider implements BroadcastProvider {
   /**
    * Schedule a broadcast - default implementation throws not supported
    */
-  async schedule(id: string, scheduledAt: Date): Promise<Broadcast> {
+  async schedule(_id: string, _scheduledAt: Date): Promise<Broadcast> {
     const capabilities = this.getCapabilities();
     if (!capabilities.supportsScheduling) {
       throw new BroadcastProviderError(
@@ -248,7 +248,7 @@ export abstract class BaseBroadcastProvider implements BroadcastProvider {
   /**
    * Cancel scheduled broadcast - default implementation throws not supported
    */
-  async cancelSchedule(id: string): Promise<Broadcast> {
+  async cancelSchedule(_id: string): Promise<Broadcast> {
     const capabilities = this.getCapabilities();
     if (!capabilities.supportsScheduling) {
       throw new BroadcastProviderError(
@@ -263,7 +263,7 @@ export abstract class BaseBroadcastProvider implements BroadcastProvider {
   /**
    * Get analytics - default implementation returns zeros
    */
-  async getAnalytics(id: string): Promise<BroadcastAnalytics> {
+  async getAnalytics(_id: string): Promise<BroadcastAnalytics> {
     const capabilities = this.getCapabilities();
     if (!capabilities.supportsAnalytics) {
       throw new BroadcastProviderError(
@@ -348,7 +348,7 @@ export abstract class BaseNewsletterProvider implements NewsletterProvider {
   /**
    * Schedule a newsletter - default implementation throws not supported
    */
-  async schedule(id: string, scheduledAt: Date): Promise<Newsletter> {
+  async schedule(_id: string, _scheduledAt: Date): Promise<Newsletter> {
     const capabilities = this.getCapabilities();
     if (!capabilities.supportsScheduling) {
       throw new NewsletterProviderError(
@@ -363,7 +363,7 @@ export abstract class BaseNewsletterProvider implements NewsletterProvider {
   /**
    * Cancel scheduled newsletter - default implementation throws not supported
    */
-  async cancelSchedule(id: string): Promise<Newsletter> {
+  async cancelSchedule(_id: string): Promise<Newsletter> {
     const capabilities = this.getCapabilities();
     if (!capabilities.supportsScheduling) {
       throw new NewsletterProviderError(
@@ -378,7 +378,7 @@ export abstract class BaseNewsletterProvider implements NewsletterProvider {
   /**
    * Get analytics - default implementation returns zeros
    */
-  async getAnalytics(id: string): Promise<NewsletterAnalytics> {
+  async getAnalytics(_id: string): Promise<NewsletterAnalytics> {
     const capabilities = this.getCapabilities();
     if (!capabilities.supportsAnalytics) {
       throw new NewsletterProviderError(

@@ -162,7 +162,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     }
   }
 
-  async updateChannel(id: string, data: UpdateChannelInput): Promise<Channel> {
+  async updateChannel(_id: string, _data: UpdateChannelInput): Promise<Channel> {
     // Resend doesn't support updating audiences via API
     throw new BroadcastProviderError(
       'Updating channels (audiences) is not supported by Resend API',
@@ -185,7 +185,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
   }
 
   // Broadcast Management Methods
-  async list(options?: ListBroadcastOptions): Promise<ListBroadcastResponse<Broadcast>> {
+  async list(_options?: ListBroadcastOptions): Promise<ListBroadcastResponse<Broadcast>> {
     // TODO: Resend broadcast list API is not documented
     // The SDK may have undocumented methods we could explore
     // For now, we throw a not supported error
@@ -197,7 +197,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     )
   }
 
-  async get(id: string): Promise<Broadcast> {
+  async get(_id: string): Promise<Broadcast> {
     // TODO: Resend broadcast get API is not documented
     // We would need to explore if the SDK has undocumented methods
     throw new BroadcastProviderError(
@@ -266,7 +266,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     }
   }
 
-  async update(id: string, data: UpdateBroadcastInput): Promise<Broadcast> {
+  async update(_id: string, _data: UpdateBroadcastInput): Promise<Broadcast> {
     // TODO: Resend broadcast update API is not documented
     // Important: Resend has restrictions where broadcasts created via API
     // can only be edited via API (not in dashboard)
@@ -278,7 +278,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     )
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(_id: string): Promise<void> {
     // TODO: Resend broadcast delete API is not documented
     throw new BroadcastProviderError(
       'Deleting broadcasts is not currently supported by Resend API.',
@@ -333,7 +333,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     }
   }
 
-  async schedule(id: string, scheduledAt: Date): Promise<Broadcast> {
+  async schedule(_id: string, _scheduledAt: Date): Promise<Broadcast> {
     // Scheduling is not supported according to our research
     throw new BroadcastProviderError(
       'Scheduling broadcasts is not supported by Resend',
@@ -342,7 +342,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     )
   }
 
-  async getAnalytics(id: string): Promise<BroadcastAnalytics> {
+  async getAnalytics(_id: string): Promise<BroadcastAnalytics> {
     // TODO: Resend does support analytics, but the API is not documented
     // They have dashboard analytics for broadcasts
     throw new BroadcastProviderError(
@@ -386,7 +386,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
         html: '<p>Testing configuration</p>'
       })
       return true
-    } catch (error) {
+    } catch {
       return false
     }
   }

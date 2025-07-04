@@ -85,7 +85,6 @@ export const ActionsCell: React.FC<DefaultCellComponentProps> = ({ rowData }) =>
   const canSend = broadcast.status === BroadcastStatus.DRAFT
   const canSchedule = broadcast.status === BroadcastStatus.DRAFT
   const canDuplicate = true
-  const canDelete = broadcast.status === BroadcastStatus.DRAFT
 
   return (
     <>

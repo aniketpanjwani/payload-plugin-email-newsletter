@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { BroadcastStatus } from '../../types'
 
 interface SendBroadcastModalProps {
   broadcast: {
