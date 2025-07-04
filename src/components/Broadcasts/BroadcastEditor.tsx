@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback } from 'react'
 import type { RichTextField } from 'payload'
-import { useField, useFormFields, FieldLabel, FieldError, FieldDescription } from '@payloadcms/ui'
+import { useField, useFormFields } from '@payloadcms/ui'
 import { EmailPreview } from './EmailPreview'
 import type { SerializedEditorState } from 'lexical'
 
@@ -12,7 +12,7 @@ interface BroadcastEditorProps {
 }
 
 export const BroadcastEditor: React.FC<BroadcastEditorProps> = (props) => {
-  const { value, setValue } = useField<SerializedEditorState>({ path: props.path })
+  const { value } = useField<SerializedEditorState>({ path: props.path })
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [isValid, setIsValid] = useState(true)
@@ -198,7 +198,7 @@ export const BroadcastEditor: React.FC<BroadcastEditorProps> = (props) => {
               content={value}
               subject={fields.subject?.value as string || 'Email Subject'}
               preheader={fields.preheader?.value as string}
-              channel={fields.channel?.value as any}
+              channel={fields.channel?.value as Record<string, unknown>}
               mode={previewMode}
               onValidation={handleValidation}
             />

@@ -58,6 +58,7 @@ async function lexicalToEmailHtml(editorState: SerializedEditorState): Promise<s
     return ''
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const html = root.children.map((node: any) => convertNode(node)).join('')
   return html
 }
@@ -65,6 +66,7 @@ async function lexicalToEmailHtml(editorState: SerializedEditorState): Promise<s
 /**
  * Convert individual Lexical nodes to email-safe HTML
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertNode(node: any): string {
   switch (node.type) {
     case 'paragraph':
@@ -95,6 +97,7 @@ function convertNode(node: any): string {
 /**
  * Convert paragraph node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertParagraph(node: any): string {
   const align = getAlignment(node.format)
   const children = node.children?.map(convertNode).join('') || ''

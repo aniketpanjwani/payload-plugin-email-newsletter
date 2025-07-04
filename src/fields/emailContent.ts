@@ -18,6 +18,9 @@ import type { RichTextField } from 'payload'
  * Email-safe features for Lexical editor
  * Only includes features that render consistently across email clients
  */
+// Using any[] here because Payload's FeatureProviderServer type is complex
+// and varies between versions. The features are properly typed by Payload internally.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const emailSafeFeatures: any[] = [
   // Basic text formatting
   BoldFeature(),

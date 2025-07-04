@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { convertToEmailSafeHtml, EMAIL_SAFE_CONFIG } from '../emailSafeHtml'
+import { convertToEmailSafeHtml } from '../emailSafeHtml'
 import type { SerializedEditorState } from 'lexical'
 
 describe('emailSafeHtml', () => {

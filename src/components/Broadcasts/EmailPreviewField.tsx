@@ -159,7 +159,7 @@ export const EmailPreviewField: React.FC = () => {
           content={fields.content?.value as SerializedEditorState || null}
           subject={fields.subject?.value as string || 'Email Subject'}
           preheader={fields.preheader?.value as string}
-          channel={fields.channel?.value as any}
+          channel={fields.channel?.value as Record<string, unknown>}
           mode={previewMode}
           onValidation={handleValidation}
         />
