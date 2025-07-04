@@ -177,6 +177,24 @@ JWT_SECRET=your_jwt_secret_here
 3. Push regularly to: https://github.com/aniketpanjwani/payload-plugin-email-newsletter
 4. Keep sensitive information in gitignored directories
 
+### Release Process
+
+**IMPORTANT**: Do NOT create git tags manually when releasing new versions!
+
+The release process is fully automated via GitHub Actions:
+1. Update the version in `package.json` (e.g., `0.9.0` → `0.9.1`)
+2. Update `CHANGELOG.md` with the changes for the new version
+3. Commit and push these changes to main
+4. GitHub Actions will automatically:
+   - Detect the new version
+   - Run tests and type checking
+   - Build the project
+   - Create the git tag (e.g., `v0.9.1`)
+   - Publish to npm
+   - Create a GitHub release
+
+If you manually create tags, the workflow will fail because it tries to create the same tag. Let the automation handle all tag creation and publishing.
+
 ## Questions to Always Consider
 
 Before implementing any feature, ask:
