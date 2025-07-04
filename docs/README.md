@@ -16,11 +16,13 @@ Welcome to the comprehensive documentation for the Payload Newsletter Plugin. Th
 - [Plugin Configuration](./api-reference/plugin-config.md)
 - [Collections](./api-reference/collections.md)
 - [Endpoints](./api-reference/endpoints.md)
+- [Email Utilities](./api-reference/email-utilities.md) - **New in v0.9.0**
 - [Hooks](./api-reference/hooks.md)
 - [Types](./api-reference/types.md)
 
 ### 📖 [Guides](./guides/)
 - [Email Providers](./guides/email-providers.md)
+- [Email Preview](./guides/email-preview.md) - **New in v0.9.0**
 - [Payload v3 Migration](./guides/payload-v3-migration.md) - **Important for v3 users**
 - [Authentication](./guides/authentication.md)
 - [Subscriber Management](./guides/subscriber-management.md)
@@ -61,6 +63,8 @@ Welcome to the comprehensive documentation for the Payload Newsletter Plugin. Th
 - ✅ Multiple email provider support (Resend, Broadcast, custom)
 - ✅ React components for signup forms
 - ✅ Built-in security (XSS protection, rate limiting, CSRF)
+- ✅ Email preview with validation (v0.9.0+)
+- ✅ Email-safe rich text editor (v0.9.0+)
 - ✅ Internationalization support
 - ✅ Comprehensive TypeScript types
 - ✅ Extensive test coverage
