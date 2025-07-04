@@ -18,6 +18,9 @@ A complete newsletter management plugin for [Payload CMS](https://github.com/pay
 - 📊 **Analytics Ready** - UTM tracking and signup metadata collection
 - ⚙️ **Admin UI Configuration** - Manage email settings through Payload admin panel
 - 🔄 **Bidirectional Sync** - Sync unsubscribes from email services back to Payload
+- 👁️ **Email Preview** - Real-time preview with desktop/mobile views (v0.9.0+)
+- ✅ **Email Validation** - Built-in validation for email client compatibility (v0.9.0+)
+- 📝 **Email-Safe Editor** - Rich text editor limited to email-compatible features (v0.9.0+)
 
 ## Quick Start
 
@@ -139,6 +142,87 @@ After installing the plugin, you'll need to:
 2. **Start collecting subscribers**:
    - Subscribers will appear in `/admin/collections/subscribers`
    - Use the provided React components or API endpoints
+
+## Email Preview Features (v0.9.0+)
+
+The plugin includes comprehensive email preview functionality to ensure your newsletters look great across all email clients.
+
+### Email-Safe Rich Text Editor
+
+The plugin provides a pre-configured Lexical editor with only email-compatible features:
+
+```typescript
+import { createEmailContentField } from 'payload-plugin-newsletter/fields'
+
+const BroadcastsCollection = {
+  fields: [
+    createEmailContentField({
+      name: 'content',
+      required: true,
+    })
+  ]
+}
+```
+
+Features included:
+- Basic text formatting (bold, italic, underline, strikethrough)
+- Simple links
+- Ordered and unordered lists
+- Headings (H1, H2, H3)
+- Text alignment
+- Blockquotes
+
+### Real-Time Email Preview
+
+The plugin includes a preview component that shows how your email will look:
+
+```typescript
+{
+  name: 'preview',
+  type: 'ui',
+  admin: {
+    components: {
+      Field: 'payload-plugin-newsletter/components/EmailPreviewField'
+    }
+  }
+}
+```
+
+Preview features:
+- **Desktop & Mobile Views** - Switch between viewport sizes
+- **Live Updates** - See changes as you type
+- **Validation Warnings** - Catch compatibility issues before sending
+- **Test Email** - Send a test to your inbox
+
+### Email HTML Validation
+
+Built-in validation checks for:
+- HTML size limits (Gmail's 102KB limit)
+- Unsupported CSS properties
+- Missing alt text on images
+- External resources that won't load
+- JavaScript that will be stripped
+
+### Utilities
+
+Convert Lexical content to email-safe HTML:
+
+```typescript
+import { convertToEmailSafeHtml } from 'payload-plugin-newsletter/utils'
+
+const html = await convertToEmailSafeHtml(editorState)
+```
+
+Validate any HTML for email compatibility:
+
+```typescript
+import { validateEmailHtml } from 'payload-plugin-newsletter/utils'
+
+const result = validateEmailHtml(html)
+if (!result.valid) {
+  console.error('Email issues:', result.errors)
+}
+```
 
 ## Configuration Options
 

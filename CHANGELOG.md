@@ -1,3 +1,48 @@
+## [0.9.0] - 2025-07-04
+
+### Added
+- **Email Preview System**: Comprehensive email preview functionality for newsletters
+  - Real-time preview with desktop and mobile viewport modes
+  - Live validation of email HTML compatibility
+  - Test email functionality to preview in actual email clients
+  - Split-view editor with side-by-side content and preview
+
+- **Email-Safe Rich Text Editor**: Pre-configured Lexical editor for email content
+  - Limited to features that work reliably across email clients
+  - Supports: bold, italic, underline, strikethrough, links, lists, headings (h1-h3), alignment, blockquotes
+  - Excludes: tables, images, videos, JavaScript-dependent features, custom fonts
+
+- **Email HTML Utilities**:
+  - `convertToEmailSafeHtml()`: Converts Lexical editor state to email-compatible HTML with inline styles
+  - `validateEmailHtml()`: Validates HTML for email client compatibility
+  - `EMAIL_SAFE_CONFIG`: DOMPurify configuration for email sanitization
+  - Full TypeScript support for all utilities
+
+- **React Components**:
+  - `EmailPreview`: Standalone preview component with validation
+  - `EmailPreviewField`: Payload UI field component for forms
+  - `BroadcastEditor`: Split-view editor component
+
+- **Validation Features**:
+  - Checks HTML size limits (Gmail's 102KB limit)
+  - Detects unsupported CSS properties (flexbox, grid, positioning)
+  - Warns about missing alt text for accessibility
+  - Identifies external resources that won't load
+  - Catches JavaScript that will be stripped by email clients
+
+### Added Test Coverage
+- Comprehensive unit tests for email-safe HTML conversion
+- Validation utility tests with edge cases
+- 100% coverage of critical email processing paths
+
+### Documentation
+- New guide: "Email Preview Guide" (`docs/guides/email-preview.md`)
+- New API reference: "Email Utilities" (`docs/api-reference/email-utilities.md`)
+- Updated main documentation with v0.9.0 features
+
+### Dependencies
+- Added `isomorphic-dompurify@2.20.0` for secure HTML sanitization
+
 ## [0.8.7] - 2025-07-01
 
 ### Fixed
