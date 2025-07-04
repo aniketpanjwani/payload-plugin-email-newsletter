@@ -7,6 +7,7 @@ import { createUnsubscribeEndpoint } from './unsubscribe'
 import { createSigninEndpoint } from './signin'
 import { createMeEndpoint } from './me'
 import { createSignoutEndpoint } from './signout'
+import { createBroadcastManagementEndpoints } from './broadcasts'
 
 export function createNewsletterEndpoints(
   config: NewsletterPluginConfig
@@ -27,6 +28,9 @@ export function createNewsletterEndpoints(
       createSignoutEndpoint(config)
     )
   }
+
+  // Add broadcast management endpoints if enabled
+  endpoints.push(...createBroadcastManagementEndpoints(config))
 
   return endpoints
 }

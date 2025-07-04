@@ -1,4 +1,12 @@
 import type { Field } from 'payload'
+import type { BroadcastProvider } from './providers'
+
+// Export broadcast and channel types
+export * from './broadcast'
+export * from './channel'
+export * from './providers'
+// Export legacy newsletter types for backwards compatibility
+export * from './newsletter'
 
 export interface NewsletterPluginConfig {
   /**
@@ -204,6 +212,37 @@ export interface NewsletterPluginConfig {
        */
       queue?: string
     }
+    
+    /**
+     * Newsletter management configuration
+     */
+    newsletterManagement?: {
+      /**
+       * Enable newsletter management features
+       * @default false
+       */
+      enabled?: boolean
+      /**
+       * Collection names for broadcast management
+       */
+      collections?: {
+        /**
+         * Channels collection slug
+         * @default 'channels'
+         */
+        channels?: string
+        /**
+         * Broadcasts collection slug
+         * @default 'broadcasts'
+         */
+        broadcasts?: string
+      }
+      /**
+       * Optional: Custom broadcast provider implementation
+       * If not provided, will use the default email provider
+       */
+      provider?: BroadcastProvider
+    }
   }
 
   /**
@@ -217,8 +256,10 @@ export interface NewsletterPluginConfig {
 
 export interface ResendProviderConfig {
   apiKey: string
-  fromAddress?: string
+  fromEmail?: string
+  fromAddress?: string // Alias for fromEmail
   fromName?: string
+  replyTo?: string
   audienceIds?: {
     [locale: string]: {
       production?: string
@@ -233,8 +274,10 @@ export interface BroadcastProviderConfig {
     production?: string
     development?: string
   }
-  fromAddress?: string
+  fromEmail?: string
+  fromAddress?: string // Alias for fromEmail
   fromName?: string
+  replyTo?: string
 }
 
 export interface EmailProvider {

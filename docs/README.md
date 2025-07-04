@@ -31,6 +31,8 @@ Welcome to the comprehensive documentation for the Payload Newsletter Plugin. Th
 ### 🏗️ [Architecture](./architecture/)
 - [Plugin Architecture](./architecture/overview.md)
 - [Data Flow](./architecture/data-flow.md)
+- [Email-Safe HTML](./architecture/email-safe-html.md)
+- [Status Synchronization](./architecture/status-synchronization.md)
 - [Security Model](./architecture/security-model.md)
 - [Extension Points](./architecture/extension-points.md)
 

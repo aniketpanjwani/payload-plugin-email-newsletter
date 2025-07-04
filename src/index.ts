@@ -1,16 +1,23 @@
 import type { Config } from 'payload'
-import type { NewsletterPluginConfig } from './types'
+import type { NewsletterPluginConfig, BroadcastProvider } from './types'
 import { createSubscribersCollection } from './collections/Subscribers'
 import { createNewsletterSettingsGlobal } from './globals/NewsletterSettings'
 import { createEmailService } from './providers'
 import { createNewsletterEndpoints } from './endpoints'
 import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
 import { createUnsubscribeSyncJob } from './jobs/sync-unsubscribes'
+import { createChannelsCollection } from './collections/Channels'
+import { createBroadcastsCollection } from './collections/Broadcasts'
+import { BroadcastApiProvider } from './providers/broadcast/broadcast'
+import { ResendBroadcastProvider } from './providers/resend/broadcast'
 
-// Extend Payload type to include our email service
+// Extend Payload type to include our email service and broadcast provider
 declare module 'payload' {
   interface BasePayload {
     newsletterEmailService?: any
+    broadcastProvider?: BroadcastProvider
+    // Legacy support
+    newsletterProvider?: BroadcastProvider
   }
 }
 
@@ -40,6 +47,13 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
 
   // Build collections array
   let collections = [...(incomingConfig.collections || []), subscribersCollection]
+
+  // Add broadcast management collections if enabled
+  if (config.features?.newsletterManagement?.enabled) {
+    const channelsCollection = createChannelsCollection(config)
+    const broadcastsCollection = createBroadcastsCollection(config)
+    collections.push(channelsCollection, broadcastsCollection)
+  }
 
   // Extend collections with newsletter scheduling fields if enabled
   if (config.features?.newsletterScheduling?.enabled) {
@@ -158,6 +172,39 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
         (payload as any).newsletterEmailService = createEmailService(emailServiceConfig)
 
         console.warn('Newsletter plugin initialized with', (payload as any).newsletterEmailService.getProvider(), 'provider')
+        
+        // Initialize broadcast management provider if enabled
+        if (config.features?.newsletterManagement?.enabled) {
+          try {
+            // Use custom provider if provided
+            let broadcastProvider: BroadcastProvider
+            
+            if (config.features.newsletterManagement.provider) {
+              broadcastProvider = config.features.newsletterManagement.provider
+            } else {
+              // Create provider based on email service config
+              const providerType = emailServiceConfig.provider || config.providers.default
+              
+              if (providerType === 'broadcast' && emailServiceConfig.broadcast) {
+                broadcastProvider = new BroadcastApiProvider(emailServiceConfig.broadcast)
+              } else if (providerType === 'resend' && emailServiceConfig.resend) {
+                broadcastProvider = new ResendBroadcastProvider(emailServiceConfig.resend)
+              } else {
+                throw new Error(`Unsupported broadcast provider: ${providerType}`)
+              }
+            }
+            
+            // Attach broadcast provider to payload instance
+            const payloadWithProvider = payload as any
+            payloadWithProvider.broadcastProvider = broadcastProvider
+            // Legacy support
+            payloadWithProvider.newsletterProvider = broadcastProvider
+            
+            console.warn('Broadcast management initialized with', broadcastProvider.name, 'provider')
+          } catch (error) {
+            console.error('Failed to initialize broadcast management provider:', error)
+          }
+        }
       } catch (error) {
         console.error('Failed to initialize newsletter email service:', error)
       }

@@ -72,7 +72,7 @@ Use these resources for understanding patterns and best practices:
 
 1. **Plugin Documentation**:
    - Check `docs/` directory for comprehensive plugin documentation
-   - `docs/references/broadcast-api-docs.md` - Complete Broadcast API reference (sendbroadcast.net)
+   - `docs/references/broadcast-docs-compiled.md` - Complete Broadcast API reference (sendbroadcast.net)
    - `docs/guides/email-providers.md` - Email provider setup and comparison
    - `docs/development/context7-setup.md` - How to set up context7 MCP for current docs
    - `docs/architecture/` - Plugin architecture and design decisions
@@ -148,6 +148,12 @@ This project uses **Bun** as the preferred package manager and runtime.
 1. First check the current date with: `date +"%Y-%m-%d"`
 2. Use the actual current date in changelog entries
 3. Follow semantic versioning principles
+
+### When Updating tracking.md or Any Progress Tracking
+1. Always check the current date first with: `date +"%Y-%m-%d"`
+2. Use the actual current date for "Started" and "Completed" columns
+3. Never use placeholder dates or guess dates
+4. Format dates as YYYY-MM-DD for consistency
 
 ### When Reviewing Reference Code
 - Extract patterns, not implementations
