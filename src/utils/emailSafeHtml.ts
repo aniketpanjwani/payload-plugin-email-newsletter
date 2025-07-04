@@ -112,6 +112,7 @@ function convertParagraph(node: any): string {
 /**
  * Convert heading node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertHeading(node: any): string {
   const tag = node.tag || 'h1'
   const align = getAlignment(node.format)
@@ -131,6 +132,7 @@ function convertHeading(node: any): string {
 /**
  * Convert list node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertList(node: any): string {
   const tag = node.listType === 'number' ? 'ol' : 'ul'
   const children = node.children?.map(convertNode).join('') || ''
@@ -145,6 +147,7 @@ function convertList(node: any): string {
 /**
  * Convert list item node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertListItem(node: any): string {
   const children = node.children?.map(convertNode).join('') || ''
   return `<li style="margin: 0 0 8px 0;">${children}</li>`
@@ -153,6 +156,7 @@ function convertListItem(node: any): string {
 /**
  * Convert blockquote node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertBlockquote(node: any): string {
   const children = node.children?.map(convertNode).join('') || ''
   const style = 'margin: 0 0 16px 0; padding-left: 16px; border-left: 4px solid #e5e7eb; color: #6b7280;'
@@ -163,6 +167,7 @@ function convertBlockquote(node: any): string {
 /**
  * Convert text node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertText(node: any): string {
   let text = escapeHtml(node.text || '')
   
@@ -186,6 +191,7 @@ function convertText(node: any): string {
 /**
  * Convert link node
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertLink(node: any): string {
   const children = node.children?.map(convertNode).join('') || ''
   const url = node.fields?.url || '#'

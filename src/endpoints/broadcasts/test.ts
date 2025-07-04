@@ -72,6 +72,7 @@ export const createTestBroadcastEndpoint = (
         })
 
         // Get email service
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const emailService = (req.payload as any).newsletterEmailService
         if (!emailService) {
           return Response.json({
