@@ -6,6 +6,8 @@ export default defineConfig({
     client: 'src/exports/client.ts',
     types: 'src/exports/types.ts',
     components: 'src/exports/components.ts',
+    utils: 'src/exports/utils.ts',
+    fields: 'src/exports/fields.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
