@@ -1,3 +1,13 @@
+## [0.9.1] - 2025-07-04
+
+### Fixed
+- Resolved all ESLint errors in the codebase
+  - Fixed unused variable errors by prefixing with underscore convention
+  - Removed unused imports (BroadcastStatus from SendBroadcastModal)
+  - Fixed unused catch block parameters
+  - All 22 ESLint errors resolved, only warnings remain
+- Improved code quality for better maintainability
+
 ## [0.9.0] - 2025-07-04
 
 ### Added
