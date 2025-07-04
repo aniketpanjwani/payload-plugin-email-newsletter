@@ -2,6 +2,7 @@ import type { Endpoint } from 'payload'
 import type { NewsletterPluginConfig } from '../../types'
 import { createSendBroadcastEndpoint } from './send'
 import { createScheduleBroadcastEndpoint } from './schedule'
+import { createTestBroadcastEndpoint } from './test'
 
 export const createBroadcastManagementEndpoints = (
   config: NewsletterPluginConfig
@@ -18,5 +19,6 @@ export const createBroadcastManagementEndpoints = (
   return [
     createSendBroadcastEndpoint(config, collectionSlug),
     createScheduleBroadcastEndpoint(config, collectionSlug),
+    createTestBroadcastEndpoint(config, collectionSlug),
   ]
 }
