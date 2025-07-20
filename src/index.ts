@@ -152,10 +152,10 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
             } : config.providers.resend,
             broadcast: settings.provider === 'broadcast' ? {
               apiUrl: settings.broadcastSettings?.apiUrl || config.providers.broadcast?.apiUrl || '',
-              tokens: {
-                production: settings.broadcastSettings?.productionToken || config.providers.broadcast?.tokens.production,
-                development: settings.broadcastSettings?.developmentToken || config.providers.broadcast?.tokens.development,
-              },
+              token: settings.broadcastSettings?.token || config.providers.broadcast?.token || '',
+              fromAddress: settings.fromAddress || config.providers.broadcast?.fromAddress,
+              fromName: settings.fromName || config.providers.broadcast?.fromName,
+              replyTo: settings.replyTo || config.providers.broadcast?.replyTo,
             } : config.providers.broadcast,
           }
         } else {

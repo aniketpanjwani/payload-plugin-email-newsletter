@@ -587,16 +587,17 @@ providers: {
 providers: {
   default: 'broadcast',
   broadcast: {
-    apiUrl: 'https://broadcast.yoursite.com',
-    tokens: {
-      production: process.env.BROADCAST_TOKEN,
-      development: process.env.BROADCAST_DEV_TOKEN,
-    },
+    apiUrl: process.env.BROADCAST_API_URL,
+    token: process.env.BROADCAST_TOKEN,
+    // Optional: These can be set here as defaults or configured in the admin UI
     fromAddress: 'hello@yoursite.com',
     fromName: 'Your Newsletter',
+    replyTo: 'replies@yoursite.com',
   },
 }
 ```
+
+**Note**: Settings configured in the Payload admin UI take precedence over these config values. The config values serve as defaults when settings haven't been configured yet.
 
 ## TypeScript
 

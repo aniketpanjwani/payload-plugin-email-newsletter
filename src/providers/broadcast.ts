@@ -7,19 +7,17 @@ export class BroadcastProvider implements EmailProvider {
   private token: string
   private fromAddress: string
   private fromName: string
-  private isDevelopment: boolean
+  private replyTo?: string
 
   constructor(config: BroadcastProviderConfig & { 
     fromAddress: string
     fromName: string 
   }) {
     this.apiUrl = config.apiUrl.replace(/\/$/, '') // Remove trailing slash
-    this.isDevelopment = process.env.NODE_ENV !== 'production'
-    this.token = this.isDevelopment 
-      ? config.tokens.development || config.tokens.production || ''
-      : config.tokens.production || config.tokens.development || ''
+    this.token = config.token
     this.fromAddress = config.fromAddress
     this.fromName = config.fromName
+    this.replyTo = config.replyTo
   }
 
   getProvider(): string {
@@ -46,7 +44,7 @@ export class BroadcastProvider implements EmailProvider {
           to: recipients[0], // Broadcast API expects a single recipient for transactional emails
           subject: params.subject,
           body: params.html || params.text || '',
-          reply_to: params.replyTo || from.email,
+          reply_to: params.replyTo || this.replyTo || from.email,
         }),
       })
 

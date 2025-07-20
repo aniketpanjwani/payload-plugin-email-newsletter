@@ -61,15 +61,11 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
   readonly name = 'broadcast'
   private apiUrl: string
   private token: string
-  private isDevelopment: boolean
 
   constructor(config: BroadcastProviderConfig) {
     super(config)
     this.apiUrl = config.apiUrl.replace(/\/$/, '') // Remove trailing slash
-    this.isDevelopment = process.env.NODE_ENV !== 'production'
-    this.token = this.isDevelopment 
-      ? config.tokens.development || config.tokens.production || ''
-      : config.tokens.production || config.tokens.development || ''
+    this.token = config.token
     
     if (!this.token) {
       throw new BroadcastProviderError(

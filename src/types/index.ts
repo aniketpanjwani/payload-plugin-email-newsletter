@@ -270,10 +270,7 @@ export interface ResendProviderConfig {
 
 export interface BroadcastProviderConfig {
   apiUrl: string
-  tokens: {
-    production?: string
-    development?: string
-  }
+  token: string
   fromEmail?: string
   fromAddress?: string // Alias for fromEmail
   fromName?: string

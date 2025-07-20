@@ -1,3 +1,19 @@
+## [0.9.3] - 2025-07-20
+
+### Changed
+- Simplified Broadcast provider configuration to use a single token instead of separate development/production tokens
+  - Changed `tokens: { production, development }` to `token` field
+  - Users should now manage different tokens via environment variables
+- Improved settings configuration hierarchy
+  - Settings from Payload admin UI now properly override config defaults
+  - Added support for configuring `fromAddress`, `fromName`, and `replyTo` in admin UI
+- Enhanced reply-to email handling
+  - Broadcast provider now supports fallback chain: request → settings → from address
+  - Added `replyTo` field support to match Broadcast API capabilities
+
+### Fixed
+- Fixed Broadcast provider tests to match new single token configuration
+
 ## [0.9.2] - 2025-07-20
 
 ### Fixed

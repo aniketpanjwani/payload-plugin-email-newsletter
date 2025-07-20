@@ -11,10 +11,7 @@ describe('BroadcastProvider', () => {
 
   const config = {
     apiUrl: 'https://api.broadcast.example.com',
-    tokens: {
-      development: 'dev-token-123',
-      production: 'prod-token-456'
-    },
+    token: 'test-token-123',
     fromAddress: 'noreply@example.com',
     fromName: 'Test Newsletter'
   }
@@ -27,16 +24,9 @@ describe('BroadcastProvider', () => {
   })
 
   describe('constructor', () => {
-    it('should use development token in development environment', () => {
-      process.env.NODE_ENV = 'development'
+    it('should use provided token', () => {
       provider = new BroadcastProvider(config)
-      expect(provider['token']).toBe('dev-token-123')
-    })
-
-    it('should use production token in production environment', () => {
-      process.env.NODE_ENV = 'production'
-      provider = new BroadcastProvider(config)
-      expect(provider['token']).toBe('prod-token-456')
+      expect(provider['token']).toBe('test-token-123')
     })
 
     it('should remove trailing slash from API URL', () => {
@@ -79,7 +69,7 @@ describe('BroadcastProvider', () => {
         {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer dev-token-123',
+            'Authorization': 'Bearer test-token-123',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({

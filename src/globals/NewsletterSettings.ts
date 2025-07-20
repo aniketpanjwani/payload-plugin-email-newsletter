@@ -101,19 +101,12 @@ export const createNewsletterSettingsGlobal = (
                     },
                   },
                   {
-                    name: 'productionToken',
+                    name: 'token',
                     type: 'text',
-                    label: 'Production Token',
+                    label: 'API Token',
+                    required: true,
                     admin: {
-                      description: 'Token for production environment',
-                    },
-                  },
-                  {
-                    name: 'developmentToken',
-                    type: 'text',
-                    label: 'Development Token',
-                    admin: {
-                      description: 'Token for development environment',
+                      description: 'Your Broadcast API token',
                     },
                   },
                 ],
