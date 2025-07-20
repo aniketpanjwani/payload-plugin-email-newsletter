@@ -5,7 +5,6 @@ import type { RichTextField } from 'payload'
 import { useField, useFormFields } from '@payloadcms/ui'
 import { EmailPreview } from './EmailPreview'
 import type { SerializedEditorState } from 'lexical'
-import type { Channel } from '../../types'
 
 interface BroadcastEditorProps {
   field: RichTextField
@@ -23,7 +22,6 @@ export const BroadcastEditor: React.FC<BroadcastEditorProps> = (props) => {
   const fields = useFormFields(([fields]) => ({
     subject: fields.subject,
     preheader: fields.preheader,
-    channel: fields.channel,
   }))
 
   // Handle validation results from preview
@@ -199,7 +197,6 @@ export const BroadcastEditor: React.FC<BroadcastEditorProps> = (props) => {
               content={value}
               subject={fields.subject?.value as string || 'Email Subject'}
               preheader={fields.preheader?.value as string}
-              channel={fields.channel?.value as Channel | null}
               mode={previewMode}
               onValidation={handleValidation}
             />

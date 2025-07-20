@@ -21,9 +21,8 @@ export const createSendBroadcastEndpoint = (
           }, { status: 401 })
         }
 
-        // Get broadcast provider
-        const broadcastProvider = (req.payload as any).newsletterProvider
-        if (!broadcastProvider) {
+        // Check if broadcast management is enabled
+        if (!config.features?.newsletterManagement?.enabled) {
           return Response.json({
             success: false,
             error: 'Broadcast management is not enabled',
@@ -45,7 +44,7 @@ export const createSendBroadcastEndpoint = (
         // Parse request body
         const data = await (req.json?.() || Promise.resolve({})) as SendBroadcastOptions
 
-        // Get the broadcast document to get the provider ID
+        // Get the broadcast document
         const broadcastDoc = await req.payload.findByID({
           collection: collectionSlug,
           id,
@@ -59,8 +58,20 @@ export const createSendBroadcastEndpoint = (
           }, { status: 404 })
         }
 
+        // Get provider from config
+        const providerConfig = config.providers?.broadcast
+        if (!providerConfig) {
+          return Response.json({
+            success: false,
+            error: 'Broadcast provider not configured',
+          }, { status: 500 })
+        }
+
+        const { BroadcastApiProvider } = await import('../../providers/broadcast/broadcast')
+        const provider = new BroadcastApiProvider(providerConfig)
+
         // Send broadcast using provider ID
-        const broadcast = await broadcastProvider.send(broadcastDoc.providerId, data)
+        const broadcast = await provider.send(broadcastDoc.providerId, data)
 
         // Update status in Payload collection
         await req.payload.update({

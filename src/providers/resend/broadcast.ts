@@ -7,12 +7,7 @@ import type {
   UpdateBroadcastInput,
   SendBroadcastOptions,
   BroadcastAnalytics,
-  BroadcastProviderCapabilities,
-  Channel,
-  CreateChannelInput,
-  UpdateChannelInput,
-  ListChannelsOptions,
-  ListChannelsResponse
+  BroadcastProviderCapabilities
 } from '../../types'
 import { 
   BroadcastProviderError, 
@@ -53,136 +48,6 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
     }
   }
 
-  // Channel Management Methods (map to Resend Audiences)
-  async listChannels(options?: ListChannelsOptions): Promise<ListChannelsResponse> {
-    try {
-      // Resend audiences API
-      const response = await this.client.audiences.list()
-      
-      const channels: Channel[] = response.data?.data?.map(audience => ({
-        id: audience.id,
-        name: audience.name,
-        description: undefined, // Resend doesn't have description
-        fromName: (this.config as ResendProviderConfig).fromName || '',
-        fromEmail: (this.config as ResendProviderConfig).fromEmail || '',
-        replyTo: (this.config as ResendProviderConfig).replyTo,
-        providerId: audience.id,
-        providerType: 'resend' as const,
-        subscriberCount: undefined, // Not available in list API
-        active: true,
-        createdAt: new Date(audience.created_at),
-        updatedAt: new Date(audience.created_at) // No updated_at in Resend
-      })) || []
-      
-      return {
-        channels,
-        total: channels.length,
-        limit: options?.limit || 100,
-        offset: options?.offset || 0
-      }
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to list channels (audiences): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async getChannel(id: string): Promise<Channel> {
-    try {
-      const response = await this.client.audiences.get(id)
-      
-      if (!response.data) {
-        throw new BroadcastProviderError(
-          `Channel (audience) not found: ${id}`,
-          BroadcastErrorCode.CHANNEL_NOT_FOUND,
-          this.name
-        )
-      }
-      
-      return {
-        id: response.data.id,
-        name: response.data.name,
-        description: undefined,
-        fromName: (this.config as ResendProviderConfig).fromName || '',
-        fromEmail: (this.config as ResendProviderConfig).fromEmail || '',
-        replyTo: (this.config as ResendProviderConfig).replyTo,
-        providerId: response.data.id,
-        providerType: 'resend',
-        subscriberCount: undefined, // Not available
-        active: true,
-        createdAt: new Date(response.data.created_at),
-        updatedAt: new Date(response.data.created_at)
-      }
-    } catch (error: unknown) {
-      if (error instanceof BroadcastProviderError) throw error
-      
-      throw new BroadcastProviderError(
-        `Failed to get channel (audience): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async createChannel(data: CreateChannelInput): Promise<Channel> {
-    try {
-      const response = await this.client.audiences.create({
-        name: data.name
-      })
-      
-      if (!response.data) {
-        throw new Error('Failed to create audience')
-      }
-      
-      return {
-        id: response.data.id,
-        name: response.data.name,
-        description: data.description,
-        fromName: data.fromName,
-        fromEmail: data.fromEmail,
-        replyTo: data.replyTo,
-        providerId: response.data.id,
-        providerType: 'resend',
-        subscriberCount: 0,
-        active: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to create channel (audience): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async updateChannel(_id: string, _data: UpdateChannelInput): Promise<Channel> {
-    // Resend doesn't support updating audiences via API
-    throw new BroadcastProviderError(
-      'Updating channels (audiences) is not supported by Resend API',
-      BroadcastErrorCode.NOT_SUPPORTED,
-      this.name
-    )
-  }
-
-  async deleteChannel(id: string): Promise<void> {
-    try {
-      await this.client.audiences.remove(id)
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to delete channel (audience): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
 
   // Broadcast Management Methods
   async list(_options?: ListBroadcastOptions): Promise<ListBroadcastResponse<Broadcast>> {
@@ -210,7 +75,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
 
   async create(data: CreateBroadcastInput): Promise<Broadcast> {
     try {
-      this.validateRequiredFields(data, ['channelId', 'name', 'subject', 'content'])
+      this.validateRequiredFields(data, ['name', 'subject', 'content'])
 
       // Get the appropriate audience ID
       const locale = 'en' // TODO: Make this configurable
@@ -302,7 +167,6 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
         // We can't get the updated broadcast, so return a mock
         return {
           id,
-          channelId: options?.audienceIds?.[0] || '1',
           name: 'Unknown',
           subject: 'Unknown',
           content: '',
@@ -361,8 +225,8 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
       supportsABTesting: false,
       supportsTemplates: false, // Not clear from docs
       supportsPersonalization: true, // Via merge tags
-      supportsMultipleChannels: true, // Via multiple audiences
-      supportsChannelSegmentation: false, // Not within a single audience
+      supportsMultipleChannels: false,
+      supportsChannelSegmentation: false,
       editableStatuses: [], // Unclear which statuses can be edited
       supportedContentTypes: ['html'] // React components via SDK
     }
@@ -398,7 +262,6 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
   private transformResendToBroadcast(broadcast: any): Broadcast {
     return {
       id: broadcast.id,
-      channelId: broadcast.audience_id || '1', // Map audience_id to channelId
       name: broadcast.name || 'Untitled',
       subject: broadcast.subject,
       preheader: broadcast.preheader,

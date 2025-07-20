@@ -7,7 +7,6 @@
  */
 export interface Broadcast {
   id: string;
-  channelId: string; // Reference to the channel this broadcast belongs to
   name: string;
   subject: string;
   preheader?: string;
@@ -48,7 +47,6 @@ export interface ListBroadcastOptions {
   limit?: number;
   offset?: number;
   status?: BroadcastStatus;
-  channelId?: string; // Filter by channel
   sortBy?: 'createdAt' | 'updatedAt' | 'sentAt' | 'name';
   sortOrder?: 'asc' | 'desc';
 }
@@ -68,7 +66,6 @@ export interface ListBroadcastResponse<T = Broadcast> {
  * Input for creating a new broadcast
  */
 export interface CreateBroadcastInput {
-  channelId: string; // Which channel to send to
   name: string;
   subject: string;
   preheader?: string;
@@ -76,7 +73,7 @@ export interface CreateBroadcastInput {
   trackOpens?: boolean;
   trackClicks?: boolean;
   replyTo?: string;
-  audienceIds?: string[]; // Maps to segments/audiences within the channel
+  audienceIds?: string[]; // Maps to segments/audiences
 }
 
 /**
@@ -97,7 +94,7 @@ export interface UpdateBroadcastInput {
  * Options for sending a broadcast
  */
 export interface SendBroadcastOptions {
-  audienceIds?: string[]; // Target specific audiences within the channel
+  audienceIds?: string[]; // Target specific audiences
   testMode?: boolean; // Send test email
   testRecipients?: string[]; // Email addresses for test send
 }
@@ -132,7 +129,6 @@ export interface BroadcastProviderCapabilities {
   maxRecipientsPerSend?: number;
   editableStatuses: BroadcastStatus[];
   supportedContentTypes: ('html' | 'text' | 'react')[];
-  // Channel-specific capabilities
   supportsMultipleChannels: boolean;
   supportsChannelSegmentation: boolean;
 }
@@ -160,9 +156,7 @@ export enum BroadcastErrorCode {
   NOT_FOUND = 'NOT_FOUND',
   PERMISSION_DENIED = 'PERMISSION_DENIED',
   RATE_LIMITED = 'RATE_LIMITED',
-  CONFIGURATION_ERROR = 'CONFIGURATION_ERROR',
-  CHANNEL_NOT_FOUND = 'CHANNEL_NOT_FOUND',
-  INVALID_CHANNEL = 'INVALID_CHANNEL'
+  CONFIGURATION_ERROR = 'CONFIGURATION_ERROR'
 }
 
 /**
@@ -170,7 +164,6 @@ export enum BroadcastErrorCode {
  */
 export interface BroadcastTemplate {
   id: string;
-  channelId?: string; // Optional channel-specific template
   name: string;
   description?: string;
   content: string;

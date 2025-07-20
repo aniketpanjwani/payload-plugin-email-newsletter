@@ -1,3 +1,30 @@
+## [0.10.0] - 2025-07-20
+
+### Changed
+- **BREAKING**: Simplified plugin architecture to single-channel design
+  - Removed Channels collection entirely 
+  - Each Payload instance now connects to a single Broadcast channel
+  - Channel is determined by the API token (Broadcast tokens are channel-specific)
+  - Removed `channelId` field from Broadcast type
+  - Removed channel management methods from providers
+- Updated newsletter management configuration
+  - Removed `collections.channels` from plugin config
+  - Broadcasts no longer have channel relationships
+  - All broadcasts use the global provider configuration
+- Improved provider capabilities
+  - Set `supportsMultipleChannels` to `false` for all providers
+  - Removed channel-specific error codes (`CHANNEL_NOT_FOUND`, `INVALID_CHANNEL`)
+
+### Added
+- Comprehensive documentation for single-channel architecture (`docs/guides/single-channel-broadcast.md`)
+- Clear migration path from multi-channel to single-channel design
+
+### Removed
+- Channels collection (`src/collections/Channels.ts`)
+- Channel utility functions (`src/providers/utils/getChannelProvider.ts`)
+- Channel type definitions (`src/types/channel.ts`)
+- Channel imports and references throughout the codebase
+
 ## [0.9.3] - 2025-07-20
 
 ### Changed

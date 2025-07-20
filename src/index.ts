@@ -6,7 +6,6 @@ import { createEmailService } from './providers'
 import { createNewsletterEndpoints } from './endpoints'
 import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
 import { createUnsubscribeSyncJob } from './jobs/sync-unsubscribes'
-import { createChannelsCollection } from './collections/Channels'
 import { createBroadcastsCollection } from './collections/Broadcasts'
 import { BroadcastApiProvider } from './providers/broadcast/broadcast'
 import { ResendBroadcastProvider } from './providers/resend/broadcast'
@@ -48,11 +47,10 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
   // Build collections array
   let collections = [...(incomingConfig.collections || []), subscribersCollection]
 
-  // Add broadcast management collections if enabled
+  // Add broadcast management collection if enabled
   if (config.features?.newsletterManagement?.enabled) {
-    const channelsCollection = createChannelsCollection(config)
     const broadcastsCollection = createBroadcastsCollection(config)
-    collections.push(channelsCollection, broadcastsCollection)
+    collections.push(broadcastsCollection)
   }
 
   // Extend collections with newsletter scheduling fields if enabled

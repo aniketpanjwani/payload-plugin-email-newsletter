@@ -16,18 +16,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
     admin: {
       useAsTitle: 'name',
       description: 'Individual email campaigns sent to subscribers',
-      defaultColumns: ['name', 'subject', 'status', 'channel', 'sentAt', 'actions'],
+      defaultColumns: ['name', 'subject', 'status', 'sentAt', 'actions'],
     },
     fields: [
-      {
-        name: 'channel',
-        type: 'relationship',
-        relationTo: 'channels',
-        required: true,
-        admin: {
-          description: 'The channel this broadcast belongs to'
-        },
-      },
       {
         name: 'name',
         type: 'text',
@@ -240,29 +231,28 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || operation !== 'create') return doc
 
           try {
-            // Get the channel to determine provider
-            const channel = await req.payload.findByID({
-              collection: 'channels',
-              id: typeof doc.channel === 'string' ? doc.channel : doc.channel.id,
-              req,
-            })
+            // Get provider from config
+            const providerConfig = pluginConfig.providers?.broadcast
+            if (!providerConfig) {
+              req.payload.logger.error('Broadcast provider not configured')
+              return doc
+            }
 
-            const provider = await getProvider(channel.providerType, pluginConfig)
-            if (!provider) return doc
+            const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+            const provider = new BroadcastApiProvider(providerConfig)
 
             // Convert rich text to HTML
             const htmlContent = await convertToEmailSafeHtml(doc.content)
 
             // Create broadcast in provider
             const providerBroadcast = await provider.create({
-              channelId: channel.providerId || channel.id,
               name: doc.name,
               subject: doc.subject,
               preheader: doc.preheader,
               content: htmlContent,
               trackOpens: doc.settings?.trackOpens,
               trackClicks: doc.settings?.trackClicks,
-              replyTo: doc.settings?.replyTo,
+              replyTo: doc.settings?.replyTo || providerConfig.replyTo,
               audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
             })
 
@@ -294,16 +284,15 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || !originalDoc?.providerId || operation !== 'update') return data
 
           try {
-            // Get the channel to determine provider
-            const channelId = data.channel || originalDoc.channel
-            const channel = await req.payload.findByID({
-              collection: 'channels',
-              id: typeof channelId === 'string' ? channelId : channelId.id,
-              req,
-            })
+            // Get provider from config
+            const providerConfig = pluginConfig.providers?.broadcast
+            if (!providerConfig) {
+              req.payload.logger.error('Broadcast provider not configured')
+              return data
+            }
 
-            const provider = await getProvider(channel.providerType, pluginConfig)
-            if (!provider) return data
+            const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+            const provider = new BroadcastApiProvider(providerConfig)
 
             // Only sync if broadcast is still editable
             const capabilities = provider.getCapabilities()
@@ -326,7 +315,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               updates.trackClicks = data.settings.trackClicks
             }
             if (data.settings?.replyTo !== originalDoc.settings?.replyTo) {
-              updates.replyTo = data.settings.replyTo
+              updates.replyTo = data.settings.replyTo || providerConfig.replyTo
             }
             if (JSON.stringify(data.audienceIds) !== JSON.stringify(originalDoc.audienceIds)) {
               updates.audienceIds = data.audienceIds?.map((a: any) => a.audienceId)
@@ -349,15 +338,15 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || !doc?.providerId) return doc
 
           try {
-            // Get the channel to determine provider
-            const channel = await req.payload.findByID({
-              collection: 'channels',
-              id: typeof doc.channel === 'string' ? doc.channel : doc.channel.id,
-              req,
-            })
+            // Get provider from config
+            const providerConfig = pluginConfig.providers?.broadcast
+            if (!providerConfig) {
+              req.payload.logger.error('Broadcast provider not configured')
+              return doc
+            }
 
-            const provider = await getProvider(channel.providerType, pluginConfig)
-            if (!provider) return doc
+            const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+            const provider = new BroadcastApiProvider(providerConfig)
 
             // Only delete if broadcast is still editable
             const capabilities = provider.getCapabilities()
@@ -375,20 +364,4 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
   }
 }
 
-// Helper to get provider instance
-async function getProvider(providerType: string, config: NewsletterPluginConfig): Promise<any> {
-  if (providerType === 'broadcast') {
-    const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-    const providerConfig = config.providers?.broadcast
-    return providerConfig ? new BroadcastApiProvider(providerConfig) : null
-  }
-  
-  if (providerType === 'resend') {
-    const { ResendBroadcastProvider } = await import('../providers/resend/broadcast')
-    const providerConfig = config.providers?.resend
-    return providerConfig ? new ResendBroadcastProvider(providerConfig) : null
-  }
-
-  return null
-}
 

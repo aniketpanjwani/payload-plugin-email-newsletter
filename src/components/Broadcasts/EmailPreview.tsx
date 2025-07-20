@@ -4,13 +4,11 @@ import React, { useState, useEffect, useRef } from 'react'
 import type { SerializedEditorState } from 'lexical'
 import { convertToEmailSafeHtml, replacePersonalizationTags } from '../../utils/emailSafeHtml'
 import { validateEmailHtml } from '../../utils/validateEmailHtml'
-import type { Channel } from '../../types'
 
 interface EmailPreviewProps {
   content: SerializedEditorState | null
   subject: string
   preheader?: string
-  channel?: Channel | null
   mode?: 'desktop' | 'mobile'
   onValidation?: (result: { valid: boolean; warnings: string[]; errors: string[] }) => void
 }
@@ -31,7 +29,6 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
   content,
   subject,
   preheader,
-  channel,
   mode = 'desktop',
   onValidation,
 }) => {
@@ -62,7 +59,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
         // Add email header to the preview
         const previewHtml = addEmailHeader(personalizedHtml, {
           subject,
-          from: channel ? `${channel.fromName} <${channel.fromEmail}>` : 'Newsletter <noreply@example.com>',
+          from: 'Newsletter <noreply@example.com>',
           to: SAMPLE_DATA['subscriber.email'],
         })
 
@@ -81,7 +78,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
     }
 
     convertContent()
-  }, [content, subject, preheader, channel, onValidation])
+  }, [content, subject, preheader, onValidation])
 
   // Update iframe content when HTML changes
   useEffect(() => {

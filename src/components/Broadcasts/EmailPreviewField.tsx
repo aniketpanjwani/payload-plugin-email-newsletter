@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import { useFormFields } from '@payloadcms/ui'
 import { EmailPreview } from './EmailPreview'
 import type { SerializedEditorState } from 'lexical'
-import type { Channel } from '../../types'
 
 export const EmailPreviewField: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
@@ -160,7 +159,6 @@ export const EmailPreviewField: React.FC = () => {
           content={fields.content?.value as SerializedEditorState || null}
           subject={fields.subject?.value as string || 'Email Subject'}
           preheader={fields.preheader?.value as string}
-          channel={fields.channel?.value as Channel | null}
           mode={previewMode}
           onValidation={handleValidation}
         />

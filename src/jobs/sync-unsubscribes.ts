@@ -34,9 +34,7 @@ export const createUnsubscribeSyncJob = (
           }
 
           const apiUrl = broadcastConfig.apiUrl.replace(/\/$/, '')
-          const token = process.env.NODE_ENV === 'production' 
-            ? broadcastConfig.tokens.production 
-            : broadcastConfig.tokens.development
+          const token = broadcastConfig.token
 
           let page = 1
           let hasMore = true

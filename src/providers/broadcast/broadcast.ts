@@ -6,12 +6,7 @@ import type {
   UpdateBroadcastInput,
   SendBroadcastOptions,
   BroadcastAnalytics,
-  BroadcastProviderCapabilities,
-  Channel,
-  CreateChannelInput,
-  UpdateChannelInput,
-  ListChannelsOptions,
-  ListChannelsResponse
+  BroadcastProviderCapabilities
 } from '../../types'
 import { 
   BroadcastProviderError, 
@@ -44,18 +39,6 @@ interface BroadcastListResponse {
   total: number
 }
 
-// Channel API interfaces
-interface BroadcastChannelApiResponse {
-  id: number
-  name: string
-  description?: string
-  address: string
-  from: string
-  reply_to?: string
-  total_active_subscribers: number
-  created_at: string
-  updated_at: string
-}
 
 export class BroadcastApiProvider extends BaseBroadcastProvider {
   readonly name = 'broadcast'
@@ -72,176 +55,6 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
         'Broadcast API token is required',
         BroadcastErrorCode.CONFIGURATION_ERROR,
         this.name
-      )
-    }
-  }
-
-  // Channel Management Methods
-  async listChannels(options?: ListChannelsOptions): Promise<ListChannelsResponse> {
-    try {
-      const params = new URLSearchParams()
-      if (options?.limit) params.append('limit', options.limit.toString())
-      if (options?.offset) params.append('offset', options.offset.toString())
-
-      const response = await fetch(`${this.apiUrl}/api/v1/channels?${params}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`Broadcast API error: ${response.status} - ${error}`)
-      }
-
-      const data = await response.json()
-      const channels = data.data.map((channel: BroadcastChannelApiResponse) => this.transformChannelFromApi(channel))
-      
-      return {
-        channels,
-        total: data.total || channels.length,
-        limit: options?.limit || 20,
-        offset: options?.offset || 0
-      }
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to list channels: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async getChannel(id: string): Promise<Channel> {
-    try {
-      const response = await fetch(`${this.apiUrl}/api/v1/channels/${id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new BroadcastProviderError(
-            `Channel not found: ${id}`,
-            BroadcastErrorCode.CHANNEL_NOT_FOUND,
-            this.name
-          )
-        }
-        const error = await response.text()
-        throw new Error(`Broadcast API error: ${response.status} - ${error}`)
-      }
-
-      const channel: BroadcastChannelApiResponse = await response.json()
-      return this.transformChannelFromApi(channel)
-    } catch (error: unknown) {
-      if (error instanceof BroadcastProviderError) throw error
-      
-      throw new BroadcastProviderError(
-        `Failed to get channel: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async createChannel(data: CreateChannelInput): Promise<Channel> {
-    try {
-      const response = await fetch(`${this.apiUrl}/api/v1/channels`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          channel: {
-            name: data.name,
-            description: data.description,
-            from: data.fromName,
-            address: data.fromEmail,
-            reply_to: data.replyTo
-          }
-        })
-      })
-
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`Broadcast API error: ${response.status} - ${error}`)
-      }
-
-      const channel: BroadcastChannelApiResponse = await response.json()
-      return this.transformChannelFromApi(channel)
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to create channel: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async updateChannel(id: string, data: UpdateChannelInput): Promise<Channel> {
-    try {
-      const updateData: any = { channel: {} }
-      if (data.name !== undefined) updateData.channel.name = data.name
-      if (data.description !== undefined) updateData.channel.description = data.description
-      if (data.fromName !== undefined) updateData.channel.from = data.fromName
-      if (data.fromEmail !== undefined) updateData.channel.address = data.fromEmail
-      if (data.replyTo !== undefined) updateData.channel.reply_to = data.replyTo
-
-      const response = await fetch(`${this.apiUrl}/api/v1/channels/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData)
-      })
-
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`Broadcast API error: ${response.status} - ${error}`)
-      }
-
-      const channel: BroadcastChannelApiResponse = await response.json()
-      return this.transformChannelFromApi(channel)
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to update channel: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
-      )
-    }
-  }
-
-  async deleteChannel(id: string): Promise<void> {
-    try {
-      const response = await fetch(`${this.apiUrl}/api/v1/channels/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`Broadcast API error: ${response.status} - ${error}`)
-      }
-    } catch (error: unknown) {
-      throw new BroadcastProviderError(
-        `Failed to delete channel: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        BroadcastErrorCode.PROVIDER_ERROR,
-        this.name,
-        error
       )
     }
   }
@@ -319,7 +132,7 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
 
   async create(data: CreateBroadcastInput): Promise<Broadcast> {
     try {
-      this.validateRequiredFields(data, ['channelId', 'name', 'subject', 'content'])
+      this.validateRequiredFields(data, ['name', 'subject', 'content'])
 
       const response = await fetch(`${this.apiUrl}/api/v1/broadcasts`, {
         method: 'POST',
@@ -329,7 +142,6 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
         },
         body: JSON.stringify({
           broadcast: {
-            channel_id: parseInt(data.channelId), // Broadcast API uses numeric IDs
             name: data.name,
             subject: data.subject,
             preheader: data.preheader,
@@ -581,8 +393,8 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
       supportsABTesting: false,
       supportsTemplates: false,
       supportsPersonalization: true,
-      supportsMultipleChannels: true,
-      supportsChannelSegmentation: true,
+      supportsMultipleChannels: false,
+      supportsChannelSegmentation: false,
       editableStatuses: [BroadcastStatus.DRAFT, BroadcastStatus.SCHEDULED],
       supportedContentTypes: ['html', 'text']
     }
@@ -599,11 +411,8 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
   }
 
   private transformBroadcastFromApi(broadcast: BroadcastApiResponse): Broadcast {
-    // TODO: We need to get the channel_id from the broadcast API response
-    // For now, we'll use a placeholder
     return {
       id: broadcast.id.toString(),
-      channelId: '1', // TODO: Get from API response when available
       name: broadcast.name,
       subject: broadcast.subject,
       preheader: broadcast.preheader,
@@ -620,23 +429,6 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
       providerData: { broadcast },
       providerId: broadcast.id.toString(),
       providerType: 'broadcast'
-    }
-  }
-  
-  private transformChannelFromApi(channel: BroadcastChannelApiResponse): Channel {
-    return {
-      id: channel.id.toString(),
-      name: channel.name,
-      description: channel.description,
-      fromName: channel.from,
-      fromEmail: channel.address,
-      replyTo: channel.reply_to,
-      providerId: channel.id.toString(),
-      providerType: 'broadcast',
-      subscriberCount: channel.total_active_subscribers,
-      active: true, // Broadcast API doesn't have an active field
-      createdAt: new Date(channel.created_at),
-      updatedAt: new Date(channel.updated_at)
     }
   }
 

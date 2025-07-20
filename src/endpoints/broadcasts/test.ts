@@ -58,13 +58,6 @@ export const createTestBroadcastEndpoint = (
           }, { status: 404 })
         }
 
-        // Get the channel for sender info
-        const channel = await req.payload.findByID({
-          collection: 'channels',
-          id: typeof broadcast.channel === 'string' ? broadcast.channel : broadcast.channel.id,
-          user: auth.user,
-        })
-
         // Convert content to email-safe HTML
         const htmlContent = await convertToEmailSafeHtml(broadcast.content, {
           wrapInTemplate: true,
@@ -81,12 +74,20 @@ export const createTestBroadcastEndpoint = (
           }, { status: 500 })
         }
 
+        // Get sender info from provider config
+        const providerConfig = config.providers.default === 'resend' 
+          ? config.providers.resend 
+          : config.providers.broadcast
+        const fromEmail = providerConfig?.fromAddress || providerConfig?.fromEmail || 'noreply@example.com'
+        const fromName = providerConfig?.fromName || 'Newsletter'
+        const replyTo = broadcast.settings?.replyTo || providerConfig?.replyTo
+
         // Send test email
         await emailService.send({
           to: testEmail,
-          from: channel?.fromEmail || config.providers.resend?.fromAddress || 'noreply@example.com',
-          fromName: channel?.fromName || config.providers.resend?.fromName || 'Newsletter',
-          replyTo: broadcast.settings?.replyTo || channel?.replyTo,
+          from: fromEmail,
+          fromName: fromName,
+          replyTo: replyTo,
           subject: `[TEST] ${broadcast.subject}`,
           html: htmlContent,
           trackOpens: false,

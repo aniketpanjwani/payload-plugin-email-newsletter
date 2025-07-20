@@ -32,10 +32,7 @@ export interface EmailServiceConfig {
   }
   broadcast?: {
     apiUrl: string
-    tokens: {
-      production?: string
-      development?: string
-    }
+    token: string
   }
 }
 

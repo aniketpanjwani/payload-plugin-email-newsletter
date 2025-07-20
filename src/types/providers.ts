@@ -20,14 +20,6 @@ import {
   BroadcastErrorCode
 } from './broadcast'
 
-// Import channel types
-import type {
-  Channel,
-  CreateChannelInput,
-  UpdateChannelInput,
-  ListChannelsOptions,
-  ListChannelsResponse
-} from './channel'
 
 // Import legacy newsletter types for backwards compatibility
 import type {
@@ -55,32 +47,6 @@ export interface BroadcastProvider {
    * Get the provider name
    */
   readonly name: string;
-
-  // Channel management methods
-  /**
-   * List channels (newsletter types/publications)
-   */
-  listChannels(options?: ListChannelsOptions): Promise<ListChannelsResponse>;
-  
-  /**
-   * Get a specific channel by ID
-   */
-  getChannel(id: string): Promise<Channel>;
-  
-  /**
-   * Create a new channel
-   */
-  createChannel(data: CreateChannelInput): Promise<Channel>;
-  
-  /**
-   * Update an existing channel
-   */
-  updateChannel(id: string, data: UpdateChannelInput): Promise<Channel>;
-  
-  /**
-   * Delete a channel
-   */
-  deleteChannel(id: string): Promise<void>;
 
   // Broadcast management methods
   /**
@@ -212,13 +178,6 @@ export abstract class BaseBroadcastProvider implements BroadcastProvider {
   abstract readonly name: string;
   
   constructor(protected config: any) {}
-  
-  // Channel management - abstract methods
-  abstract listChannels(options?: ListChannelsOptions): Promise<ListChannelsResponse>;
-  abstract getChannel(id: string): Promise<Channel>;
-  abstract createChannel(data: CreateChannelInput): Promise<Channel>;
-  abstract updateChannel(id: string, data: UpdateChannelInput): Promise<Channel>;
-  abstract deleteChannel(id: string): Promise<void>;
   
   // Broadcast management - abstract methods
   abstract list(options?: ListBroadcastOptions): Promise<ListBroadcastResponse<Broadcast>>;

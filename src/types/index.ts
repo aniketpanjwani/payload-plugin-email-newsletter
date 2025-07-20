@@ -1,9 +1,8 @@
 import type { Field } from 'payload'
 import type { BroadcastProvider } from './providers'
 
-// Export broadcast and channel types
+// Export broadcast types
 export * from './broadcast'
-export * from './channel'
 export * from './providers'
 // Export legacy newsletter types for backwards compatibility
 export * from './newsletter'
@@ -226,11 +225,6 @@ export interface NewsletterPluginConfig {
        * Collection names for broadcast management
        */
       collections?: {
-        /**
-         * Channels collection slug
-         * @default 'channels'
-         */
-        channels?: string
         /**
          * Broadcasts collection slug
          * @default 'broadcasts'
