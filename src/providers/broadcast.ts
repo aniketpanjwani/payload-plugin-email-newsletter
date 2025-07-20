@@ -36,20 +36,17 @@ export class BroadcastProvider implements EmailProvider {
       const recipients = Array.isArray(params.to) ? params.to : [params.to]
       
       // Broadcast expects a specific format
-      const response = await fetch(`${this.apiUrl}/api/v1/emails`, {
+      const response = await fetch(`${this.apiUrl}/api/v1/transactionals.json`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from_email: from.email,
-          from_name: from.name,
-          to: recipients,
+          to: recipients[0], // Broadcast API expects a single recipient for transactional emails
           subject: params.subject,
-          html_body: params.html,
-          text_body: params.text,
-          reply_to: params.replyTo,
+          body: params.html || params.text || '',
+          reply_to: params.replyTo || from.email,
         }),
       })
 

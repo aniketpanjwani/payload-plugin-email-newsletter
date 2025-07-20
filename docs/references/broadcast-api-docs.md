@@ -21,7 +21,7 @@
 ### Our documentation is currently under construction.
 
       
-        Our documentation is currently under construction, so you may expect missing parts. Need help? Email us at [[email&#160;protected]](/cdn-cgi/l/email-protection#8ffce6e2e0e1cffceae1ebedfde0eeebeceefcfba1e1eafbb0fcfaede5eaecfbb2cbe0ecfae2eae1fbeefbe6e0e1afe9eaeaebedeeece4).
+        Our documentation is currently under construction, so you may expect missing parts. Need help? Email us at [[email&#160;protected]](/cdn-cgi/l/email-protection#a5d6ccc8cacbe5d6c0cbc1c7d7cac4c1c6c4d6d18bcbc0d19ad6d0c7cfc0c6d198e1cac6d0c8c0cbd1c4d1cccacb85c3c0c0c1c7c4c6ce).
       
     
   
@@ -30,7 +30,7 @@
 
 Here is everything you need to know to install and use Broadcast.
 
-If we are missing anything here or if anything is unclear, please email us at [[email&#160;protected]](/cdn-cgi/l/email-protection#2c5f454143426c5f4942484e5e434d484f4d5f5802424958135f594e46494f581168434f59414942584d584543420c4a4949484e4d4f47).
+If we are missing anything here or if anything is unclear, please email us at [[email&#160;protected]](/cdn-cgi/l/email-protection#2b58424644456b584e454f4959444a4f484a585f05454e5f14585e49414e485f166f44485e464e455f4a5f4244450b4d4e4e4f494a4840).
 
 ---
 
@@ -98,7 +98,7 @@ Before you can begin sending any email messages, you must configure your channel
 
 This includes:
 
-- Sender name and email address (eg. &ldquo;John Doe&rdquo; [[email&#160;protected]](/cdn-cgi/l/email-protection#b9d3d6d1d797ddd6dcf9dcc1d8d4c9d5dc97dad6d4)). All emails sent from this specific channel will appear to come from this sender.
+- Sender name and email address (eg. &ldquo;John Doe&rdquo; [[email&#160;protected]](/cdn-cgi/l/email-protection#701a1f181e5e141f15301508111d001c155e131f1d)). All emails sent from this specific channel will appear to come from this sender.
 
 - At least one SMTP server for sending emails.
 
@@ -160,6 +160,57 @@ All settings, subscribers, broadcasts, sequences, and transactional emails are c
 
 This allows you to have a separate setup for each of your channels, which is useful if you have different opt-in forms, or want to send different content to different groups of people.
 
+## Email servers
+
+Each channel requires at least one email server. You can have multiple email servers within the same channel, and Broadcast will automatically &ldquo;load balance&rdquo; between them when sending out broadcasts, transactional emails, and sequences (DRIP/autoresponders).
+
+### Adding an email server
+
+To add an email server, navigate to **Channel Settings** -> **Email Servers**. From there, click on the **Add email server** button. This will take you to a page where you can configure the new server.
+
+### Configuring an email server
+
+When adding or editing an email server, you will be presented with several configuration options:
+
+- **Label**: A friendly name for you to identify the server easily. For example, &ldquo;Server at AWS us-east-1&rdquo;.
+
+- **Vendor**: Select your email service provider (ESP) from the list, like AWS SES, Sendgrid, Postmark, etc. Broadcast will use the correct settings for the email service you choose.
+
+- **SMTP Details**: You&rsquo;ll need to provide the SMTP address, port, username, and password for your email server. You can get these details from your ESP. Note that some hosting providers block outgoing traffic on ports 25, 467, or even 587. If your test connection fails, please double check if the port is open.
+
+- **SMTP Authentication**: Select the authentication method used by your SMTP server.
+
+#### Custom Headers
+
+You can add custom headers to all emails sent through this server. This is useful for adding things like custom tracking headers.
+
+#### Email Types
+
+You can control which types of emails are sent using this server. This is a powerful feature that helps you maintain your deliverability and IP/domain reputation. For example, you can use one server with a high reputation for important transactional emails, and another server for bulk broadcasts.
+
+You can choose from:
+
+- Broadcasts (manual campaigns)
+
+- Transactional emails
+
+- Automated sequences (Drip style emails)
+
+You must select at least one email type for the server to be used.
+
+#### Custom Unsubscribe Settings
+
+Broadcast allows you to customize the unsubscribe behavior for each server.
+- **Include unsubscribe header**: Adds a `List-Unsubscribe` email header, which is a best practice for deliverability.
+- **Include unsubscribe link**: Adds an unsubscribe link to the bottom of your emails.
+- **Customize unsubscribe link**: Override the channel&rsquo;s default unsubscribe link with a custom one for this server.
+
+Note that certain ESPs will automatically include an unsubscribe header and link, and these settings may not take effect. Also, if your broadcast channel does not have an email footer, these settings will not take effect.
+
+#### Availability
+
+You can temporarily disable an email server by unchecking the **Enable server to send emails** option. This is useful if you need to perform maintenance on a server or if you&rsquo;re experiencing deliverability issues with it and want to stop sending emails through it without deleting its configuration.
+
 ---
 
 ## Managing Subscribers
@@ -191,6 +242,8 @@ For each subscriber, you can store the following information:
 - Subscribed at date (required)
 
 - Unsubscribed at date
+
+- Custom data
 
 The required values are indicated above.
 
@@ -289,6 +342,8 @@ The form options you have available are:
 - **Subject**: The subject of the broadcast.
 
 - **Preheader**: The text that will be shown in the preheader of the email.
+
+- **Reply-to**: The email address that recipients can reply to. If not specified, replies will go to the sender email address.
 
 - **Body**: The content of the broadcast.
 
@@ -835,6 +890,42 @@ If your Access Token tries to make a request that it is not authorized to make, 
 
 To view and manage your Access Tokens, click on **Access Tokens** in the left sidebar of the dashboard.
 
+### Refreshing Access Tokens
+
+By default, any access token you create does not expire.
+
+You can refresh (regenerate) an Access Token at any time. This will create a new token value while maintaining the same permissions.
+
+  
+    
+      
+        
+      
+    
+    
+      
+### Important
+
+      
+        
+When you refresh an Access Token, the old token value becomes invalid immediately. Any applications or integrations using the old token will stop working until you update them with the new token value.
+
+      
+    
+  
+
+To refresh an Access Token:
+
+- Click on the token you want to refresh from the Access Tokens list
+
+- Click the **Refresh token** button
+
+- Confirm that you want to refresh the token
+
+- Copy the new token value and update your applications
+
+Always ensure you have updated all your integrations with the new token value before refreshing.
+
 ---
 
 ## API Subscribers
@@ -843,7 +934,7 @@ To view and manage your Access Tokens, click on **Access Tokens** in the left si
 
 # Subscribers API
 
-The Subscribers API allows you to programmatically manage your subscriber list.
+The Subscribers API allows you to programmatically manage your subscriber list. It supports comprehensive filtering capabilities to enable efficient querying and external system synchronization.
 
 ## Required Permissions
 
@@ -852,6 +943,20 @@ All endpoints require authentication via an API token with appropriate permissio
 - List and read subscribers (Read)
 
 - Create and update subscribers (Write)
+
+## Common Use Cases
+
+The filtering capabilities are particularly useful for:
+
+- **External System Synchronization**: Sync unsubscribed users with your CRM by filtering `subscription_status=unsubscribed`
+
+- **Segment Management**: Export specific subscriber segments based on tags, source, or activity status
+
+- **Data Cleanup**: Identify inactive subscribers or those who haven&rsquo;t been emailed recently
+
+- **Analytics and Reporting**: Generate reports for subscribers by date ranges or custom attributes
+
+- **Compliance**: Efficiently retrieve subscription status for regulatory reporting
 
 ## Subscriber Object
 
@@ -901,12 +1006,20 @@ The subscriber object contains the following fields:
       The date and time the subscriber was unsubscribed
     
     
+      `last_email_sent_at`
+      The date and time the subscriber was last sent an email
+    
+    
       `created_at`
       The date and time the subscriber was created
     
     
       `tags`
       An array of tags associated with the subscriber
+    
+    
+      `custom_data`
+      A JSON object, with key-value pairs
     
   
 
@@ -919,13 +1032,168 @@ GET /api/v1/subscribers.json
 
 ### Parameters
 
+#### Pagination
+
 - `page`: The page number to return (default is 1)
 
-### Request
+#### Filtering Parameters
+
+The following filtering parameters can be used to filter the subscribers list:
+
+**Subscription Status Filtering:**
+
+  `subscriptionstatus`: Filter by subscription status
+    
+
+      - `subscribed`: Subscribers who have not unsubscribed (unsubscribedat is null)
+
+      - `unsubscribed`: Subscribers who have unsubscribed (unsubscribedat is not null)
+
+      - `active`: Subscribers marked as active (isactive = true)
+
+      - `inactive`: Subscribers marked as inactive (is_active = false)
+
+    
+
+  
+
+**Source Filtering:**
+
+  - `source`: Filter by how the subscriber was added (e.g., `website`, `api`, `import`)
+
+**Date Range Filtering:**
+
+  - `subscribedafter`: Filter subscribers who joined after this date (ISO 8601 format)
+
+  - `subscribedbefore`: Filter subscribers who joined before this date (ISO 8601 format)
+
+  - `emailedafter`: Filter subscribers who were emailed after this date (ISO 8601 format)
+
+  - `emailedbefore`: Filter subscribers who were emailed before this date (ISO 8601 format)
+
+**Email Pattern Filtering:**
+
+  - `email_contains`: Filter subscribers whose email contains the specified text
+
+**Tag-Based Filtering:**
+
+  - `tags[]`: Filter subscribers by tags (supports multiple tags)
+
+  `tag*match*type`: Determines how multiple tags are matched
+    
+
+      - `any`: OR logic - returns subscribers with ANY of the specified tags (default)
+
+      - `all`: AND logic - returns subscribers with ALL of the specified tags
+
+    
+
+  
+
+**Tag Filtering Logic Explanation:**
+
+When filtering by tags, you can control the matching logic using the `tag_match_type` parameter:
+
+**OR Logic (default):** Returns subscribers who have **ANY** of the specified tags.
+
+**AND Logic:** Returns subscribers who have **ALL** of the specified tags.
+
+**Example:** If you have subscribers with these tags:
+
+  - Alice: `["premium", "newsletter"]`
+
+  - Bob: `["premium", "vip"]`
+
+  - Carol: `["newsletter", "trial"]`
+
+  - Dave: `["basic"]`
+
+**OR Logic** request `tags[]=premium&tags[]=newsletter&tag_match_type=any` returns Alice, Bob, and Carol:
+
+  - ✅ Alice has both `premium` and `newsletter` (matches)
+
+  - ✅ Bob has `premium` (matches one of the requested tags)
+
+  - ✅ Carol has `newsletter` (matches one of the requested tags)
+
+  - ❌ Dave has neither `premium` nor `newsletter`
+
+**AND Logic** request `tags[]=premium&tags[]=newsletter&tag_match_type=all` returns only Alice:
+
+  - ✅ Alice has both `premium` and `newsletter` (matches all required tags)
+
+  - ❌ Bob has `premium` but not `newsletter`
+
+  - ❌ Carol has `newsletter` but not `premium`
+
+  - ❌ Dave has neither `premium` nor `newsletter`
+
+**Custom Data Filtering:**
+
+  - `custom*data[field*name]`: Filter by custom JSONB field values
+
+### Request Examples
+
+**Basic request:**
 
 ```
-curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  https://your-broadcast-domain.com/api/v1/subscribers.json?page=1
+GET /api/v1/subscribers.json?page=1
+
+```
+
+**Filter by subscription status:**
+
+```
+GET /api/v1/subscribers.json?subscription_status=unsubscribed
+
+```
+
+**Filter by source and activity status:**
+
+```
+GET /api/v1/subscribers.json?subscription_status=active&source=website
+
+```
+
+**Filter by date range:**
+
+```
+GET /api/v1/subscribers.json?subscribed_after=2024-01-01T00:00:00Z&subscribed_before=2024-12-31T23:59:59Z
+
+```
+
+**Filter by tags (OR logic - subscribers with ANY of these tags):**
+
+```
+GET /api/v1/subscribers.json?tags[]=premium&tags[]=newsletter&tag_match_type=any
+
+```
+
+**Filter by tags (AND logic - subscribers with ALL of these tags):**
+
+```
+GET /api/v1/subscribers.json?tags[]=premium&tags[]=newsletter&tag_match_type=all
+
+```
+
+**Filter by tags (default behavior - OR logic when `tag_match_type` is omitted):**
+
+```
+GET /api/v1/subscribers.json?tags[]=premium&tags[]=newsletter
+
+```
+
+**Filter by custom data:**
+
+```
+GET /api/v1/subscribers.json?custom_data[plan]=enterprise
+
+```
+
+**Combined filtering:**
+
+```
+GET /api/v1/subscribers.json?subscription_status=active&source=api&subscribed_after=2024-01-01T00:00:00Z&tags[]=premium
 
 ```
 
@@ -944,8 +1212,10 @@ curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
       "source": "web_form",
       "subscribed_at": "2024-03-20T10:00:00Z",
       "unsubscribed_at": null,
+      "last_email_sent_at": "2024-03-25T14:30:00Z",
       "created_at": "2024-03-20T10:00:00Z",
-      "tags": ["newsletter", "product-updates"]
+      "tags": ["newsletter", "product-updates"],
+      "custom_data": { "some_key": "some value" }
     }
   ],
   "pagination": {
@@ -994,8 +1264,10 @@ curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   "source": "web_form",
   "subscribed_at": "2024-03-20T10:00:00Z",
   "unsubscribed_at": null,
+  "last_email_sent_at": "2024-03-25T14:30:00Z",
   "created_at": "2024-03-20T10:00:00Z",
-  "tags": ["newsletter", "product-updates"]
+  "tags": ["newsletter", "product-updates"],
+  "custom_data": { "some_key": "some value" }
 }
 
 ```
@@ -1039,7 +1311,10 @@ curl -X POST \
       "is_active": true,
       "source": "web_form",
       "subscribed_at": "2024-03-20T10:00:00Z",
-      "tags": ["newsletter", "product-updates"]
+      "tags": ["newsletter", "product-updates"],
+      "custom_data": {
+        "my_custom_data": "data value"
+      }
     }
   }' \
   https://your-broadcast-domain.com/api/v1/subscribers.json
@@ -1243,13 +1518,15 @@ The response code will be 200 (OK) if the tags were successfully removed.
 
 # Broadcast API
 
-The Broadcast API allows you to programmatically create draft broadcasts. These will create broadcasts in the draft state, which you can then manually trigger through Broadcast&rsquo;s own API after verifying that the broadcast is ready to send.
+The Broadcast API provides full CRUD (Create, Read, Update, Delete) operations for managing email broadcast campaigns. You can create, list, view, update, delete, and send broadcasts programmatically.
 
 ## Required Permissions
 
 All endpoints require authentication via an API token with appropriate permissions:
 
-- Create broadcasts (Write)
+- **Read Permission**: Required for GET endpoints (list, show)
+
+- **Write Permission**: Required for POST, PATCH, DELETE endpoints and send operations
 
 ## Broadcast Object
 
@@ -1290,14 +1567,118 @@ The broadcast object contains the following fields:
       `track_clicks`
       Whether click tracking is enabled for this broadcast
     
+    
+      `status`
+      Current status of the broadcast (draft, scheduled, sending, sent, etc.)
+    
+    
+      `html_body`
+      Whether the body contains HTML content
+    
+    
+      `reply_to`
+      Reply-to email address
+    
+    
+      `total_recipients`
+      Total number of recipients
+    
+    
+      `sent_at`
+      Timestamp when the broadcast was sent
+    
+    
+      `scheduled_send_at`
+      Timestamp when the broadcast is scheduled to send
+    
   
 
-You will notice that several properties of broadcasts are not included in the object. At the moment, the above properties are the only ones which are exposed through this API.
-
-## Create (Draft) Broadcast
+## List Broadcasts
 
 ```
-POST /api/v1/broadcasts.json
+GET /api/v1/broadcasts
+
+```
+
+Retrieve a list of all broadcasts for the authenticated broadcast channel.
+
+### Query Parameters
+
+- `limit` (optional): Maximum number of broadcasts to return
+
+- `offset` (optional): Number of broadcasts to skip for pagination
+
+### Request
+
+```
+curl -X GET \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://your-domain.com/api/v1/broadcasts
+
+```
+
+### Response
+
+```
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Weekly Newsletter",
+      "subject": "Your Weekly Update",
+      "status": "draft",
+      "total_recipients": 0,
+      "sent_at": null,
+      "created_at": "2024-01-01T12:00:00Z"
+    }
+  ],
+  "total": 1
+}
+
+```
+
+## Get Broadcast
+
+```
+GET /api/v1/broadcasts/:id
+
+```
+
+Retrieve details of a specific broadcast.
+
+### Request
+
+```
+curl -X GET \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://your-domain.com/api/v1/broadcasts/123
+
+```
+
+### Response
+
+```
+{
+  "id": 123,
+  "name": "Weekly Newsletter",
+  "subject": "Your Weekly Update",
+  "body": "<p>Newsletter content here</p>",
+  "reply_to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
+  "status": "draft",
+  "track_opens": true,
+  "track_clicks": true,
+  "total_recipients": 150,
+  "sent_at": null,
+  "created_at": "2024-01-01T12:00:00Z",
+  "updated_at": "2024-01-01T12:00:00Z"
+}
+
+```
+
+## Create Broadcast
+
+```
+POST /api/v1/broadcasts
 
 ```
 
@@ -1305,15 +1686,27 @@ POST /api/v1/broadcasts.json
 
 - `subject` (required): Subject line of the email
 
-- `body` (required): Content of the email, which can be either a simple string or HTML. In either case, Broadcast will wrap the content in the appropriate html and body tags. If you want to incorporate an entire HTML design, just send the contents within the body tag.
+- `body` (required): Content of the email, which can be either a simple string or HTML
 
-- `preheader` (recommended): Preview text that appears in email clients
+- `name` (optional): Internal name of the broadcast
 
-- `name` (required): Internal name of the broadcast
+- `preheader` (optional): Preview text that appears in email clients
 
-- `track_opens` (optional): Whether open tracking is enabled for this broadcast
+- `html_body` (optional): Whether the body contains HTML (default: false)
 
-- `track_clicks` (optional): Whether click tracking is enabled for this broadcast
+- `reply_to` (optional): Reply-to email address
+
+- `track_opens` (optional): Whether open tracking is enabled (default: false)
+
+- `track_clicks` (optional): Whether click tracking is enabled (default: false)
+
+- `scheduled_send_at` (optional): ISO 8601 datetime for scheduled sending
+
+- `scheduled_timezone` (optional): Timezone for scheduled sending
+
+- `segment_ids` (optional): Array of segment IDs to target
+
+- `email_server_ids` (optional): Array of specific email server IDs to use
 
 ### Request
 
@@ -1327,6 +1720,7 @@ curl -X POST \
       "preheader": "Test Preheader",
       "body": "<p>Test Body</p>",
       "name": "Test Name",
+      "reply_to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
       "track_opens": true,
       "track_clicks": true
     }
@@ -1347,27 +1741,164 @@ You do not need to include the head or body tags in the body field. Broadcast wi
 
 ```
 {
-  "id": "123",
-  "subject": "Test Subject",
-  "preheader": "Test Preheader",
-  "body": "<p>Test Body</p>",
-  "name": "Test Name",
-  "track_opens": true,
-  "track_clicks": true,
-  "created_at": "2024-03-21T09:00:00Z",
-  "updated_at": "2024-03-21T09:00:00Z"
+  "id": 123
 }
 
 ```
 
-If the request is invalid, the response code will be 422 (Unprocessable Entity). The error message will be returned in the response body:
+## Update Broadcast
+
+```
+PATCH /api/v1/broadcasts/:id
+
+```
+
+Update an existing broadcast. Only broadcasts in `draft` or `scheduled` status can be updated.
+
+### Request
+
+```
+curl -X PATCH \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "broadcast": {
+      "subject": "Updated Subject",
+      "body": "<p>Updated content</p>"
+    }
+  }' \
+  http://your-domain.com/api/v1/broadcasts/123
+
+```
+
+### Response
 
 ```
 {
-  "errors": {
-    "subject": ["can't be blank"],
-    "body": ["can't be blank"]
-  }
+  "id": 123,
+  "name": "Updated Newsletter",
+  "subject": "Updated Subject",
+  "body": "<p>Updated content</p>",
+  "reply_to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
+  "status": "draft",
+  "created_at": "2024-01-01T12:00:00Z",
+  "updated_at": "2024-01-01T12:30:00Z"
+}
+
+```
+
+## Delete Broadcast
+
+```
+DELETE /api/v1/broadcasts/:id
+
+```
+
+Delete a broadcast. Only broadcasts in `draft` or `scheduled` status can be deleted.
+
+### Request
+
+```
+curl -X DELETE \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://your-domain.com/api/v1/broadcasts/123
+
+```
+
+### Response
+
+```
+{
+  "message": "Broadcast deleted successfully"
+}
+
+```
+
+## Send Broadcast
+
+```
+POST /api/v1/broadcasts/:id/send_broadcast
+
+```
+
+Queue a broadcast for immediate sending. The broadcast must be in `draft` or `failed` status and must be sendable (have required content).
+
+### Request
+
+```
+curl -X POST \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  http://your-domain.com/api/v1/broadcasts/123/send_broadcast
+
+```
+
+### Response
+
+```
+{
+  "id": 123,
+  "message": "Broadcast queued for sending",
+  "status": "queueing"
+}
+
+```
+
+## Broadcast Status Values
+
+- `draft`: Being composed, can be edited
+
+- `scheduled`: Scheduled for future sending, can be edited
+
+- `queueing`: Being prepared for sending
+
+- `sending`: Currently being sent
+
+- `sent`: Successfully sent
+
+- `failed`: Failed to send
+
+- `partial_failure`: Some recipients failed
+
+- `aborted`: Manually stopped
+
+- `paused`: Temporarily paused
+
+## Error Responses
+
+If the request is invalid, the response will include an appropriate HTTP status code and error message:
+
+### 400 Bad Request
+
+```
+{
+  "error": "Broadcast is not ready to send"
+}
+
+```
+
+### 401 Unauthorized
+
+```
+{
+  "error": "Unauthorized"
+}
+
+```
+
+### 404 Not Found
+
+```
+{
+  "error": "Broadcast not found"
+}
+
+```
+
+### 422 Unprocessable Entity
+
+```
+{
+  "error": "Subject can't be blank, Body can't be blank"
 }
 
 ```
@@ -1426,6 +1957,10 @@ The transactional email object contains the following fields:
       Preview text that appears in email clients
     
     
+      `reply_to`
+      Reply-to email address for this transactional email
+    
+    
       `queue_at`
       The scheduled time for sending the email
     
@@ -1462,6 +1997,8 @@ POST /api/v1/transactionals.json
 
 - `body` (required): Content of the email, which can be either a simple string or HTML. In either case, Broadcast will wrap the content in the appropriate html and body tags. If you want to incorporate an entire HTML design, just send the contents within the body tag.
 
+- `reply_to` (optional): Reply-to email address for this transactional email
+
 ### Request
 
 ```
@@ -1471,7 +2008,8 @@ curl -X POST \
   --data-raw '{
     "to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
     "subject": "Welcome to Our Service",
-    "body": "Thank you for signing up!"
+    "body": "Thank you for signing up!",
+    "reply_to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)"
   }' \
   https://your-broadcast-domain.com/api/v1/transactionals.json
 
@@ -1487,6 +2025,7 @@ curl -X POST \
   "subject": "Welcome to Our Service",
   "body": "Thank you for signing up!",
   "preheader": "Welcome to our amazing service",
+  "reply_to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
   "queue_at": "2024-03-21T10:00:00Z",
   "sent_at": null,
   "created_at": "2024-03-21T09:00:00Z",
@@ -1538,6 +2077,7 @@ curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   "subject": "Welcome to Our Service",
   "body": "Thank you for signing up!",
   "preheader": "Welcome to our amazing service",
+  "reply_to": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
   "queue_at": "2024-03-21T10:00:00Z",
   "sent_at": null,
   "created_at": "2024-03-21T09:00:00Z",
@@ -1746,6 +2286,448 @@ curl -X DELETE 'https://your-broadcast-domain.com/api/v1/sequences/123/remove_su
 ### Response
 
 Returns `200 OK` on success or `422 Unprocessable Entity` if the request fails.
+
+---
+
+## Domain Names
+
+*Source: https://sendbroadcast.net/docs/domain-names*
+
+# Domain Names
+
+In Broadcast, your main installation domain name is your primary domain. What this means is that all of the following links and URL references that are generated from within Broadcast uses this domain:
+
+- Unsubscribe links
+
+- Tracking pixels
+
+- Lead capture forms
+
+In order to set your primary domain name properly, you must:
+
+- Have the IP address of your server
+
+- Have a domain name you own
+
+Note that you do not need to use the &ldquo;root&rdquo; domain. For example, if your domain is example.com, you can use a subdomain like broadcast.example.com as the primary domain of your Broadcast installation.
+
+## Using multiple domains
+
+With Broadcast, you can use more than one domain for your single Broadcast installation. Each [broadcast channel](/docs/terminology) is capable of having its own domain.
+
+If you do not set a domain on a broadcast channel, then the primary domain becomes the default for that channel.
+
+By organizing your lists into separate channels, you can use a separate domain for each of them.
+
+---
+
+## Suppression Lists
+
+*Source: https://sendbroadcast.net/docs/suppression-lists*
+
+# Suppression Lists
+
+Suppression lists allow you to prevent emails from being sent to specific email addresses. This is crucial for maintaining good deliverability and compliance with email marketing regulations.
+
+Broadcast supports two types of suppressions:
+
+- **Channel-specific suppressions**: Block emails for a specific channel only
+
+- **Global suppressions**: Block emails across all channels in your application
+
+## Understanding Suppressions
+
+When an email address is added to a suppression list, Broadcast will automatically prevent any emails (broadcasts, sequences, or transactional emails) from being sent to that address. This happens automatically during the sending process.
+
+### Channel-specific vs Global Suppressions
+
+- **Channel-specific suppressions**: These email addresses are suppressed only for the current channel. They can still receive emails from other channels.
+
+- **Global suppressions**: These email addresses are suppressed across all channels in your application. They will not receive any emails regardless of which channel is sending them.
+
+  
+    
+      
+        
+      
+    
+    
+      
+        **Important:** Suppressions are permanent until manually removed. Make sure you&rsquo;re adding the correct email addresses to your suppression lists.
+      
+    
+  
+
+## Accessing Suppression Lists
+
+To access suppression lists, navigate to **Settings** → **Suppression List** in your channel dashboard.
+
+You&rsquo;ll see two tabs:
+- **This Channel**: Shows email addresses suppressed for the current channel only
+- **Global**: Shows email addresses suppressed across all channels
+
+## Adding Individual Suppressions
+
+### Single Email Address
+
+- Navigate to **Settings** → **Suppression List**
+
+- Click **Add Suppression**
+
+- Enter the email address you want to suppress
+
+Choose the suppression type:
+
+- **Channel-specific suppression**: Suppresses emails only for the current channel
+
+- **Global suppression**: Suppresses emails across all channels
+
+- Click **Add Suppression**
+
+## Bulk Upload Suppressions
+
+For larger lists, you can upload multiple email addresses at once using a text file.
+
+### Preparing Your File
+
+- Create a plain text file (.txt extension)
+
+- Add one email address per line
+
+- Ensure each email address is properly formatted
+
+Example file content:
+
+```
+[[email&#160;protected]](/cdn-cgi/l/email-protection)
+[[email&#160;protected]](/cdn-cgi/l/email-protection)
+[[email&#160;protected]](/cdn-cgi/l/email-protection)
+
+```
+
+### Uploading the File
+
+- Navigate to **Settings** → **Suppression List**
+
+- Click **Upload Suppression List**
+
+Choose your suppression type:
+
+- **This Channel Only**: Suppresses emails only for the current channel
+
+- **All Channels (Global)**: Suppresses emails across all channels
+
+- Select your text file
+
+- Click **Upload**
+
+Broadcast will process the file and provide a summary of:
+- How many email addresses were added
+- How many were already suppressed (skipped)
+- How many were invalid (skipped)
+
+  
+    
+      
+        
+      
+    
+    
+      
+        **Tip:** Only plain text files (.txt) are supported for bulk uploads. If you have your list in a spreadsheet, export it as a text file with one email per line.
+      
+    
+  
+
+## Managing Suppressions
+
+### Viewing Suppressions
+
+The suppression list interface allows you to:
+- View all suppressed email addresses
+- See when each suppression was added
+- Search for specific email addresses
+- Filter by suppression type
+
+### Searching Suppressions
+
+Use the search box to quickly find specific email addresses in your suppression lists. The search will match partial email addresses, making it easy to find all suppressions for a particular domain.
+
+### Removing Suppressions
+
+To remove an email address from the suppression list:
+
+- Navigate to **Settings** → **Suppression List**
+
+- Find the email address you want to remove
+
+- Click **Remove** next to the email address
+
+- Confirm the removal
+
+  
+    
+      
+        
+      
+    
+    
+      
+        **Warning:** Once you remove an email address from the suppression list, it will be able to receive emails again. Make sure this is intentional.
+      
+    
+  
+
+## How Suppressions Work
+
+### Automatic Checking
+
+Broadcast automatically checks all suppression lists before sending any email:
+
+- **Broadcast emails**: Checked before sending to each subscriber
+
+- **Sequence emails**: Checked before each sequence step is sent
+
+- **Transactional emails**: Checked before sending via API
+
+### Priority Order
+
+If an email address appears in multiple suppression lists, Broadcast follows this priority:
+
+- **Global suppressions** always take precedence
+
+- **Channel-specific suppressions** are checked for the sending channel
+
+### Integration with Email Sending
+
+When a suppressed email address is encountered during sending:
+- The email is skipped automatically
+- The suppression is logged in the email activity
+- No error is generated (this is normal behavior)
+
+## Best Practices
+
+### When to Use Suppressions
+
+Use suppression lists for:
+
+- **Bounced emails**: Addresses that consistently bounce
+
+- **Spam complaints**: Addresses that have marked your emails as spam
+
+- **Legal compliance**: Addresses that have requested removal
+
+- **Internal testing**: Test addresses that shouldn&rsquo;t receive production emails
+
+### Maintaining Your Lists
+
+- **Regular cleanup**: Review your suppression lists periodically
+
+- **Documentation**: Keep records of why addresses were suppressed
+
+- **Global vs channel**: Use global suppressions for addresses that should never receive any emails
+
+- **Backup**: Consider exporting your suppression lists as backups
+
+### Compliance Considerations
+
+- **Respect requests**: Always honor suppression requests from recipients
+
+- **Legal requirements**: Some jurisdictions require permanent suppression for certain types of requests
+
+- **Documentation**: Keep records of suppression requests for compliance purposes
+
+## Troubleshooting
+
+### Common Issues
+
+**Q: Why isn&rsquo;t my suppression working?**
+A: Check that the email address is spelled correctly and that you&rsquo;ve selected the right suppression type (channel-specific vs global).
+
+**Q: Can I export my suppression lists?**
+A: Export functionality is planned for a future release. Currently, you can view and search your suppressions through the interface.
+
+**Q: What happens to existing scheduled emails?**
+A: Suppressions are checked at send time, so any scheduled emails to suppressed addresses will be automatically skipped when they&rsquo;re due to be sent.
+
+**Q: Are suppressions case-sensitive?**
+A: No, email addresses are normalized to lowercase, so suppressions work regardless of the case of the original email address.
+
+---
+
+## Templates
+
+*Source: https://sendbroadcast.net/docs/templates*
+
+# Email Templates
+
+Templates allow you to save time by creating reusable email designs and content. You can use templates to quickly populate content for broadcasts, sequence emails, and transactional emails, ensuring brand consistency across all your communications.
+
+## Creating a New Template
+
+To create your first template, navigate to the **Templates** section from the main navigation. Click on the **+ New Template** button. A dialog will appear asking you to choose the kind of template you want to create: HTML or Rich Text.
+
+### Template Types
+
+You have two options for creating a template:
+
+-   **Rich Text**: This option opens a user-friendly WYSIWYG (What You See Is What You Get) editor. It&rsquo;s perfect for creating beautiful emails without needing to know how to code. You can format text, add images, and create layouts with ease.
+
+-   **HTML**: This option is for users who prefer to use their own custom HTML. You can paste in your code from another source or write it from scratch in our code editor.
+
+## Template Editor
+
+After choosing your template type, you will be taken to the template editor. The description at the top of the form says: &ldquo;The template details here can be used to quickly autofill broadcasts, sequences, and transactional emails.&rdquo;
+
+### Rich Text Editor
+
+The Rich Text editor allows you to craft your email in a visual way.
+
+Here are the fields you need to fill out:
+
+-   **Give this template a label so you can easily identify it later**: This is an internal name for your template, like &ldquo;Welcome Email&rdquo; or &ldquo;Weekly Newsletter&rdquo;. It won&rsquo;t be visible to your subscribers.
+
+-   **Subject**: The subject line for your email.
+
+-   **Preheader**: The preview text that appears next to the subject line in an email client.
+
+-   **Body**: The main content of your email. Use the toolbar to format your text, add links, lists, and more.
+
+### HTML Editor
+
+The HTML editor gives you full control over the email&rsquo;s code.
+
+The fields for Label, Subject, and Preheader are the same as the Rich Text editor. The **Body** field, however, is a code editor where you can input your HTML.
+
+Once you are done, click **Create Template** to save it.
+
+## Using Templates
+
+You can use templates within broadcasts. When creating a new broadcast, you will see a button for &ldquo;Use a template&rdquo;. This option is only available when you are creating a new broadcast. Updating an existing broadcast (in draft mode) will not display this button.
+
+Clicking this button will open a &ldquo;Select template&rdquo; modal where you can see a list of all your created templates.
+
+You can search for templates by their label. Once you&rsquo;ve found the template you want to use, click the **Use template** button. The content of the template—Subject, Preheader, and Body—will be loaded into the broadcast editor.
+
+You can modify any part of the inserted template to customize for your needs for that particular broadcast.
+
+---
+
+## API Segments
+
+*Source: https://sendbroadcast.net/docs/api-segments*
+
+# Segments API
+
+The Segments API allows you to list your segments that you defined in your channel, as well as query specific segments for a list of subscribers that belong within that segment.
+
+This API endpoint is not for modifying or creating segments themselves. This must be done within Broadcast&rsquo;s user interface.
+
+## Required Permissions
+
+All endpoints require authentication via an API token with appropriate permissions:
+
+- List and read segments (Read)
+
+## Segment Object
+
+  
+    
+      Field
+      Description
+    
+  
+  
+    
+      `id`
+      Unique identifier of the segment
+    
+    
+      `name`
+      Name of the segment
+    
+    
+      `description`
+      Description of the segment
+    
+    
+      `created_at`
+      When the segment was created
+    
+  
+
+## Endpoints
+
+### List Segments
+
+```
+GET /api/v1/segments.json?page=1
+
+```
+
+Returns a paginated list of segments that belong to a channel (as determined by your access token).
+
+### Parameters
+
+- `page`: Optional parameter for the page number to return (default is 1)
+
+### Response
+
+```
+{
+  "segments": [
+    {
+      "id": 1,
+      "name": "Active Subscribers",
+      "description": "Subscribers who have opened at least one email in the last 30 days.",
+      "created_at": "2024-06-01T12:34:56Z"
+    }
+  ]
+}
+
+```
+
+### List Subscribers in a Segment
+
+```
+GET /api/v1/segments/1.json?page=1
+
+```
+
+Returns a paginated list of subscribers in a specific segment (of up to 250 subscribers per page).
+
+### Parameters
+
+- `page`: Optional parameter for the page number to return (default is 1)
+
+### Response
+
+```
+{
+  "segment": {
+    "id": 1,
+    "name": "Active Subscribers",
+    "description": "Subscribers who have opened at least one email in the last 30 days.",
+    "created_at": "2024-06-01T12:34:56Z"
+  },
+  "subscribers": [
+    {
+      "id": "123",
+      "email": "[[email&#160;protected]](/cdn-cgi/l/email-protection)",
+      "first_name": "John",
+      "last_name": "Doe",
+      "ip_address": "192.168.1.1",
+      "is_active": true,
+      "source": "web_form",
+      "subscribed_at": "2024-03-20T10:00:00Z",
+      "unsubscribed_at": null,
+      "created_at": "2024-03-20T10:00:00Z",
+      "tags": ["newsletter", "product-updates"]
+    }
+  ]
+}
+
+```
 
 ---
 
