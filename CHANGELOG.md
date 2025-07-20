@@ -1,3 +1,13 @@
+## [0.9.2] - 2025-07-20
+
+### Fixed
+- Fixed Broadcast provider to use correct API endpoint for transactional emails
+  - Changed endpoint from `/api/v1/emails` to `/api/v1/transactionals.json`
+  - Updated request body format to match Broadcast API documentation
+  - Fixed handling of single recipient (Broadcast expects single recipient for transactional emails)
+  - Adjusted reply_to field to use correct format
+  - This resolves issues with sending emails through the Broadcast provider
+
 ## [0.9.1] - 2025-07-04
 
 ### Fixed
