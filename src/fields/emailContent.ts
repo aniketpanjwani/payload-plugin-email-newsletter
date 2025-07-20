@@ -10,6 +10,10 @@ import {
   ParagraphFeature,
   AlignFeature,
   BlockquoteFeature,
+  BlocksFeature,
+  UploadFeature,
+  FixedToolbarFeature,
+  InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 import type { RichTextField } from 'payload'
@@ -22,22 +26,34 @@ import type { RichTextField } from 'payload'
 // and varies between versions. The features are properly typed by Payload internally.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const emailSafeFeatures: any[] = [
+  // Toolbars
+  FixedToolbarFeature(), // Fixed toolbar at the top
+  InlineToolbarFeature(), // Floating toolbar when text is selected
+  
   // Basic text formatting
   BoldFeature(),
   ItalicFeature(),
   UnderlineFeature(),
   StrikethroughFeature(),
   
-  // Links with simple configuration
+  // Links with enhanced configuration
   LinkFeature({
-    fields: [{
-      name: 'url',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'Enter the full URL (including https://)',
+    fields: [
+      {
+        name: 'url',
+        type: 'text',
+        required: true,
+        admin: {
+          description: 'Enter the full URL (including https://)',
+        },
       },
-    }],
+      {
+        name: 'newTab',
+        type: 'checkbox',
+        label: 'Open in new tab',
+        defaultValue: false,
+      },
+    ],
   }),
   
   // Lists
@@ -55,6 +71,95 @@ export const emailSafeFeatures: any[] = [
   
   // Blockquotes
   BlockquoteFeature(),
+  
+  // Upload feature for images
+  UploadFeature({
+    collections: {
+      media: {
+        fields: [
+          {
+            name: 'caption',
+            type: 'text',
+            admin: {
+              description: 'Optional caption for the image',
+            },
+          },
+          {
+            name: 'altText',
+            type: 'text',
+            label: 'Alt Text',
+            required: true,
+            admin: {
+              description: 'Alternative text for accessibility and when image cannot be displayed',
+            },
+          },
+        ],
+      },
+    },
+  }),
+  
+  // Custom blocks for email-specific content
+  BlocksFeature({
+    blocks: [
+      {
+        slug: 'button',
+        fields: [
+          {
+            name: 'text',
+            type: 'text',
+            label: 'Button Text',
+            required: true,
+          },
+          {
+            name: 'url',
+            type: 'text',
+            label: 'Button URL',
+            required: true,
+            admin: {
+              description: 'Enter the full URL (including https://)',
+            },
+          },
+          {
+            name: 'style',
+            type: 'select',
+            label: 'Button Style',
+            defaultValue: 'primary',
+            options: [
+              { label: 'Primary', value: 'primary' },
+              { label: 'Secondary', value: 'secondary' },
+              { label: 'Outline', value: 'outline' },
+            ],
+          },
+        ],
+        interfaceName: 'EmailButton',
+        labels: {
+          singular: 'Button',
+          plural: 'Buttons',
+        },
+      },
+      {
+        slug: 'divider',
+        fields: [
+          {
+            name: 'style',
+            type: 'select',
+            label: 'Divider Style',
+            defaultValue: 'solid',
+            options: [
+              { label: 'Solid', value: 'solid' },
+              { label: 'Dashed', value: 'dashed' },
+              { label: 'Dotted', value: 'dotted' },
+            ],
+          },
+        ],
+        interfaceName: 'EmailDivider',
+        labels: {
+          singular: 'Divider',
+          plural: 'Dividers',
+        },
+      },
+    ],
+  }),
 ]
 
 /**

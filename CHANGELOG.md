@@ -1,3 +1,35 @@
+## [0.11.0] - 2025-07-20
+
+### Added
+- Enhanced rich text editor for broadcast emails with:
+  - Fixed toolbar showing available formatting options
+  - Inline toolbar for text selection
+  - Image upload support with Media collection integration
+  - Custom email blocks (Button and Divider)
+  - Enhanced link feature with "open in new tab" option
+- Comprehensive image handling in email HTML conversion:
+  - Responsive images with proper email-safe HTML
+  - Support for captions and alt text
+  - Automatic media URL handling for different storage backends
+- Media collection setup documentation (`docs/guides/media-collection-setup.md`)
+- Prerequisites section in README mentioning Media collection requirement
+
+### Changed
+- Removed 'name' field from Broadcasts collection (now uses 'subject' as title)
+- Updated Broadcast collection admin UI:
+  - Uses subject as the display title
+  - Shows recipientCount in default columns instead of name
+- Enhanced `convertToEmailSafeHtml` utility to handle:
+  - Upload nodes for images
+  - Custom block nodes (button and divider)
+  - Media URL configuration
+  - Improved link handling with target attribute support
+- Broadcast API sync now uses subject as the name field
+
+### Fixed
+- Broadcast hooks now properly handle the absence of name field
+- Email preview components updated to work without channel references
+
 ## [0.10.0] - 2025-07-20
 
 ### Changed

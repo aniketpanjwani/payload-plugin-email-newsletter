@@ -7,9 +7,10 @@ import type { SerializedEditorState } from 'lexical'
 export const EMAIL_SAFE_CONFIG = {
   ALLOWED_TAGS: [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'strike', 's', 'span',
-    'a', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'hr'
+    'a', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'hr',
+    'img', 'div', 'table', 'tr', 'td', 'th', 'tbody', 'thead'
   ],
-  ALLOWED_ATTR: ['href', 'style', 'target', 'rel', 'align'],
+  ALLOWED_ATTR: ['href', 'style', 'target', 'rel', 'align', 'src', 'alt', 'width', 'height', 'border', 'cellpadding', 'cellspacing'],
   ALLOWED_STYLES: {
     '*': [
       'color', 'background-color', 'font-size', 'font-weight',
@@ -32,10 +33,11 @@ export async function convertToEmailSafeHtml(
   options?: {
     wrapInTemplate?: boolean
     preheader?: string
+    mediaUrl?: string // Base URL for media files
   }
 ): Promise<string> {
   // First, convert Lexical state to HTML using custom converters
-  const rawHtml = await lexicalToEmailHtml(editorState)
+  const rawHtml = await lexicalToEmailHtml(editorState, options?.mediaUrl)
   
   // Sanitize the HTML
   const sanitizedHtml = DOMPurify.sanitize(rawHtml, EMAIL_SAFE_CONFIG)
@@ -51,7 +53,7 @@ export async function convertToEmailSafeHtml(
 /**
  * Custom Lexical to HTML converter for email
  */
-async function lexicalToEmailHtml(editorState: SerializedEditorState): Promise<string> {
+async function lexicalToEmailHtml(editorState: SerializedEditorState, mediaUrl?: string): Promise<string> {
   const { root } = editorState
   
   if (!root || !root.children) {
@@ -59,7 +61,7 @@ async function lexicalToEmailHtml(editorState: SerializedEditorState): Promise<s
   }
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const html = root.children.map((node: any) => convertNode(node)).join('')
+  const html = root.children.map((node: any) => convertNode(node, mediaUrl)).join('')
   return html
 }
 
@@ -67,28 +69,32 @@ async function lexicalToEmailHtml(editorState: SerializedEditorState): Promise<s
  * Convert individual Lexical nodes to email-safe HTML
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertNode(node: any): string {
+function convertNode(node: any, mediaUrl?: string): string {
   switch (node.type) {
     case 'paragraph':
-      return convertParagraph(node)
+      return convertParagraph(node, mediaUrl)
     case 'heading':
-      return convertHeading(node)
+      return convertHeading(node, mediaUrl)
     case 'list':
-      return convertList(node)
+      return convertList(node, mediaUrl)
     case 'listitem':
-      return convertListItem(node)
+      return convertListItem(node, mediaUrl)
     case 'blockquote':
-      return convertBlockquote(node)
+      return convertBlockquote(node, mediaUrl)
     case 'text':
       return convertText(node)
     case 'link':
-      return convertLink(node)
+      return convertLink(node, mediaUrl)
     case 'linebreak':
       return '<br>'
+    case 'upload':
+      return convertUpload(node, mediaUrl)
+    case 'block':
+      return convertBlock(node, mediaUrl)
     default:
       // Unknown node type - convert children if any
       if (node.children) {
-        return node.children.map(convertNode).join('')
+        return node.children.map((child: any) => convertNode(child, mediaUrl)).join('')
       }
       return ''
   }
@@ -98,9 +104,9 @@ function convertNode(node: any): string {
  * Convert paragraph node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertParagraph(node: any): string {
+function convertParagraph(node: any, mediaUrl?: string): string {
   const align = getAlignment(node.format)
-  const children = node.children?.map(convertNode).join('') || ''
+  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
   
   if (!children.trim()) {
     return '<p style="margin: 0 0 16px 0; min-height: 1em;">&nbsp;</p>'
@@ -113,10 +119,10 @@ function convertParagraph(node: any): string {
  * Convert heading node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertHeading(node: any): string {
+function convertHeading(node: any, mediaUrl?: string): string {
   const tag = node.tag || 'h1'
   const align = getAlignment(node.format)
-  const children = node.children?.map(convertNode).join('') || ''
+  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
   
   const styles: Record<string, string> = {
     h1: 'font-size: 32px; font-weight: 700; margin: 0 0 24px 0; line-height: 1.2;',
@@ -133,9 +139,9 @@ function convertHeading(node: any): string {
  * Convert list node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertList(node: any): string {
+function convertList(node: any, mediaUrl?: string): string {
   const tag = node.listType === 'number' ? 'ol' : 'ul'
-  const children = node.children?.map(convertNode).join('') || ''
+  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
   
   const style = tag === 'ul' 
     ? 'margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc;'
@@ -148,8 +154,8 @@ function convertList(node: any): string {
  * Convert list item node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertListItem(node: any): string {
-  const children = node.children?.map(convertNode).join('') || ''
+function convertListItem(node: any, mediaUrl?: string): string {
+  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
   return `<li style="margin: 0 0 8px 0;">${children}</li>`
 }
 
@@ -157,8 +163,8 @@ function convertListItem(node: any): string {
  * Convert blockquote node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertBlockquote(node: any): string {
-  const children = node.children?.map(convertNode).join('') || ''
+function convertBlockquote(node: any, mediaUrl?: string): string {
+  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
   const style = 'margin: 0 0 16px 0; padding-left: 16px; border-left: 4px solid #e5e7eb; color: #6b7280;'
   
   return `<blockquote style="${style}">${children}</blockquote>`
@@ -192,12 +198,114 @@ function convertText(node: any): string {
  * Convert link node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertLink(node: any): string {
-  const children = node.children?.map(convertNode).join('') || ''
+function convertLink(node: any, mediaUrl?: string): string {
+  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
   const url = node.fields?.url || '#'
+  const newTab = node.fields?.newTab ?? false
   
-  // Ensure links open in new tab and have security attributes
-  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline;">${children}</a>`
+  // Add target and rel attributes based on newTab setting
+  const targetAttr = newTab ? ' target="_blank"' : ''
+  const relAttr = newTab ? ' rel="noopener noreferrer"' : ''
+  
+  return `<a href="${escapeHtml(url)}"${targetAttr}${relAttr} style="color: #2563eb; text-decoration: underline;">${children}</a>`
+}
+
+/**
+ * Convert upload (image) node
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertUpload(node: any, mediaUrl?: string): string {
+  const upload = node.value
+  if (!upload) return ''
+  
+  // Get image URL - handle both direct URL and media object
+  let src = ''
+  if (typeof upload === 'string') {
+    src = upload
+  } else if (upload.url) {
+    src = upload.url
+  } else if (upload.filename && mediaUrl) {
+    // Construct URL from media URL and filename
+    src = `${mediaUrl}/${upload.filename}`
+  }
+  
+  const alt = node.fields?.altText || upload.alt || ''
+  const caption = node.fields?.caption || ''
+  
+  // Email-safe image with max-width for responsiveness
+  const imgHtml = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />`
+  
+  if (caption) {
+    return `
+      <div style="margin: 0 0 16px 0; text-align: center;">
+        ${imgHtml}
+        <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280; font-style: italic;">${escapeHtml(caption)}</p>
+      </div>
+    `
+  }
+  
+  return `<div style="margin: 0 0 16px 0; text-align: center;">${imgHtml}</div>`
+}
+
+/**
+ * Convert custom block node
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertBlock(node: any, mediaUrl?: string): string {
+  const blockType = node.fields?.blockName
+  
+  switch (blockType) {
+    case 'button':
+      return convertButtonBlock(node.fields)
+    case 'divider':
+      return convertDividerBlock(node.fields)
+    default:
+      // Unknown block type - try to convert children
+      if (node.children) {
+        return node.children.map((child: any) => convertNode(child, mediaUrl)).join('')
+      }
+      return ''
+  }
+}
+
+/**
+ * Convert button block
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertButtonBlock(fields: any): string {
+  const text = fields?.text || 'Click here'
+  const url = fields?.url || '#'
+  const style = fields?.style || 'primary'
+  
+  const styles: Record<string, string> = {
+    primary: 'background-color: #2563eb; color: #ffffff; border: 2px solid #2563eb;',
+    secondary: 'background-color: #6b7280; color: #ffffff; border: 2px solid #6b7280;',
+    outline: 'background-color: transparent; color: #2563eb; border: 2px solid #2563eb;',
+  }
+  
+  const buttonStyle = `${styles[style] || styles.primary} display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 6px; text-align: center;`
+  
+  return `
+    <div style="margin: 0 0 16px 0; text-align: center;">
+      <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="${buttonStyle}">${escapeHtml(text)}</a>
+    </div>
+  `
+}
+
+/**
+ * Convert divider block
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertDividerBlock(fields: any): string {
+  const style = fields?.style || 'solid'
+  
+  const styles: Record<string, string> = {
+    solid: 'border-top: 1px solid #e5e7eb;',
+    dashed: 'border-top: 1px dashed #e5e7eb;',
+    dotted: 'border-top: 1px dotted #e5e7eb;',
+  }
+  
+  return `<hr style="${styles[style] || styles.solid} margin: 24px 0; border-bottom: none; border-left: none; border-right: none;" />`
 }
 
 /**

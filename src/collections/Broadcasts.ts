@@ -14,19 +14,11 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
       plural: 'Broadcasts',
     },
     admin: {
-      useAsTitle: 'name',
+      useAsTitle: 'subject',
       description: 'Individual email campaigns sent to subscribers',
-      defaultColumns: ['name', 'subject', 'status', 'sentAt', 'actions'],
+      defaultColumns: ['subject', 'status', 'sentAt', 'recipientCount', 'actions'],
     },
     fields: [
-      {
-        name: 'name',
-        type: 'text',
-        required: true,
-        admin: {
-          description: 'Internal name for this broadcast'
-        },
-      },
       {
         name: 'subject',
         type: 'text',
@@ -246,7 +238,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Create broadcast in provider
             const providerBroadcast = await provider.create({
-              name: doc.name,
+              name: doc.subject, // Use subject as name since we removed the name field
               subject: doc.subject,
               preheader: doc.preheader,
               content: htmlContent,
@@ -302,8 +294,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Build update data
             const updates: any = {}
-            if (data.name !== originalDoc.name) updates.name = data.name
-            if (data.subject !== originalDoc.subject) updates.subject = data.subject
+            if (data.subject !== originalDoc.subject) {
+              updates.name = data.subject // Use subject as name in the provider
+              updates.subject = data.subject
+            }
             if (data.preheader !== originalDoc.preheader) updates.preheader = data.preheader
             if (data.content !== originalDoc.content) {
               updates.content = await convertToEmailSafeHtml(data.content)

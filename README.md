@@ -22,6 +22,11 @@ A complete newsletter management plugin for [Payload CMS](https://github.com/pay
 - ✅ **Email Validation** - Built-in validation for email client compatibility (v0.9.0+)
 - 📝 **Email-Safe Editor** - Rich text editor limited to email-compatible features (v0.9.0+)
 
+## Prerequisites
+
+- Payload CMS v3.0.0 or higher
+- A Media collection configured in your Payload project (required for image support in broadcasts)
+
 ## Quick Start
 
 ### 1. Install the plugin
