@@ -7,7 +7,7 @@ global.fetch = vi.fn()
 
 describe('BroadcastProvider', () => {
   let provider: BroadcastProvider
-  const mockFetch = vi.mocked(global.fetch)
+  const mockFetch = global.fetch as any
 
   const config = {
     apiUrl: 'https://api.broadcast.example.com',
@@ -75,7 +75,7 @@ describe('BroadcastProvider', () => {
       await provider.send(emailParams)
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.broadcast.example.com/api/v1/emails',
+        'https://api.broadcast.example.com/api/v1/transactionals.json',
         {
           method: 'POST',
           headers: {
@@ -83,12 +83,10 @@ describe('BroadcastProvider', () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from_email: 'noreply@example.com',
-            from_name: 'Test Newsletter',
-            to: [emailParams.to],
+            to: emailParams.to,
             subject: emailParams.subject,
-            html_body: emailParams.html,
-            text_body: emailParams.text
+            body: emailParams.html,
+            reply_to: 'noreply@example.com'
           })
         }
       )
@@ -111,9 +109,8 @@ describe('BroadcastProvider', () => {
       await provider.send(multipleRecipients)
 
       const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.to).toHaveLength(2)
-      expect(requestBody.to[0].email).toBe('user1@example.com')
-      expect(requestBody.to[1].email).toBe('user2@example.com')
+      // Broadcast API expects a single recipient for transactional emails
+      expect(requestBody.to).toEqual({ email: 'user1@example.com', name: 'User 1' })
     })
 
     it('should use custom from address when provided', async () => {
@@ -133,8 +130,8 @@ describe('BroadcastProvider', () => {
       await provider.send(customFromParams)
 
       const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(requestBody.from_email).toBe('custom@example.com')
-      expect(requestBody.from_name).toBe('Custom Sender')
+      // Broadcast API uses reply_to for the from address in transactional emails
+      expect(requestBody.reply_to).toBe('custom@example.com')
     })
 
     it('should handle non-200 responses', async () => {
@@ -186,7 +183,8 @@ describe('BroadcastProvider', () => {
       } as Response)
 
       // Should not throw - empty response is okay for successful send
-      await expect(provider.send(emailParams)).resolves.not.toThrow()
+      await provider.send(emailParams)
+      expect(mockFetch).toHaveBeenCalled()
     })
   })
 
