@@ -1,3 +1,17 @@
+## [0.13.0] - 2025-07-21
+
+### Changed
+- **BREAKING**: Broadcasts collection field structure has been updated for improved layout
+  - Fields `subject`, `preheader`, and `content` are now nested under `contentSection` group
+  - Email preview is now displayed side-by-side with content fields on desktop screens
+  - Responsive design switches to vertical layout on screens smaller than 1024px
+  
+### Migration Guide
+If you have existing broadcast data, you'll need to migrate the field structure:
+- `subject` → `contentSection.subject`
+- `preheader` → `contentSection.preheader`
+- `content` → `contentSection.content`
+
 ## [0.12.3] - 2025-07-20
 
 ### Fixed

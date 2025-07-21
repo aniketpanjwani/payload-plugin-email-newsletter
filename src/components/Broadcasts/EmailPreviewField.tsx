@@ -12,9 +12,9 @@ export const EmailPreviewField: React.FC = () => {
 
   // Get form fields for preview
   const fields = useFormFields(([fields]) => ({
-    content: fields.content,
-    subject: fields.subject,
-    preheader: fields.preheader,
+    content: fields['contentSection.content'],
+    subject: fields['contentSection.subject'],
+    preheader: fields['contentSection.preheader'],
     channel: fields.channel,
   }))
 

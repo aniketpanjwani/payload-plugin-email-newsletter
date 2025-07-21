@@ -20,8 +20,8 @@ export const BroadcastEditor: React.FC<BroadcastEditorProps> = (props) => {
 
   // Get other form fields for preview
   const fields = useFormFields(([fields]) => ({
-    subject: fields.subject,
-    preheader: fields.preheader,
+    subject: fields['contentSection.subject'],
+    preheader: fields['contentSection.preheader'],
   }))
 
   // Handle validation results from preview

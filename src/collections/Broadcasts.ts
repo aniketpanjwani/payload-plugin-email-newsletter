@@ -15,32 +15,77 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
       plural: 'Broadcasts',
     },
     admin: {
-      useAsTitle: 'subject',
+      useAsTitle: 'contentSection.subject',
       description: 'Individual email campaigns sent to subscribers',
-      defaultColumns: ['subject', 'status', 'sentAt', 'recipientCount', 'actions'],
+      defaultColumns: ['contentSection.subject', 'status', 'sentAt', 'recipientCount', 'actions'],
     },
     fields: [
       {
-        name: 'subject',
-        type: 'text',
-        required: true,
+        type: 'row',
         admin: {
-          description: 'Email subject line'
+          style: {
+            '@media (max-width: 1024px)': {
+              flexDirection: 'column',
+            },
+          },
         },
+        fields: [
+          {
+            name: 'contentSection',
+            type: 'group',
+            label: false,
+            admin: {
+              width: '50%',
+              style: {
+                marginRight: '2rem',
+                '@media (max-width: 1024px)': {
+                  width: '100%',
+                  marginRight: 0,
+                  marginBottom: '2rem',
+                },
+              },
+            },
+            fields: [
+              {
+                name: 'subject',
+                type: 'text',
+                required: true,
+                admin: {
+                  description: 'Email subject line'
+                },
+              },
+              {
+                name: 'preheader',
+                type: 'text',
+                admin: {
+                  description: 'Preview text shown in email clients'
+                },
+              },
+              createEmailContentField({
+                admin: {
+                  description: 'Email content',
+                },
+              }),
+            ],
+          },
+          {
+            name: 'previewSection',
+            type: 'group',
+            label: false,
+            admin: {
+              width: '50%',
+              style: {
+                '@media (max-width: 1024px)': {
+                  width: '100%',
+                },
+              },
+            },
+            fields: [
+              createBroadcastInlinePreviewField(),
+            ],
+          },
+        ],
       },
-      {
-        name: 'preheader',
-        type: 'text',
-        admin: {
-          description: 'Preview text shown in email clients'
-        },
-      },
-      createEmailContentField({
-        admin: {
-          description: 'Email content',
-        },
-      }),
-      createBroadcastInlinePreviewField(),
       {
         name: 'status',
         type: 'select',
@@ -227,13 +272,13 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             const provider = new BroadcastApiProvider(providerConfig)
 
             // Convert rich text to HTML
-            const htmlContent = await convertToEmailSafeHtml(doc.content)
+            const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
 
             // Create broadcast in provider
             const providerBroadcast = await provider.create({
-              name: doc.subject, // Use subject as name since we removed the name field
-              subject: doc.subject,
-              preheader: doc.preheader,
+              name: doc.contentSection?.subject, // Use subject as name since we removed the name field
+              subject: doc.contentSection?.subject,
+              preheader: doc.contentSection?.preheader,
               content: htmlContent,
               trackOpens: doc.settings?.trackOpens,
               trackClicks: doc.settings?.trackClicks,
@@ -287,13 +332,13 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Build update data
             const updates: any = {}
-            if (data.subject !== originalDoc.subject) {
-              updates.name = data.subject // Use subject as name in the provider
-              updates.subject = data.subject
+            if (data.contentSection?.subject !== originalDoc.contentSection?.subject) {
+              updates.name = data.contentSection?.subject // Use subject as name in the provider
+              updates.subject = data.contentSection?.subject
             }
-            if (data.preheader !== originalDoc.preheader) updates.preheader = data.preheader
-            if (data.content !== originalDoc.content) {
-              updates.content = await convertToEmailSafeHtml(data.content)
+            if (data.contentSection?.preheader !== originalDoc.contentSection?.preheader) updates.preheader = data.contentSection?.preheader
+            if (data.contentSection?.content !== originalDoc.contentSection?.content) {
+              updates.content = await convertToEmailSafeHtml(data.contentSection?.content)
             }
             if (data.settings?.trackOpens !== originalDoc.settings?.trackOpens) {
               updates.trackOpens = data.settings.trackOpens

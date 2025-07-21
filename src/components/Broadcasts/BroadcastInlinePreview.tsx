@@ -17,9 +17,9 @@ export const BroadcastInlinePreview: React.FC = () => {
   const [error, setError] = useState<Error | null>(null)
   
   const fields = useFormFields(([fields]) => ({
-    subject: fields.subject?.value as string,
-    preheader: fields.preheader?.value as string,
-    content: fields.content?.value,
+    subject: fields['contentSection.subject']?.value as string,
+    preheader: fields['contentSection.preheader']?.value as string,
+    content: fields['contentSection.content']?.value,
   }))
   
   const updatePreview = useCallback(async () => {
@@ -57,10 +57,12 @@ export const BroadcastInlinePreview: React.FC = () => {
   }, [fields])
   
   const containerStyle: React.CSSProperties = {
-    marginTop: '2rem',
     border: '1px solid #e5e7eb',
     borderRadius: '8px',
     overflow: 'hidden',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
   }
   
   const headerStyle: React.CSSProperties = {
@@ -80,10 +82,11 @@ export const BroadcastInlinePreview: React.FC = () => {
   }
   
   const previewContainerStyle: React.CSSProperties = {
-    height: '600px',
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     background: '#f3f4f6',
+    minHeight: '600px',
   }
   
   const errorStyle: React.CSSProperties = {
