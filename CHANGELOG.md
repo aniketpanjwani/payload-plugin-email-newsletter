@@ -1,3 +1,13 @@
+## [0.12.2] - 2025-07-20
+
+### Documentation
+- Updated all documentation to reflect single-channel architecture
+- Removed outdated references to 'name' field in broadcasts
+- Added comprehensive broadcast sync documentation
+- Updated email preview and React Email template documentation
+- Revised multi-channel setup guide to indicate it's no longer supported
+- Enhanced README with broadcast management and custom template examples
+
 ## [0.12.1] - 2025-07-20
 
 ### Fixed

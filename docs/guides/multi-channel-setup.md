@@ -1,177 +1,72 @@
 # Multi-Channel Setup Guide
 
-This guide explains how to set up multiple newsletter channels, each connected to different Broadcast channels.
+**Note**: As of v0.10.0, the Payload Newsletter Plugin uses a single-channel architecture. This document is retained for historical reference only.
 
-## Understanding Channel-Specific Tokens
+## Why Single-Channel?
 
-Broadcast API tokens are channel-specific, meaning:
-- Each token provides access to only one Broadcast channel
-- Different channels require different tokens
-- The plugin now fully supports this architecture
+The plugin was redesigned to use a single-channel architecture because:
 
-## Configuration Options
+1. **Broadcast API Design**: Each Broadcast API token is tied to a specific channel
+2. **Simplicity**: One Payload instance = One newsletter channel
+3. **Security**: Clear separation between different newsletters
+4. **Performance**: No channel lookup overhead
 
-### Option 1: Single Channel (Simple Setup)
+## Migration from Multi-Channel
 
-For a single newsletter channel, use environment variables:
+If you were using multiple channels in earlier versions:
 
-```typescript
-// payload.config.ts
-newsletterPlugin({
-  features: {
-    newsletterManagement: {
-      enabled: true,
-    }
-  },
-  providers: {
-    default: 'broadcast',
-    broadcast: {
-      apiUrl: process.env.BROADCAST_API_URL,
-      token: process.env.BROADCAST_TOKEN,
-    }
-  }
-})
+### Option 1: Multiple Payload Instances (Recommended)
+
+Deploy separate Payload instances for each newsletter:
+
 ```
+payload-newsletter-tech/     # Tech newsletter
+├── .env                    # BROADCAST_TOKEN for tech channel
+└── payload.config.ts
+
+payload-newsletter-marketing/ # Marketing newsletter  
+├── .env                    # BROADCAST_TOKEN for marketing channel
+└── payload.config.ts
+```
+
+Each instance has its own:
+- Broadcast API token (channel-specific)
+- Subscriber list
+- Broadcast history
+- Settings
+
+### Option 2: Single Instance, Manual Channel Switching
+
+If you must use a single instance for multiple channels:
+
+1. Update environment variables when switching channels
+2. Restart the application
+3. Note that all broadcasts will go to the current channel
 
 ```bash
-# .env
-BROADCAST_API_URL=https://broadcast.example.com
-BROADCAST_TOKEN=your_token_here
+# For tech newsletter
+BROADCAST_TOKEN=tech_channel_token npm run dev
+
+# For marketing newsletter (requires restart)
+BROADCAST_TOKEN=marketing_channel_token npm run dev
 ```
 
-### Option 2: Multiple Channels (Advanced Setup)
+**Warning**: This approach is not recommended as it's error-prone and doesn't provide proper separation.
 
-For multiple channels with different Broadcast instances:
+## Current Architecture
 
-1. **Minimal Config** (tokens configured in admin UI):
-```typescript
-newsletterPlugin({
-  features: {
-    newsletterManagement: {
-      enabled: true,
-    }
-  },
-  providers: {
-    default: 'broadcast',
-    broadcast: {
-      // Only set the default API URL
-      apiUrl: process.env.BROADCAST_API_URL,
-      // Don't set token - configure per channel
-    }
-  }
-})
-```
+See [Single Channel Broadcast Setup](./single-channel-broadcast.md) for the current recommended approach.
 
-2. **Configure Each Channel in Admin UI**:
-   - Navigate to Channels
-   - Create a new channel
-   - Select "Broadcast" as provider
-   - In "Provider Config" section:
-     - Enter the channel-specific token
-     - Optionally override the API URL
+## Benefits of Single-Channel Design
 
-## Example Multi-Channel Setup
+1. **Clear Scope**: Each instance manages exactly one newsletter
+2. **Better Security**: No risk of sending to wrong channel
+3. **Simpler Configuration**: Just one token per instance
+4. **Easier Management**: Clear separation of content and subscribers
+5. **Better Performance**: No channel queries or lookups
 
-### Scenario: Company with Multiple Newsletters
+## Questions?
 
-**Channel 1: Customer Newsletter**
-- Name: "Customer Updates"
-- Provider: Broadcast
-- Token: `token_customer_abc123`
-- Broadcast Channel: "customers" on main instance
-
-**Channel 2: Developer Newsletter**
-- Name: "Dev Updates"
-- Provider: Broadcast
-- Token: `token_dev_xyz789`
-- API URL: `https://dev-broadcast.company.com`
-- Broadcast Channel: "developers" on dev instance
-
-**Channel 3: Internal Newsletter**
-- Name: "Team Updates"
-- Provider: Broadcast
-- Token: `token_internal_qrs456`
-- Broadcast Channel: "internal" on main instance
-
-## Step-by-Step Setup
-
-### 1. Create Channels in Broadcast
-
-For each newsletter you want:
-1. Log into your Broadcast instance
-2. Create a new channel
-3. Generate an API token for that channel
-4. Note the token and channel details
-
-### 2. Configure Payload
-
-Add the plugin with minimal config:
-```typescript
-export default buildConfig({
-  plugins: [
-    newsletterPlugin({
-      features: {
-        newsletterManagement: {
-          enabled: true,
-        }
-      },
-      providers: {
-        default: 'broadcast',
-        broadcast: {
-          apiUrl: process.env.BROADCAST_API_URL,
-          // Optionally set a default token for fallback
-          token: process.env.BROADCAST_DEFAULT_TOKEN,
-        }
-      }
-    })
-  ],
-})
-```
-
-### 3. Create Channels in Payload Admin
-
-For each channel:
-1. Go to Channels → Create New
-2. Fill in basic info (name, from email, etc.)
-3. Select "Broadcast" as provider
-4. In Provider Config:
-   - Add the channel-specific token
-   - Override API URL if using different instance
-5. Save
-
-### 4. Create and Send Broadcasts
-
-1. Go to Broadcasts → Create New
-2. Select the appropriate channel
-3. Create your content
-4. Send to the right audience!
-
-## Token Priority
-
-The plugin uses tokens in this order:
-1. Channel-specific token (if configured)
-2. Global token from config (fallback)
-3. Error if no token found
-
-## Benefits of Multi-Channel Setup
-
-- **Separation of Concerns**: Different teams can manage different newsletters
-- **Different Environments**: Dev/staging/prod channels can use different Broadcast instances
-- **Security**: Channel-specific tokens limit access scope
-- **Flexibility**: Each channel can have different settings and configurations
-
-## Troubleshooting
-
-### "No API token configured for this channel"
-- Ensure the channel has a token in Provider Config
-- Or set a default token in the plugin config
-
-### "Failed to create channel in provider"
-- Verify the token has proper permissions
-- Check the API URL is correct
-- Ensure the Broadcast instance is accessible
-
-### Broadcasts not syncing
-- Check that the channel's token is valid
-- Verify the channel was created successfully (has a providerId)
-- Check Payload logs for detailed error messages
+For the current single-channel setup, see:
+- [Single Channel Broadcast Setup](./single-channel-broadcast.md)
+- [Email Providers Guide](./email-providers.md)

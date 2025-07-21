@@ -21,6 +21,8 @@ A complete newsletter management plugin for [Payload CMS](https://github.com/pay
 - 👁️ **Email Preview** - Real-time preview with desktop/mobile views (v0.9.0+)
 - ✅ **Email Validation** - Built-in validation for email client compatibility (v0.9.0+)
 - 📝 **Email-Safe Editor** - Rich text editor limited to email-compatible features (v0.9.0+)
+- 📬 **Broadcast Management** - Create and send email campaigns with provider sync (v0.10.0+)
+- 🎨 **React Email Templates** - Customizable email templates with React Email (v0.12.0+)
 
 ## Prerequisites
 
@@ -208,6 +210,69 @@ Built-in validation checks for:
 - External resources that won't load
 - JavaScript that will be stripped
 
+## Broadcast Management (v0.10.0+)
+
+Create and send email campaigns directly from Payload:
+
+### Enable Broadcasts
+
+```typescript
+newsletterPlugin({
+  features: {
+    newsletterManagement: {
+      enabled: true,
+    }
+  },
+  providers: {
+    default: 'broadcast',
+    broadcast: {
+      apiUrl: process.env.BROADCAST_API_URL,
+      token: process.env.BROADCAST_TOKEN,
+      fromAddress: 'newsletter@yoursite.com',
+      fromName: 'Your Newsletter',
+    }
+  }
+})
+```
+
+This adds a `broadcasts` collection with:
+- Rich text editor with email-safe formatting
+- Image uploads with Media collection integration
+- Custom email blocks (buttons, dividers)
+- Inline email preview with React Email
+- Automatic sync with your email provider
+
+### Custom Email Templates (v0.12.0+)
+
+Customize your email design with React Email templates:
+
+```typescript
+// email-templates/broadcast-template.tsx
+import { Html, Body, Container, Text, Link } from '@react-email/components'
+
+export default function BroadcastTemplate({ subject, preheader, content }) {
+  return (
+    <Html>
+      <Body style={{ backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }}>
+        <Container style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <Text style={{ fontSize: '16px', lineHeight: '1.6' }}>
+            <div dangerouslySetInnerHTML={{ __html: content }} />
+          </Text>
+          <hr style={{ margin: '40px 0', border: '1px solid #e5e7eb' }} />
+          <Text style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center' }}>
+            <Link href="{{unsubscribe_url}}" style={{ color: '#6b7280' }}>
+              Unsubscribe
+            </Link>
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  )
+}
+```
+
+The plugin automatically detects templates at `email-templates/broadcast-template.tsx`.
+
 ### Utilities
 
 Convert Lexical content to email-safe HTML:
@@ -305,6 +370,11 @@ newsletterPlugin({
     newsletterScheduling: {
       enabled: true,
       articlesCollection: 'posts', // Your articles/posts collection
+    },
+    
+    // Broadcast management (v0.10.0+)
+    newsletterManagement: {
+      enabled: true, // Enables broadcasts collection
     },
     
     // UTM tracking

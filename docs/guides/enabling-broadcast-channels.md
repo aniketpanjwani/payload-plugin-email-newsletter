@@ -1,10 +1,12 @@
-# Enabling Broadcasts and Channels
+# Enabling Broadcasts
 
-This guide explains how to enable the newsletter management features (broadcasts and channels) in your Payload project.
+This guide explains how to enable the broadcast management features in your Payload project.
+
+**Note**: As of v0.10.0, the plugin uses a single-channel architecture. Each Payload instance connects to one Broadcast channel.
 
 ## Quick Start
 
-### 1. Enable Newsletter Management in Your Config
+### 1. Enable Newsletter Management
 
 ```typescript
 import { buildConfig } from 'payload'
@@ -15,14 +17,17 @@ export default buildConfig({
     newsletterPlugin({
       features: {
         newsletterManagement: {
-          enabled: true, // This enables channels and broadcasts collections
+          enabled: true, // This enables the broadcasts collection
         }
       },
       providers: {
         default: 'broadcast',
         broadcast: {
           apiUrl: process.env.BROADCAST_API_URL,
-          token: process.env.BROADCAST_TOKEN,
+          token: process.env.BROADCAST_TOKEN, // Determines your channel
+          fromAddress: 'newsletter@example.com',
+          fromName: 'My Newsletter',
+          replyTo: 'replies@example.com',
         }
       }
     })
@@ -31,14 +36,7 @@ export default buildConfig({
 })
 ```
 
-### 2. What Collections Are Created
-
-When newsletter management is enabled, the plugin automatically creates:
-
-- **`channels`** - Newsletter channels/publications
-- **`broadcasts`** - Individual newsletter emails
-
-### 3. Set Up Your Environment Variables
+### 2. Set Up Environment Variables
 
 ```bash
 # .env
@@ -46,63 +44,52 @@ BROADCAST_API_URL=https://your-broadcast-instance.com
 BROADCAST_TOKEN=your_channel_api_token_here
 ```
 
-## Important: Broadcast API Tokens Are Channel-Specific
+### 3. What Gets Created
 
-✅ **Full Multi-Channel Support**: The plugin now supports channel-specific API tokens! Since Broadcast API tokens are channel-specific:
+When newsletter management is enabled, the plugin creates:
 
-- Each API token only works with one Broadcast channel
-- You can now configure different tokens for different channels
-- Each channel can connect to a different Broadcast channel
+- **`broadcasts`** collection - Individual newsletter emails
+- **Newsletter Settings** global - Email provider configuration
+- Custom endpoints for sending and scheduling
 
-### Setting Up Channel-Specific Tokens
+## Understanding the Single-Channel Design
 
-You have two options:
+Since v0.10.0, the plugin embraces Broadcast's token architecture:
 
-#### Option 1: Global Token (Single Channel)
+- **One Token = One Channel**: Each Broadcast API token is tied to a specific channel
+- **One Instance = One Newsletter**: Each Payload instance manages one newsletter
+- **Simple Configuration**: Just one token per instance
 
-If you only have one newsletter channel, you can use a global token:
+This design:
+- ✅ Aligns with how Broadcast API tokens work
+- ✅ Simplifies configuration and management
+- ✅ Provides clear separation between different newsletters
+- ✅ Eliminates channel selection complexity
 
-```bash
-BROADCAST_TOKEN=your_channel_api_token_here
-```
+## Setting Up Your Broadcast Channel
 
-#### Option 2: Channel-Specific Tokens (Multiple Channels)
+### 1. In Broadcast:
+1. Create a channel (if you haven't already)
+2. Navigate to Settings → Access Tokens
+3. Create a new access token for your channel
+4. Copy the token
 
-For multiple channels, configure tokens in the admin UI:
+### 2. In Your Payload Project:
+1. Set the `BROADCAST_TOKEN` environment variable
+2. Configure the plugin (see Quick Start above)
+3. Start Payload
+4. Your broadcasts will automatically sync with this channel
 
-1. Create a channel in the Payload admin
-2. Select "Broadcast" as the provider type
-3. In the "Provider Config" section that appears:
-   - Add your channel-specific API token
-   - Optionally override the API URL for this channel
-4. Save the channel
-
-Each channel can now have its own token and connect to different Broadcast channels!
-
-## Setting Up Your First Channel
-
-1. **In Broadcast:**
-   - Create a channel (if you haven't already)
-   - Navigate to Settings → Access Tokens
-   - Create a new access token for your channel
-   - Copy the token
-
-2. **In Your Payload Project:**
-   - Set the `BROADCAST_TOKEN` environment variable
-   - Start Payload
-   - Navigate to Channels in the admin UI
-   - Create a new channel with matching settings
-
-3. **Create Your First Broadcast:**
-   - Navigate to Broadcasts in the admin UI
-   - Click "Create New"
-   - Select your channel
-   - Write your newsletter content
-   - Send or schedule your broadcast
+### 3. Create Your First Broadcast:
+1. Navigate to Broadcasts in the admin UI
+2. Click "Create New"
+3. Fill in the subject and content
+4. Use the inline preview to see how it looks
+5. Send or schedule your broadcast
 
 ## Configuration Options
 
-### Minimal Configuration
+### Basic Configuration
 
 ```typescript
 newsletterPlugin({
@@ -121,7 +108,7 @@ newsletterPlugin({
 })
 ```
 
-### Full Configuration with Defaults
+### Full Configuration
 
 ```typescript
 newsletterPlugin({
@@ -135,57 +122,89 @@ newsletterPlugin({
     broadcast: {
       apiUrl: process.env.BROADCAST_API_URL,
       token: process.env.BROADCAST_TOKEN,
-      // Optional defaults (can be overridden in admin UI)
       fromAddress: 'newsletter@example.com',
       fromName: 'My Newsletter',
       replyTo: 'replies@example.com',
+      // These can be overridden in Newsletter Settings
     }
   }
 })
 ```
 
-## Admin UI Settings vs Config
+## Features Available
 
-Settings can be configured in two places:
+When broadcasts are enabled:
 
-1. **In your code config** - Serves as defaults
-2. **In the Payload admin UI** - Overrides config defaults
+1. **Broadcast Management**
+   - Create, edit, and delete broadcasts
+   - Rich text editor with email-safe formatting
+   - Image uploads (requires Media collection)
+   - Custom blocks (buttons, dividers)
 
-Priority: Admin UI settings > Config defaults
+2. **Email Preview** (v0.12.0+)
+   - Live preview with React Email
+   - Desktop and mobile views
+   - Custom template support
+
+3. **Provider Sync**
+   - Automatic sync with Broadcast API
+   - Status tracking
+   - Analytics (opens, clicks, etc.)
+
+4. **Sending Options**
+   - Send immediately
+   - Schedule for later
+   - Test mode sending
 
 ## Testing Your Setup
 
-1. Create a test broadcast
-2. Use the preview feature to see how it looks
-3. Send a test email to yourself
-4. Check that it arrives correctly
+1. **Create a Test Broadcast**
+   - Use a simple subject like "Test Email"
+   - Add some content with formatting
+   - Preview it in the editor
+
+2. **Send a Test**
+   - Use test mode to send to yourself
+   - Verify it arrives correctly
+   - Check that tracking works
+
+3. **Check Sync**
+   - Verify the broadcast appears in your Broadcast dashboard
+   - Confirm status updates sync back to Payload
 
 ## Troubleshooting
 
 ### "Broadcast API error" when sending
-
 - Check your API token is correct
 - Verify your Broadcast instance URL
-- Ensure the token has permissions for the operations you're trying
+- Ensure the token has send permissions
 
-### Channel not syncing with Broadcast
+### Broadcasts not syncing
+- Check Payload logs for error messages
+- Verify API token has correct permissions
+- Ensure BROADCAST_API_URL includes protocol (https://)
 
-- The plugin should automatically create channels in Broadcast
-- Check the Payload logs for any error messages
-- Verify your API token has channel management permissions
+### Images not showing in preview
+- Ensure you have a Media collection configured
+- Check that images are uploaded before previewing
+- Verify media URL in your Payload config
 
-## Multi-Channel Configuration Example
+## Multiple Newsletters?
 
-Here's how you can set up multiple channels with different Broadcast instances:
+If you need multiple separate newsletters:
 
-### Channel 1: Main Newsletter
-- Provider: Broadcast
-- Token: `abc123` (from Broadcast instance A)
-- API URL: `https://broadcast-a.example.com`
+1. **Recommended**: Deploy separate Payload instances
+   ```
+   newsletter-tech/      # Tech newsletter instance
+   newsletter-marketing/ # Marketing newsletter instance
+   ```
 
-### Channel 2: Product Updates
-- Provider: Broadcast  
-- Token: `xyz789` (from Broadcast instance B)
-- API URL: `https://broadcast-b.example.com`
+2. **Not Recommended**: Manual token switching (error-prone)
 
-Each channel operates independently with its own Broadcast channel!
+See [Single Channel Broadcast Setup](./single-channel-broadcast.md) for more details.
+
+## Next Steps
+
+- Set up [custom email templates](../features/email-preview.md)
+- Configure [subscriber management](./quick-start.md)
+- Review [email provider options](./email-providers.md)

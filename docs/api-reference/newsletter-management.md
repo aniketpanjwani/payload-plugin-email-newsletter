@@ -29,14 +29,23 @@ POST /api/newsletters
 Content-Type: application/json
 
 {
-  "name": "Holiday Sale",
   "subject": "Get 50% off this weekend!",
-  "content": "<h1>Holiday Sale</h1><p>...</p>",
-  "trackOpens": true,
-  "trackClicks": true
+  "preheader": "Limited time offer inside",
+  "content": {
+    "root": {
+      "type": "root",
+      "children": [...]
+    }
+  },
+  "settings": {
+    "trackOpens": true,
+    "trackClicks": true
+  }
 }
 ```
 Creates a new broadcast. The collection hooks automatically sync with your email provider (Broadcast or Resend).
+
+**Note**: The `content` field expects Lexical editor state format. The broadcast uses `subject` as its title (the separate `name` field was removed in v0.11.0).
 
 ### Update Broadcast
 ```
@@ -93,11 +102,61 @@ Authorization: Bearer YOUR_AUTH_TOKEN
 
 The newsletter collection uses hooks to keep data synchronized with your email provider:
 
-- **beforeChange**: Creates/updates the broadcast in the provider
-- **afterChange**: Updates local status after provider operations
-- **beforeDelete**: Removes the broadcast from the provider
+### Create Sync (afterChange hook)
+When creating a new broadcast:
+1. The broadcast is saved locally in Payload
+2. The hook creates it in the provider (using `subject` as the name)
+3. The provider's ID is stored in `providerId` field
+4. Any provider-specific data is stored in `providerData`
 
-This ensures your Payload data and provider data stay in sync.
+### Update Sync (beforeChange hook)
+When updating an existing broadcast:
+1. The hook checks if the broadcast is still editable (draft status)
+2. Changed fields are synced to the provider
+3. The `subject` field is used as both name and subject in the provider
+
+### Delete Sync (afterDelete hook)
+When deleting a broadcast:
+1. The hook checks if the broadcast can be deleted (draft/canceled status)
+2. The broadcast is removed from the provider
+3. Local deletion proceeds
+
+**Note**: Sync only works for broadcasts in editable statuses. Once sent, broadcasts become read-only.
+
+## Email Preview
+
+The broadcast editor includes an inline email preview feature (v0.12.0+):
+
+- **Location**: Below the content editor in the broadcast edit view
+- **Update**: Click "Show Preview" then "Update Preview" to refresh
+- **Views**: Toggle between desktop (600px) and mobile (375px) views
+- **Template**: Uses React Email with a default template or custom template
+
+### Custom Email Templates
+
+Create a custom template at `email-templates/broadcast-template.tsx`:
+
+```typescript
+import { Html, Body, Container, Text, Link } from '@react-email/components'
+
+export default function BroadcastTemplate({ subject, preheader, content }) {
+  return (
+    <Html>
+      <Body>
+        <Container>
+          <div dangerouslySetInnerHTML={{ __html: content }} />
+          <Link href="{{unsubscribe_url}}">Unsubscribe</Link>
+        </Container>
+      </Body>
+    </Html>
+  )
+}
+```
+
+The template receives:
+- `subject`: The email subject line
+- `preheader`: Preview text (optional)
+- `content`: Email-safe HTML content
 
 ## Status Values
 
