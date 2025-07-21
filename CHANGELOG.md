@@ -1,3 +1,10 @@
+## [0.12.1] - 2025-07-20
+
+### Fixed
+- Resolved ESLint errors in email preview components
+- Removed unused imports and variables
+- Fixed console.info statements in template loader
+
 ## [0.12.0] - 2025-07-20
 
 ### Added
