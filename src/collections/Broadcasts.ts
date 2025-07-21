@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField } from '../fields/emailContent'
+import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 
 export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig): CollectionConfig => {
@@ -39,15 +40,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           description: 'Email content',
         },
       }),
-      {
-        name: 'emailPreview',
-        type: 'ui',
-        admin: {
-          components: {
-            Field: '/src/components/Broadcasts/EmailPreviewField',
-          },
-        },
-      },
+      createBroadcastInlinePreviewField(),
       {
         name: 'status',
         type: 'select',

@@ -1,3 +1,14 @@
+## [0.12.0] - 2025-07-20
+
+### Added
+- Email preview feature for broadcasts with inline preview component
+- React Email integration for reliable email template rendering
+- Custom email template support
+- Desktop and mobile preview modes
+
+### Changed
+- Broadcast collection now includes inline email preview below content editor
+
 ## [0.11.0] - 2025-07-20
 
 ### Added
@@ -7,12 +18,25 @@
   - Image upload support with Media collection integration
   - Custom email blocks (Button and Divider)
   - Enhanced link feature with "open in new tab" option
+- Email preview feature for broadcasts:
+  - Live preview with manual update button
+  - Desktop and mobile responsive views
+  - React Email template rendering
+  - Custom template support via `email-templates/broadcast-template.tsx`
+  - Inline preview below content editor
 - Comprehensive image handling in email HTML conversion:
   - Responsive images with proper email-safe HTML
   - Support for captions and alt text
   - Automatic media URL handling for different storage backends
-- Media collection setup documentation (`docs/guides/media-collection-setup.md`)
-- Prerequisites section in README mentioning Media collection requirement
+- New utilities and components:
+  - `contentTransformer` for preview content processing
+  - `templateLoader` for custom template discovery
+  - `DefaultBroadcastTemplate` bundled email template
+  - `BroadcastInlinePreview` component
+- Documentation:
+  - Media collection setup guide (`docs/guides/media-collection-setup.md`)
+  - Email preview feature guide (`docs/features/email-preview.md`)
+  - Prerequisites section in README mentioning Media collection requirement
 
 ### Changed
 - Removed 'name' field from Broadcasts collection (now uses 'subject' as title)
