@@ -58,7 +58,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         admin: {
           readOnly: true,
           components: {
-            Cell: '/src/components/Broadcasts/StatusBadge',
+            Cell: 'payload-plugin-newsletter/components#StatusBadge',
           },
         },
       },
@@ -202,8 +202,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         type: 'ui',
         admin: {
           components: {
-            Cell: '/src/components/Broadcasts/ActionsCell',
-            Field: '/src/components/Broadcasts/EmptyField',
+            Cell: 'payload-plugin-newsletter/components#ActionsCell',
+            Field: 'payload-plugin-newsletter/components#EmptyField',
           },
           disableListColumn: false,
         },

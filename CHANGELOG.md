@@ -1,3 +1,10 @@
+## [0.12.3] - 2025-07-20
+
+### Fixed
+- Fixed import map component path references to use package exports instead of file paths
+- Resolved "PayloadComponent not found in importMap" errors in Payload v3 projects
+- Added missing component exports (StatusBadge, ActionsCell, EmptyField)
+
 ## [0.12.2] - 2025-07-20
 
 ### Documentation

@@ -6,7 +6,7 @@ export const createBroadcastPreviewField = (): Field => {
     type: 'ui',
     admin: {
       components: {
-        Field: '/src/components/Broadcasts/BroadcastPreviewField',
+        Field: 'payload-plugin-newsletter/components#BroadcastPreviewField',
       },
       position: 'sidebar',
     },

@@ -6,7 +6,7 @@ export const createBroadcastInlinePreviewField = (): Field => {
     type: 'ui',
     admin: {
       components: {
-        Field: '/src/components/Broadcasts/BroadcastInlinePreview',
+        Field: 'payload-plugin-newsletter/components#BroadcastInlinePreview',
       },
     },
   }
