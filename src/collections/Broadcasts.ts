@@ -22,13 +22,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
     fields: [
       {
         type: 'row',
-        admin: {
-          style: {
-            '@media (max-width: 1024px)': {
-              flexDirection: 'column',
-            },
-          },
-        },
         fields: [
           {
             name: 'contentSection',
@@ -37,12 +30,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             admin: {
               width: '50%',
               style: {
-                marginRight: '2rem',
-                '@media (max-width: 1024px)': {
-                  width: '100%',
-                  marginRight: 0,
-                  marginBottom: '2rem',
-                },
+                paddingRight: '1rem',
               },
             },
             fields: [
@@ -74,11 +62,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             label: false,
             admin: {
               width: '50%',
-              style: {
-                '@media (max-width: 1024px)': {
-                  width: '100%',
-                },
-              },
             },
             fields: [
               createBroadcastInlinePreviewField(),
