@@ -1,12 +1,6 @@
 import React from 'react'
 import { DefaultBroadcastTemplate } from '../email-templates/DefaultBroadcastTemplate'
 
-interface TemplateModule {
-  default?: React.ComponentType<any>
-  BroadcastTemplate?: React.ComponentType<any>
-  [key: string]: React.ComponentType<any> | undefined
-}
-
 class TemplateLoader {
   private defaultTemplate: React.ComponentType<any>
   private customTemplate?: React.ComponentType<any>
@@ -41,11 +35,10 @@ class TemplateLoader {
       
       if (module) {
         this.customTemplate = module.default || module.BroadcastTemplate
-        console.info('Loaded custom broadcast template')
       }
-    } catch (error) {
+    } catch {
       // Custom template not found, use default
-      console.info('Using default broadcast template')
+      // Silent fallback to default template
     }
   }
   
