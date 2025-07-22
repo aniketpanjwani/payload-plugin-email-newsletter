@@ -1,3 +1,14 @@
+## [0.13.1] - 2025-07-21
+
+### Fixed
+- Fixed Broadcast API subscriber update method to match API documentation
+- Added comprehensive debug logging for email service initialization and subscriber sync
+- Improved error handling in subscriber hooks to surface sync issues
+
+### Added
+- Debug logging for troubleshooting subscriber sync with email providers
+- Better error messages when email service configuration fails
+
 ## [0.13.0] - 2025-07-21
 
 ### Changed

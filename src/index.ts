@@ -130,6 +130,13 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
           slug: config.settingsSlug || 'newsletter-settings',
         })
 
+        console.log('[Newsletter Plugin] Initializing with settings:', {
+          hasSettings: !!settings,
+          settingsProvider: settings?.provider,
+          configProvider: config.providers?.default,
+          hasBroadcastConfig: !!config.providers?.broadcast
+        })
+
         let emailServiceConfig: any
         
         if (settings) {
@@ -167,9 +174,27 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
           }
         }
 
-        (payload as any).newsletterEmailService = createEmailService(emailServiceConfig)
+        console.log('[Newsletter Plugin] Email service config:', {
+          provider: emailServiceConfig.provider,
+          hasBroadcastConfig: !!emailServiceConfig.broadcast,
+          broadcastUrl: emailServiceConfig.broadcast?.apiUrl,
+          hasToken: !!emailServiceConfig.broadcast?.token
+        })
 
-        console.warn('Newsletter plugin initialized with', (payload as any).newsletterEmailService.getProvider(), 'provider')
+        try {
+          const emailService = createEmailService(emailServiceConfig)
+          ;(payload as any).newsletterEmailService = emailService
+
+          console.log('[Newsletter Plugin] Email service initialized:', {
+            provider: emailService.getProvider(),
+            hasProvider: !!emailService,
+            payloadHasService: !!(payload as any).newsletterEmailService
+          })
+        } catch (emailServiceError) {
+          console.error('[Newsletter Plugin] Failed to create email service:', emailServiceError)
+          console.error('[Newsletter Plugin] Email service config was:', emailServiceConfig)
+          // Don't throw - let the plugin work without email service
+        }
         
         // Initialize broadcast management provider if enabled
         if (config.features?.newsletterManagement?.enabled) {

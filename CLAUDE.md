@@ -72,7 +72,7 @@ Use these resources for understanding patterns and best practices:
 
 1. **Plugin Documentation**:
    - Check `docs/` directory for comprehensive plugin documentation
-   - `docs/references/broadcast-docs-compiled.md` - Complete Broadcast API reference (sendbroadcast.net)
+   - `docs/references/broadcast-api-docs.md` - Complete Broadcast API reference (sendbroadcast.net)
    - `docs/guides/email-providers.md` - Email provider setup and comparison
    - `docs/development/context7-setup.md` - How to set up context7 MCP for current docs
    - `docs/architecture/` - Plugin architecture and design decisions

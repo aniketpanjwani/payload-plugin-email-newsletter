@@ -126,6 +126,7 @@ export class BroadcastProvider implements EmailProvider {
       const lastName = lastNameParts.join(' ')
 
       // Update existing contact
+      // According to Broadcast docs, email should be at root level for identification
       const response = await fetch(`${this.apiUrl}/api/v1/subscribers.json`, {
         method: 'PATCH',
         headers: {
@@ -133,7 +134,7 @@ export class BroadcastProvider implements EmailProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: contact.email,
+          email: contact.email, // Email at root level to identify the subscriber
           subscriber: {
             first_name: firstName || undefined,
             last_name: lastName || undefined,

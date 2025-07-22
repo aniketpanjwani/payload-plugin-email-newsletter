@@ -223,12 +223,20 @@ export const createSubscribersCollection = (
           if (operation === 'create') {
             // Add to email service
             const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
+            console.log('[Newsletter Plugin] Creating subscriber:', {
+              email: doc.email,
+              hasEmailService: !!emailService
+            })
+            
             if (emailService) {
               try {
                 await emailService.addContact(doc)
-              } catch {
-                // Failed to add contact to email service
+                console.log('[Newsletter Plugin] Successfully added contact to email service')
+              } catch (error) {
+                console.error('[Newsletter Plugin] Failed to add contact to email service:', error)
               }
+            } else {
+              console.warn('[Newsletter Plugin] No email service configured for subscriber creation')
             }
 
             // Send welcome email if active
@@ -271,14 +279,24 @@ export const createSubscribersCollection = (
           if (operation === 'update' && previousDoc) {
             // Update email service if status changed
             const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service
-            if (
-              doc.subscriptionStatus !== previousDoc.subscriptionStatus &&
-              emailService
-            ) {
-              try {
-                await emailService.updateContact(doc)
-              } catch {
-                // Failed to update contact in email service
+            
+            if (doc.subscriptionStatus !== previousDoc.subscriptionStatus) {
+              console.log('[Newsletter Plugin] Subscription status changed:', {
+                email: doc.email,
+                from: previousDoc.subscriptionStatus,
+                to: doc.subscriptionStatus,
+                hasEmailService: !!emailService
+              })
+              
+              if (emailService) {
+                try {
+                  await emailService.updateContact(doc)
+                  console.log('[Newsletter Plugin] Successfully updated contact in email service')
+                } catch (error) {
+                  console.error('[Newsletter Plugin] Failed to update contact in email service:', error)
+                }
+              } else {
+                console.warn('[Newsletter Plugin] No email service configured')
               }
             }
 
