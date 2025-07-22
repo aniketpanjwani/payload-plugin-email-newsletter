@@ -15,11 +15,19 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
       plural: 'Broadcasts',
     },
     admin: {
-      useAsTitle: 'contentSection.subject',
+      useAsTitle: 'subject',
       description: 'Individual email campaigns sent to subscribers',
-      defaultColumns: ['contentSection.subject', 'status', 'sentAt', 'recipientCount', 'actions'],
+      defaultColumns: ['subject', 'status', 'sentAt', 'recipientCount', 'actions'],
     },
     fields: [
+      {
+        name: 'subject',
+        type: 'text',
+        required: true,
+        admin: {
+          description: 'Email subject line'
+        },
+      },
       {
         type: 'row',
         fields: [
@@ -34,14 +42,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               },
             },
             fields: [
-              {
-                name: 'subject',
-                type: 'text',
-                required: true,
-                admin: {
-                  description: 'Email subject line'
-                },
-              },
               {
                 name: 'preheader',
                 type: 'text',
@@ -259,8 +259,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Create broadcast in provider
             const providerBroadcast = await provider.create({
-              name: doc.contentSection?.subject, // Use subject as name since we removed the name field
-              subject: doc.contentSection?.subject,
+              name: doc.subject, // Use subject as name since we removed the name field
+              subject: doc.subject,
               preheader: doc.contentSection?.preheader,
               content: htmlContent,
               trackOpens: doc.settings?.trackOpens,
@@ -315,9 +315,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Build update data
             const updates: any = {}
-            if (data.contentSection?.subject !== originalDoc.contentSection?.subject) {
-              updates.name = data.contentSection?.subject // Use subject as name in the provider
-              updates.subject = data.contentSection?.subject
+            if (data.subject !== originalDoc.subject) {
+              updates.name = data.subject // Use subject as name in the provider
+              updates.subject = data.subject
             }
             if (data.contentSection?.preheader !== originalDoc.contentSection?.preheader) updates.preheader = data.contentSection?.preheader
             if (data.contentSection?.content !== originalDoc.contentSection?.content) {

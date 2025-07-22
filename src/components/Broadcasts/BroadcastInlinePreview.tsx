@@ -17,7 +17,7 @@ export const BroadcastInlinePreview: React.FC = () => {
   const [error, setError] = useState<Error | null>(null)
   
   const fields = useFormFields(([fields]) => ({
-    subject: fields['contentSection.subject']?.value as string,
+    subject: fields['subject']?.value as string,
     preheader: fields['contentSection.preheader']?.value as string,
     content: fields['contentSection.content']?.value,
   }))

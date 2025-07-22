@@ -1,3 +1,17 @@
+## [0.13.2] - 2025-07-21
+
+### Fixed
+- Fixed `useAsTitle` configuration error in Broadcasts collection
+  - Moved `subject` field to top level as Payload v3 doesn't support nested field references in `useAsTitle`
+  - Updated all component references from `contentSection.subject` to `subject`
+  - Maintained split-screen layout with subject field appearing above the content sections
+
+### Breaking Changes
+- The `subject` field location has changed in the data structure:
+  - Old: `broadcast.contentSection.subject`
+  - New: `broadcast.subject`
+- If you have existing broadcasts, you may need to migrate the subject field data
+
 ## [0.13.1] - 2025-07-21
 
 ### Fixed

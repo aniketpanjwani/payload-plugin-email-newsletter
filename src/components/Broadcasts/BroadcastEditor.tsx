@@ -20,7 +20,7 @@ export const BroadcastEditor: React.FC<BroadcastEditorProps> = (props) => {
 
   // Get other form fields for preview
   const fields = useFormFields(([fields]) => ({
-    subject: fields['contentSection.subject'],
+    subject: fields['subject'],
     preheader: fields['contentSection.preheader'],
   }))
 
