@@ -129,10 +129,14 @@ export function verifySessionToken(token: string): SessionTokenPayload {
 export function generateMagicLinkURL(
   token: string,
   baseURL: string,
-  config: NewsletterPluginConfig
+  config: NewsletterPluginConfig,
+  redirectUrl?: string
 ): string {
   const path = config.auth?.magicLinkPath || '/newsletter/verify'
   const url = new URL(path, baseURL)
   url.searchParams.set('token', token)
+  if (redirectUrl) {
+    url.searchParams.set('redirect', redirectUrl)
+  }
   return url.toString()
 }

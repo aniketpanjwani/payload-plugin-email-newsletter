@@ -21,7 +21,7 @@ export const createSigninEndpoint = (
     handler: (async (req: ExtendedPayloadRequest) => {
       try {
         const data = await req.json()
-        const { email } = data as SigninRequestData
+        const { email, redirectUrl } = data as SigninRequestData & { redirectUrl?: string }
 
         // Validate email
         const validation = validateSubscriberData({ email })
@@ -72,7 +72,7 @@ export const createSigninEndpoint = (
 
         // Generate magic link URL
         const serverURL = req.payload.config.serverURL || process.env.PAYLOAD_PUBLIC_SERVER_URL || ''
-        const magicLinkURL = generateMagicLinkURL(token, serverURL, config)
+        const magicLinkURL = generateMagicLinkURL(token, serverURL, config, redirectUrl)
 
         // Get email service
         const emailService = (req.payload as any).newsletterEmailService // TODO: Add proper type for newsletter email service

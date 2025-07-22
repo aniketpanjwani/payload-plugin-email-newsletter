@@ -1,3 +1,14 @@
+## [0.13.3] - 2025-07-21
+
+### Added
+- Support for custom redirect URLs after successful subscriber sign-in
+  - Added `redirectUrl` parameter to signin endpoint
+  - Magic link URLs now include the redirect parameter to maintain context after authentication
+  - Enables seamless user experience when accessing protected content
+
+### Fixed
+- Magic link generation now properly includes redirect URL parameter
+
 ## [0.13.2] - 2025-07-21
 
 ### Fixed
