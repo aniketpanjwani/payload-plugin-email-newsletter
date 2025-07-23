@@ -86,7 +86,7 @@ export const BroadcastInlinePreview: React.FC = () => {
     display: 'flex',
     flexDirection: 'column',
     background: '#f3f4f6',
-    minHeight: '600px',
+    overflow: 'hidden',
   }
   
   const errorStyle: React.CSSProperties = {
@@ -145,13 +145,11 @@ export const BroadcastInlinePreview: React.FC = () => {
                 onDeviceChange={setDevice}
                 isLoading={isLoading}
               />
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-                <EmailRenderer 
-                  template={previewData.template}
-                  data={previewData.data}
-                  device={device}
-                />
-              </div>
+              <EmailRenderer 
+                template={previewData.template}
+                data={previewData.data}
+                device={device}
+              />
             </>
           ) : null}
         </div>

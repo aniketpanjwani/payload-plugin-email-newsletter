@@ -140,6 +140,44 @@ export const createNewsletterSettingsGlobal = (
             ],
           },
           {
+            label: 'Brand Settings',
+            fields: [
+              {
+                name: 'brandSettings',
+                type: 'group',
+                label: 'Brand Settings',
+                fields: [
+                  {
+                    name: 'siteName',
+                    type: 'text',
+                    label: 'Site Name',
+                    required: true,
+                    defaultValue: 'Newsletter',
+                    admin: {
+                      description: 'Your website or newsletter name',
+                    },
+                  },
+                  {
+                    name: 'siteUrl',
+                    type: 'text',
+                    label: 'Site URL',
+                    admin: {
+                      description: 'Your website URL (optional)',
+                    },
+                  },
+                  {
+                    name: 'logoUrl',
+                    type: 'text',
+                    label: 'Logo URL',
+                    admin: {
+                      description: 'URL to your logo image (optional)',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+          {
             label: 'Email Templates',
             fields: [
               {

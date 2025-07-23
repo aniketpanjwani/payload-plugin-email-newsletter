@@ -63,14 +63,17 @@ export const EmailRenderer: React.FC<EmailRendererProps> = ({
     width: '100%',
     height: '100%',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
+    overflow: 'auto',
+    padding: '2rem',
+    boxSizing: 'border-box',
   }
   
   const iframeStyle: React.CSSProperties = {
     width: device === 'mobile' ? '375px' : '600px',
-    maxWidth: '100%',
     height: '100%',
+    minHeight: '600px',
     background: 'white',
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     borderRadius: device === 'mobile' ? '20px' : '8px',
