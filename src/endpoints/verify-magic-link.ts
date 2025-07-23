@@ -123,7 +123,7 @@ export const createVerifyMagicLinkEndpoint = (
                 email: subscriber.email,
                 siteName: settings?.brandSettings?.siteName || 'Newsletter',
                 preferencesUrl: `${serverURL}/account/preferences`, // This could be customized
-              })
+              }, config)
               
               // Send email
               await emailService.send({

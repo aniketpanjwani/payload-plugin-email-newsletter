@@ -105,7 +105,7 @@ export const createSigninEndpoint = (
             email: subscriber.email,
             siteName: settings?.brandSettings?.siteName || 'Newsletter',
             expiresIn: config.auth?.tokenExpiration || '7d',
-          })
+          }, config)
 
           // Send email
           await emailService.send({

@@ -253,7 +253,7 @@ export const createSubscribersCollection = (
                   email: doc.email,
                   siteName: settings?.brandSettings?.siteName || 'Newsletter',
                   preferencesUrl: `${serverURL}/account/preferences`, // This could be customized
-                })
+                }, pluginConfig)
                 
                 // Send email
                 await emailService.send({

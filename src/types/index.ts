@@ -258,6 +258,13 @@ export interface NewsletterPluginConfig {
     defaultLocale?: string
     locales?: string[]
   }
+
+  /**
+   * Custom email templates
+   */
+  customTemplates?: {
+    [key: string]: React.ComponentType<any>
+  }
 }
 
 export interface ResendProviderConfig {

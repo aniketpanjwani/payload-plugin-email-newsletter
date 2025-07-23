@@ -22,12 +22,12 @@ Welcome to the comprehensive documentation for the Payload Newsletter Plugin. Th
 
 ### 📖 [Guides](./guides/)
 - [Email Providers](./guides/email-providers.md)
+- [Email Templates](./guides/email-templates.md) - **Custom templates for broadcasts and transactional emails**
 - [Email Preview](./guides/email-preview.md) - **New in v0.9.0**
 - [Payload v3 Migration](./guides/payload-v3-migration.md) - **Important for v3 users**
 - [Authentication](./guides/authentication.md)
 - [Subscriber Management](./guides/subscriber-management.md)
 - [Sending Newsletters](./guides/sending-newsletters.md)
-- [Templates](./guides/templates.md)
 - [Security Best Practices](./guides/security.md)
 
 ### 🏗️ [Architecture](./architecture/)

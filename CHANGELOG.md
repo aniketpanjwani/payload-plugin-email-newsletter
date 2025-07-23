@@ -1,3 +1,20 @@
+## [0.14.2] - 2025-07-22
+
+### Added
+- Custom email template support for transactional emails (magic link, welcome, sign-in)
+  - Configure via `customTemplates` in plugin config
+  - Full React Email component support
+  - Fallback to built-in templates when custom ones not provided
+- Comprehensive email template documentation
+  - Guide for creating custom broadcast templates
+  - Guide for creating custom transactional templates
+  - Examples and best practices for template development
+  - Extension patterns for advanced use cases
+
+### Fixed
+- Custom templates now properly used when configured in plugin settings
+- All email rendering functions now accept config parameter for template customization
+
 ## [0.14.1] - 2025-07-22
 
 ### Changed

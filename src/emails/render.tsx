@@ -2,6 +2,7 @@ import { render } from '@react-email/render'
 import { MagicLinkEmail } from './MagicLink'
 import { WelcomeEmail } from './Welcome'
 import { SignInEmail } from './SignIn'
+import type { NewsletterPluginConfig } from '../types'
 
 export type EmailTemplate = 'magic-link' | 'welcome' | 'signin'
 
@@ -24,9 +25,20 @@ export interface WelcomeData extends BaseEmailData {
 
 export async function renderEmail(
   template: EmailTemplate, 
-  data: MagicLinkData | WelcomeData
+  data: MagicLinkData | WelcomeData,
+  config?: NewsletterPluginConfig
 ): Promise<string> {
   try {
+    // Check for custom templates if config provided
+    if (config?.customTemplates) {
+      const customTemplate = config.customTemplates[template]
+      if (customTemplate) {
+        const CustomComponent = customTemplate
+        return render(<CustomComponent {...data} />)
+      }
+    }
+    
+    // Fall back to built-in templates
     switch (template) {
       case 'magic-link': {
         const magicLinkData = data as MagicLinkData

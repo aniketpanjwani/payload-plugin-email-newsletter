@@ -119,7 +119,7 @@ export const createSubscribeEndpoint = (
                 email: updated.email,
                 siteName: settings?.brandSettings?.siteName || 'Newsletter',
                 siteUrl: req.payload.config.serverURL || '',
-              })
+              }, config)
               
               await emailService.send({
                 to: updated.email,
@@ -164,7 +164,7 @@ export const createSubscribeEndpoint = (
                 email: subscriber.email,
                 siteName: settings?.brandSettings?.siteName || 'Newsletter',
                 expiresIn: config.auth?.tokenExpiration || '7d',
-              })
+              }, config)
               
               await emailService.send({
                 to: subscriber.email,
@@ -280,7 +280,7 @@ export const createSubscribeEndpoint = (
                 email: subscriber.email,
                 siteName: settings?.brandSettings?.siteName || 'Newsletter',
                 expiresIn: config.auth?.tokenExpiration || '7d',
-              })
+              }, config)
               
               // Send email
               await emailService.send({
