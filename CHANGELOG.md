@@ -1,3 +1,12 @@
+## [0.14.1] - 2025-07-22
+
+### Changed
+- Improved email preview in Broadcasts collection to use full container height
+  - Email preview now utilizes all available vertical space
+  - Maintains realistic email widths (600px for desktop, 375px for mobile)
+  - Added scrolling within preview container for longer email content
+  - Better space utilization for viewing and editing broadcast emails
+
 ## [0.14.0] - 2025-07-22
 
 ### Added
