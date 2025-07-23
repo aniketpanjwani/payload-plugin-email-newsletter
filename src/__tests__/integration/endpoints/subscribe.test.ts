@@ -194,14 +194,12 @@ describe('Subscribe Endpoint Security', () => {
       mockReq.data = { email: 'existing@example.com' }
       const response = await endpoint.handler(mockReq)
       
-      expect(response.status).toBe(400)
+      expect(response.status).toBe(200)
       const responseData = await response.json()
       expect(responseData).toEqual({
-        success: false,
-        error: 'Already subscribed',
-        subscriber: expect.objectContaining({
-          email: 'existing@example.com',
-        }),
+        success: true,
+        message: 'You are already subscribed! Check your email for a sign-in link.',
+        alreadySubscribed: true,
       })
     })
 
