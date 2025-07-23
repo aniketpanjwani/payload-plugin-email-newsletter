@@ -99,7 +99,7 @@ export const createSigninEndpoint = (
             slug: config.settingsSlug || 'newsletter-settings',
           })
 
-          // Render email
+          // Render email - pass config to use custom templates
           const html = await renderEmail('signin', {
             magicLink: magicLinkURL,
             email: subscriber.email,
@@ -107,12 +107,16 @@ export const createSigninEndpoint = (
             expiresIn: config.auth?.tokenExpiration || '7d',
           }, config)
 
+          // Use magic link subject from settings if available
+          const subject = settings?.emailTemplates?.magicLink?.subjectLine || 
+                         (settings?.brandSettings?.siteName 
+                           ? `Sign in to ${settings.brandSettings.siteName}` 
+                           : 'Sign in to your account')
+
           // Send email
           await emailService.send({
             to: subscriber.email,
-            subject: settings?.brandSettings?.siteName 
-              ? `Sign in to ${settings.brandSettings.siteName}` 
-              : 'Sign in to your account',
+            subject,
             html,
           })
 

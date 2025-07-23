@@ -42,6 +42,7 @@ export class BroadcastProvider implements EmailProvider {
         },
         body: JSON.stringify({
           to: recipients[0], // Broadcast API expects a single recipient for transactional emails
+          from: `${from.name} <${from.email}>`, // Include from name and email
           subject: params.subject,
           body: params.html || params.text || '',
           reply_to: params.replyTo || this.replyTo || from.email,

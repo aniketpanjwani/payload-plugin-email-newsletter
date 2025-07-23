@@ -1,3 +1,9 @@
+## [0.14.3] - 2025-07-23
+
+### Fixed
+- Sign-in emails now use the magic link subject line from Newsletter Settings
+- Broadcast provider now properly sends the from name along with the email address
+
 ## [0.14.2] - 2025-07-22
 
 ### Added
