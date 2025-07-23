@@ -74,6 +74,7 @@ describe('BroadcastProvider', () => {
           },
           body: JSON.stringify({
             to: emailParams.to,
+            from: 'Test Newsletter <noreply@example.com>',
             subject: emailParams.subject,
             body: emailParams.html,
             reply_to: 'noreply@example.com'
