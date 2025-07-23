@@ -71,23 +71,114 @@ export const createSubscribeEndpoint = (
         if (existing.docs.length > 0) {
           const subscriber = existing.docs[0]
           
-          // If unsubscribed, don't allow resubscription via API
+          // Handle unsubscribed users
           if (subscriber.subscriptionStatus === 'unsubscribed') {
-            return Response.json({
-              success: false,
-              error: 'This email has been unsubscribed. Please contact support to resubscribe.',
-            }, { status: 400 })
-          }
-
-          return Response.json({
-            success: false,
-            error: 'Already subscribed',
-            subscriber: {
+            const allowResubscribe = config.auth?.allowResubscribe ?? false
+            
+            if (!allowResubscribe) {
+              return Response.json({
+                success: false,
+                error: 'This email has been unsubscribed. Please contact support to resubscribe.',
+              }, { status: 400 })
+            }
+            
+            // Resubscribe the user
+            const updated = await req.payload.update({
+              collection: config.subscribersSlug || 'subscribers',
               id: subscriber.id,
-              email: subscriber.email,
-              subscriptionStatus: subscriber.subscriptionStatus,
-            },
-          }, { status: 400 })
+              data: {
+                subscriptionStatus: 'active',
+                resubscribedAt: new Date().toISOString(),
+                // Preserve preferences but update metadata
+                signupMetadata: {
+                  ...metadata,
+                  source: source || 'resubscribe',
+                  resubscribedFrom: subscriber.signupMetadata?.source,
+                },
+              },
+              overrideAccess: true,
+            })
+            
+            // Fire afterSubscribe hook for resubscription
+            if (config.hooks?.afterSubscribe) {
+              await config.hooks.afterSubscribe({
+                doc: updated,
+                req,
+              })
+            }
+            
+            // Send welcome back email
+            const emailService = (req.payload as any).newsletterEmailService
+            if (emailService) {
+              const settings = await req.payload.findGlobal({
+                slug: config.settingsSlug || 'newsletter-settings',
+              })
+              
+              const html = await renderEmail('welcome', {
+                name: updated.name || '',
+                email: updated.email,
+                siteName: settings?.brandSettings?.siteName || 'Newsletter',
+                siteUrl: req.payload.config.serverURL || '',
+              })
+              
+              await emailService.send({
+                to: updated.email,
+                subject: `Welcome back to ${settings?.brandSettings?.siteName || 'our newsletter'}!`,
+                html,
+              })
+            }
+            
+            return Response.json({
+              success: true,
+              message: 'Welcome back! You have been resubscribed.',
+              subscriber: {
+                id: updated.id,
+                email: updated.email,
+                subscriptionStatus: updated.subscriptionStatus,
+              },
+              wasResubscribed: true,
+            })
+          }
+          
+          // Already active subscriber - send sign-in link instead
+          if (subscriber.subscriptionStatus === 'active') {
+            // Generate magic link for signin
+            const token = generateMagicLinkToken(
+              String(subscriber.id),
+              subscriber.email,
+              config
+            )
+            
+            const serverURL = req.payload.config.serverURL || process.env.PAYLOAD_PUBLIC_SERVER_URL || ''
+            const magicLinkURL = generateMagicLinkURL(token, serverURL, config)
+            
+            // Send signin email
+            const emailService = (req.payload as any).newsletterEmailService
+            if (emailService) {
+              const settings = await req.payload.findGlobal({
+                slug: config.settingsSlug || 'newsletter-settings',
+              })
+              
+              const html = await renderEmail('signin', {
+                magicLink: magicLinkURL,
+                email: subscriber.email,
+                siteName: settings?.brandSettings?.siteName || 'Newsletter',
+                expiresIn: config.auth?.tokenExpiration || '7d',
+              })
+              
+              await emailService.send({
+                to: subscriber.email,
+                subject: `Sign in to ${settings?.brandSettings?.siteName || 'your account'}`,
+                html,
+              })
+            }
+            
+            return Response.json({
+              success: true,
+              message: 'You are already subscribed! Check your email for a sign-in link.',
+              alreadySubscribed: true,
+            })
+          }
         }
 
         // Check IP rate limiting

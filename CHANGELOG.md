@@ -1,3 +1,25 @@
+## [0.14.0] - 2025-07-22
+
+### Added
+- New authentication configuration options for flexible subscriber management
+  - `auth.allowUnsubscribedSignin`: Allow unsubscribed users to sign in
+  - `auth.allowResubscribe`: Allow unsubscribed users to resubscribe
+- Improved subscribe endpoint behavior:
+  - Already subscribed users now receive a sign-in link instead of an error
+  - Unsubscribed users can resubscribe (when enabled)
+- Enhanced response formats with status indicators:
+  - `requiresSubscribe`: Indicates user needs to subscribe first
+  - `requiresResubscribe`: Indicates user needs to resubscribe
+  - `wasResubscribed`: Indicates user was successfully resubscribed
+  - `alreadySubscribed`: Indicates user is already subscribed
+
+### Changed
+- Sign-in endpoint now returns more detailed error information for better UX
+- Subscribe endpoint handles existing subscribers more gracefully
+
+### Fixed
+- Unsubscribed users can now manage their preferences when `allowUnsubscribedSignin` is enabled
+
 ## [0.13.3] - 2025-07-21
 
 ### Added
