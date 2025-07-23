@@ -47,6 +47,18 @@ export interface NewsletterPluginConfig {
      * @default '/newsletter/verify'
      */
     magicLinkPath?: string
+    
+    /**
+     * Allow unsubscribed users to sign in
+     * @default false
+     */
+    allowUnsubscribedSignin?: boolean
+    
+    /**
+     * Allow unsubscribed users to resubscribe
+     * @default false
+     */
+    allowResubscribe?: boolean
   }
 
   /**

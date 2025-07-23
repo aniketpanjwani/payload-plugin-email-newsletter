@@ -43,12 +43,11 @@ export const createSigninEndpoint = (
           }, { status: 429 })
         }
 
-        // Find existing active subscriber
+        // Find existing subscriber (including unsubscribed)
         const result = await req.payload.find({
           collection: config.subscribersSlug || 'subscribers',
           where: {
             email: { equals: email.toLowerCase() },
-            subscriptionStatus: { equals: 'active' },
           },
           limit: 1,
           overrideAccess: true, // Need to check subscriber exists
@@ -58,10 +57,27 @@ export const createSigninEndpoint = (
           return Response.json({
             success: false,
             error: 'Email not found. Please subscribe first.',
+            requiresSubscribe: true,
           }, { status: 404 })
         }
 
         const subscriber = result.docs[0]
+        
+        // Check if unsubscribed and whether we allow unsubscribed signin
+        const allowUnsubscribed = config.auth?.allowUnsubscribedSignin ?? false
+        
+        if (subscriber.subscriptionStatus === 'unsubscribed' && !allowUnsubscribed) {
+          return Response.json({
+            success: false,
+            error: 'Your subscription is inactive. Please resubscribe to sign in.',
+            subscriber: {
+              id: subscriber.id,
+              email: subscriber.email,
+              subscriptionStatus: subscriber.subscriptionStatus,
+            },
+            requiresResubscribe: true,
+          }, { status: 403 })
+        }
 
         // Generate magic link token
         const token = generateMagicLinkToken(
