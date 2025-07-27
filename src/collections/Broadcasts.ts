@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import type { NewsletterPluginConfig, BroadcastCustomizations } from '../types'
+import type { NewsletterPluginConfig } from '../types'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
