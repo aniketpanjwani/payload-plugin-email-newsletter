@@ -1,6 +1,6 @@
 {
   "name": "payload-plugin-newsletter",
-  "version": "0.14.3",
+  "version": "0.15.0",
   "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
   "type": "module",
   "main": "./dist/index.js",
@@ -65,6 +65,16 @@
       "require": {
         "types": "./dist/fields.d.cts",
         "default": "./dist/fields.cjs"
+      }
+    },
+    "./collections": {
+      "import": {
+        "types": "./dist/collections.d.ts",
+        "default": "./dist/collections.js"
+      },
+      "require": {
+        "types": "./dist/collections.d.cts",
+        "default": "./dist/collections.cjs"
       }
     }
   },

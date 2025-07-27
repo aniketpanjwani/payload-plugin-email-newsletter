@@ -1,3 +1,30 @@
+## [0.15.0] - 2025-07-27
+
+### Added
+- **Plugin Extensibility System** - New customization API for extending the Broadcasts collection
+  - `additionalFields` - Add custom fields to the Broadcasts collection
+  - `customBlocks` - Extend the email content editor with custom blocks
+  - `fieldOverrides` - Override default field configurations (e.g., content field customization)
+  - Full TypeScript support for all customization options
+- **New Export Paths** for advanced usage
+  - `payload-plugin-newsletter/fields` - Access field factories and configurations
+  - `payload-plugin-newsletter/collections` - Access collection factories
+  - Export `createEmailSafeFeatures` function for custom rich text configurations
+- **Comprehensive Documentation** - New extension points guide with examples and best practices
+  - Email-safe block creation guidelines
+  - TypeScript support documentation
+  - Migration and backward compatibility information
+
+### Improved
+- Enhanced `createEmailContentField` to accept `additionalBlocks` parameter
+- Maintained full backward compatibility with existing installations
+- Added examples for e-commerce, SaaS, and content marketing use cases
+
+### Technical
+- Updated build configuration to include new export paths
+- Added proper TypeScript interfaces for customization options
+- Enhanced field and collection factories for better extensibility
+
 ## [0.14.3] - 2025-07-23
 
 ### Fixed

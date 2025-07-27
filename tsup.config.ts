@@ -8,6 +8,7 @@ export default defineConfig({
     components: 'src/exports/components.ts',
     utils: 'src/exports/utils.ts',
     fields: 'src/exports/fields.ts',
+    collections: 'src/exports/collections.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

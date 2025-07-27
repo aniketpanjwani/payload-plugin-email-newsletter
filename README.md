@@ -725,6 +725,51 @@ newsletterPlugin({
 })
 ```
 
+### Extending the Broadcasts Collection (v0.15.0+)
+
+You can extend the Broadcasts collection with additional fields and custom blocks:
+
+```typescript
+import type { Block } from 'payload'
+
+const customBlock: Block = {
+  slug: 'product-spotlight',
+  labels: { singular: 'Product Spotlight', plural: 'Product Spotlights' },
+  fields: [
+    { name: 'product', type: 'relationship', relationTo: 'products', required: true },
+    { name: 'description', type: 'textarea' }
+  ]
+}
+
+newsletterPlugin({
+  // ... existing config
+  customizations: {
+    broadcasts: {
+      additionalFields: [
+        {
+          name: 'slug',
+          type: 'text',
+          required: true,
+          admin: { position: 'sidebar' }
+        }
+      ],
+      customBlocks: [customBlock],
+      fieldOverrides: {
+        content: (defaultField) => ({
+          ...defaultField,
+          admin: {
+            ...defaultField.admin,
+            description: 'Custom description'
+          }
+        })
+      }
+    }
+  }
+})
+```
+
+For complete extensibility documentation, see the [Extension Points Guide](./docs/architecture/extension-points.md).
+
 ## Troubleshooting
 
 ### Common Issues

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import type { NewsletterPluginConfig } from '../types'
+import type { NewsletterPluginConfig, BroadcastCustomizations } from '../types'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
@@ -7,6 +7,7 @@ import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 
 export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig): CollectionConfig => {
   const hasProviders = !!(pluginConfig.providers?.broadcast || pluginConfig.providers?.resend)
+  const customizations = pluginConfig.customizations?.broadcasts
 
   return {
     slug: 'broadcasts',
@@ -28,6 +29,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           description: 'Email subject line'
         },
       },
+      // Add any additional fields from customizations after subject
+      ...(customizations?.additionalFields || []),
       {
         type: 'row',
         fields: [
@@ -49,11 +52,16 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   description: 'Preview text shown in email clients'
                 },
               },
-              createEmailContentField({
-                admin: {
-                  description: 'Email content',
-                },
-              }),
+              // Apply content field customization if provided
+              customizations?.fieldOverrides?.content
+                ? customizations.fieldOverrides.content(createEmailContentField({
+                    admin: { description: 'Email content' },
+                    additionalBlocks: customizations.customBlocks
+                  }))
+                : createEmailContentField({
+                    admin: { description: 'Email content' },
+                    additionalBlocks: customizations?.customBlocks
+                  }),
             ],
           },
           {

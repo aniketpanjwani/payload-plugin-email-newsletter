@@ -1,4 +1,4 @@
-import type { Field } from 'payload'
+import type { Field, Block, RichTextField } from 'payload'
 import type { BroadcastProvider } from './providers'
 
 // Export broadcast types
@@ -6,6 +6,15 @@ export * from './broadcast'
 export * from './providers'
 // Export legacy newsletter types for backwards compatibility
 export * from './newsletter'
+
+// Add new interface for broadcast customizations
+export interface BroadcastCustomizations {
+  additionalFields?: Field[]
+  customBlocks?: Block[]
+  fieldOverrides?: {
+    content?: (defaultField: RichTextField) => RichTextField
+  }
+}
 
 export interface NewsletterPluginConfig {
   /**
@@ -264,6 +273,13 @@ export interface NewsletterPluginConfig {
    */
   customTemplates?: {
     [key: string]: React.ComponentType<any>
+  }
+
+  /**
+   * Customization options for plugin collections
+   */
+  customizations?: {
+    broadcasts?: BroadcastCustomizations
   }
 }
 
