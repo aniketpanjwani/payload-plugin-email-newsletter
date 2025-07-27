@@ -17,6 +17,7 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 import type { RichTextField, Block } from 'payload'
+import { createEmailSafeBlocks } from '../utils/blockValidation'
 
 /**
  * Creates email-safe features for Lexical editor with optional additional blocks
@@ -174,6 +175,95 @@ export const createEmailSafeFeatures = (additionalBlocks?: Block[]): any[] => {
 }
 
 /**
+ * Creates a Lexical editor configured specifically for email content
+ * Processes blocks server-side to avoid client serialization issues
+ */
+export const createEmailLexicalEditor = (customBlocks: Block[] = []): any => {
+  const emailSafeBlocks = createEmailSafeBlocks(customBlocks)
+  
+  return lexicalEditor({
+    features: [
+      // Toolbars
+      FixedToolbarFeature(),
+      InlineToolbarFeature(),
+      
+      // Basic text formatting
+      BoldFeature(),
+      ItalicFeature(),
+      UnderlineFeature(),
+      StrikethroughFeature(),
+      
+      // Links with enhanced configuration
+      LinkFeature({
+        fields: [
+          {
+            name: 'url',
+            type: 'text',
+            required: true,
+            admin: {
+              description: 'Enter the full URL (including https://)',
+            },
+          },
+          {
+            name: 'newTab',
+            type: 'checkbox',
+            label: 'Open in new tab',
+            defaultValue: false,
+          },
+        ],
+      }),
+      
+      // Lists
+      OrderedListFeature(),
+      UnorderedListFeature(),
+      
+      // Headings - limited to h1, h2, h3 for email compatibility
+      HeadingFeature({
+        enabledHeadingSizes: ['h1', 'h2', 'h3'],
+      }),
+      
+      // Basic paragraph and alignment
+      ParagraphFeature(),
+      AlignFeature(),
+      
+      // Blockquotes
+      BlockquoteFeature(),
+      
+      // Upload feature for images
+      UploadFeature({
+        collections: {
+          media: {
+            fields: [
+              {
+                name: 'caption',
+                type: 'text',
+                admin: {
+                  description: 'Optional caption for the image',
+                },
+              },
+              {
+                name: 'altText',
+                type: 'text',
+                label: 'Alt Text',
+                required: true,
+                admin: {
+                  description: 'Alternative text for accessibility and when image cannot be displayed',
+                },
+              },
+            ],
+          },
+        },
+      }),
+      
+      // Email-safe blocks (processed server-side)
+      BlocksFeature({
+        blocks: emailSafeBlocks,
+      }),
+    ],
+  })
+}
+
+/**
  * Legacy export for backward compatibility
  */
 export const emailSafeFeatures = createEmailSafeFeatures()
@@ -184,18 +274,17 @@ export const emailSafeFeatures = createEmailSafeFeatures()
 export const createEmailContentField = (
   overrides?: Partial<RichTextField> & {
     additionalBlocks?: Block[]
+    editor?: any // Lexical editor instance
   }
 ): RichTextField => {
-  // Create features array with blocks
-  const features = createEmailSafeFeatures(overrides?.additionalBlocks)
+  // Use provided editor or create one with blocks
+  const editor = overrides?.editor || createEmailLexicalEditor(overrides?.additionalBlocks)
 
   return {
     name: 'content',
     type: 'richText',
     required: true,
-    editor: lexicalEditor({
-      features,
-    }),
+    editor,
     admin: {
       description: 'Email content with limited formatting for compatibility',
       ...overrides?.admin,

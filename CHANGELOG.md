@@ -1,3 +1,31 @@
+## [0.15.1] - 2025-07-27
+
+### Fixed
+- **Email-Compatible Block Editor** - Resolved Next.js serialization errors with custom blocks
+  - Custom blocks are now processed server-side using Lexical's proven BlocksFeature pattern
+  - Prevents "Functions cannot be passed directly to Client Components" errors
+  - Maintains full email compatibility while enabling custom block functionality
+- **Block Validation System** - Added validation utilities for email compatibility
+  - `validateEmailBlocks()` warns about potentially incompatible block types
+  - `createEmailSafeBlocks()` processes blocks for email-safe configurations
+  - Automatic detection of complex field types that may not render in email clients
+
+### Improved
+- **Server-Side Block Processing** - Enhanced `createEmailLexicalEditor()` function
+  - Processes custom blocks into Lexical editor configuration before client serialization
+  - Clean separation between email-compatible and web-only content blocks
+  - Better performance through pre-configured editor instances
+- **Enhanced Documentation** - Updated extension points guide with new approach
+  - Examples showing both legacy and new server-side processing methods
+  - Block validation utilities documentation
+  - Email compatibility best practices
+
+### Technical
+- Added `createEmailLexicalEditor()` for server-side editor configuration
+- Enhanced `createEmailContentField()` to accept pre-configured editors
+- New utility exports: `validateEmailBlocks`, `createEmailSafeBlocks`
+- Improved TypeScript support for custom block configurations
+
 ## [0.15.0] - 2025-07-27
 
 ### Added

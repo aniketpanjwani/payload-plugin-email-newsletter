@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import type { NewsletterPluginConfig } from '../types'
 import { BroadcastStatus } from '../types'
-import { createEmailContentField } from '../fields/emailContent'
+import { createEmailContentField, createEmailLexicalEditor } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 
@@ -53,15 +53,22 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 },
               },
               // Apply content field customization if provided
-              customizations?.fieldOverrides?.content
-                ? customizations.fieldOverrides.content(createEmailContentField({
-                    admin: { description: 'Email content' },
-                    additionalBlocks: customizations.customBlocks
-                  }))
-                : createEmailContentField({
-                    admin: { description: 'Email content' },
-                    additionalBlocks: customizations?.customBlocks
-                  }),
+              // Process blocks server-side to avoid client serialization issues
+              (() => {
+                // Create email editor with custom blocks processed server-side
+                const emailEditor = createEmailLexicalEditor(customizations?.customBlocks)
+                
+                // Create base field with pre-processed editor
+                const baseField = createEmailContentField({
+                  admin: { description: 'Email content' },
+                  editor: emailEditor
+                })
+                
+                // Apply field overrides if provided
+                return customizations?.fieldOverrides?.content
+                  ? customizations.fieldOverrides.content(baseField)
+                  : baseField
+              })(),
             ],
           },
           {

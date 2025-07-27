@@ -727,7 +727,7 @@ newsletterPlugin({
 
 ### Extending the Broadcasts Collection (v0.15.0+)
 
-You can extend the Broadcasts collection with additional fields and custom blocks:
+You can extend the Broadcasts collection with additional fields and custom email-compatible blocks:
 
 ```typescript
 import type { Block } from 'payload'
@@ -753,7 +753,7 @@ newsletterPlugin({
           admin: { position: 'sidebar' }
         }
       ],
-      customBlocks: [customBlock],
+      customBlocks: [customBlock], // Processed server-side for email compatibility
       fieldOverrides: {
         content: (defaultField) => ({
           ...defaultField,
@@ -767,6 +767,8 @@ newsletterPlugin({
   }
 })
 ```
+
+**Note**: Custom blocks are processed server-side to ensure email compatibility and prevent Next.js serialization errors.
 
 For complete extensibility documentation, see the [Extension Points Guide](./docs/architecture/extension-points.md).
 

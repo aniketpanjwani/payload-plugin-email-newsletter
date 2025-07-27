@@ -49,9 +49,9 @@ export default buildConfig({
 })
 ```
 
-### Adding Custom Blocks
+### Adding Custom Blocks (Email-Compatible)
 
-Extend the email content editor with custom blocks:
+Extend the email content editor with custom blocks. **Important**: Blocks are processed server-side to avoid client serialization issues, ensuring email compatibility:
 
 ```typescript
 import type { Block } from 'payload'
@@ -105,13 +105,15 @@ export default buildConfig({
       // ... existing config
       customizations: {
         broadcasts: {
-          customBlocks: [productSpotlightBlock]
+          customBlocks: [productSpotlightBlock] // Processed server-side
         }
       }
     })
   ]
 })
 ```
+
+**Note**: Custom blocks are automatically validated for email compatibility and processed server-side into a Lexical editor configuration, preventing Next.js serialization errors.
 
 ### Overriding Default Fields
 
@@ -150,7 +152,7 @@ export default buildConfig({
 Import field configurations for use in your own collections:
 
 ```typescript
-import { createEmailContentField } from 'payload-plugin-newsletter/fields'
+import { createEmailContentField, createEmailLexicalEditor } from 'payload-plugin-newsletter/fields'
 import type { Block } from 'payload'
 
 const customBlock: Block = {
@@ -172,16 +174,40 @@ export const MyCustomCollection = {
       type: 'text',
       required: true
     },
-    // Use the email-safe content field with custom blocks
+    // Method 1: Use the email-safe content field with custom blocks
     createEmailContentField({
       name: 'emailContent',
       additionalBlocks: [customBlock],
       admin: {
         description: 'Email content for custom collection'
       }
+    }),
+    
+    // Method 2: Create a pre-configured editor (recommended for performance)
+    createEmailContentField({
+      name: 'emailContent2',
+      editor: createEmailLexicalEditor([customBlock]), // Processed server-side
+      admin: {
+        description: 'Pre-configured email editor'
+      }
     })
   ]
 }
+```
+
+### Block Validation Utilities
+
+Use the built-in validation utilities to ensure email compatibility:
+
+```typescript
+import { validateEmailBlocks, createEmailSafeBlocks } from 'payload-plugin-newsletter/fields'
+
+// Validate blocks for email compatibility
+const myBlocks = [/* your blocks */]
+validateEmailBlocks(myBlocks) // Warns about potential issues
+
+// Create email-safe block configurations
+const emailSafeBlocks = createEmailSafeBlocks(myBlocks) // Includes base + custom blocks
 ```
 
 ### Using Collection Factories
