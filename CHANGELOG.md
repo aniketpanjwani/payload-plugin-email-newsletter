@@ -1,3 +1,11 @@
+## [0.16.1] - 2025-07-27
+
+### Fixed
+- **Critical Bug Fix** - Fixed afterChange hook placement for sending broadcasts
+  - The send hook was incorrectly placed in the `afterDelete` array instead of `afterChange`
+  - This prevented broadcasts from being sent when published
+  - Publishing broadcasts now correctly triggers the send functionality
+
 ## [0.16.0] - 2025-07-27
 
 ### Changed

@@ -299,6 +299,67 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             return doc
           }
         },
+        // Hook to send when published
+        async ({ doc, operation, previousDoc, req }) => {
+          // Only run on updates when transitioning to published
+          if (operation !== 'update') return doc
+          
+          const wasUnpublished = !previousDoc?._status || previousDoc._status === 'draft'
+          const isNowPublished = doc._status === 'published'
+          
+          if (wasUnpublished && isNowPublished && doc.providerId) {
+            // Check if already sent
+            if (doc.status === 'sent' || doc.status === 'sending') {
+              return doc
+            }
+            
+            try {
+              const broadcastConfig = pluginConfig.providers?.broadcast
+              const resendConfig = pluginConfig.providers?.resend
+              
+              if (!broadcastConfig && !resendConfig) {
+                req.payload.logger.error('No provider configured for sending')
+                return doc
+              }
+              
+              // Send via provider
+              if (broadcastConfig) {
+                const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+                const provider = new BroadcastApiProvider(broadcastConfig)
+                await provider.send(doc.providerId)
+              }
+              // Add resend provider support here when needed
+              
+              // Update status
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: doc.id,
+                data: {
+                  status: BroadcastStatus.SENDING,
+                  sentAt: new Date().toISOString(),
+                },
+                req,
+              })
+              
+              req.payload.logger.info(`Broadcast ${doc.id} sent successfully`)
+              
+            } catch (error) {
+              req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, error)
+              
+              // Update status to failed
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: doc.id,
+                data: {
+                  status: BroadcastStatus.FAILED,
+                },
+                req,
+              })
+            }
+          }
+          
+          return doc
+        },
       ],
       // Sync updates with provider
       beforeChange: [
@@ -381,62 +442,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             req.payload.logger.error('Failed to delete broadcast from provider:', error)
           }
 
-          return doc
-        },
-        // Hook to send when published
-        async ({ doc, req }) => {
-          // Only send if published and has a providerId
-          if (doc._status === 'published' && doc.providerId) {
-            // Check if already sent
-            if (doc.status === 'sent' || doc.status === 'sending') {
-              return doc
-            }
-            
-            try {
-              const broadcastConfig = pluginConfig.providers?.broadcast
-              const resendConfig = pluginConfig.providers?.resend
-              
-              if (!broadcastConfig && !resendConfig) {
-                req.payload.logger.error('No provider configured for sending')
-                return doc
-              }
-              
-              // Send via provider
-              if (broadcastConfig) {
-                const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-                const provider = new BroadcastApiProvider(broadcastConfig)
-                await provider.send(doc.providerId)
-              }
-              // Add resend provider support here when needed
-              
-              // Update status
-              await req.payload.update({
-                collection: 'broadcasts',
-                id: doc.id,
-                data: {
-                  status: BroadcastStatus.SENDING,
-                  sentAt: new Date().toISOString(),
-                },
-                req,
-              })
-              
-              req.payload.logger.info(`Broadcast ${doc.id} sent successfully`)
-              
-            } catch (error) {
-              req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, error)
-              
-              // Update status to failed
-              await req.payload.update({
-                collection: 'broadcasts',
-                id: doc.id,
-                data: {
-                  status: BroadcastStatus.FAILED,
-                },
-                req,
-              })
-            }
-          }
-          
           return doc
         },
       ],
