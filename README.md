@@ -241,6 +241,50 @@ This adds a `broadcasts` collection with:
 - Custom email blocks (buttons, dividers)
 - Inline email preview with React Email
 - Automatic sync with your email provider
+- Draft/publish system with scheduled publishing support
+
+### Send = Publish Workflow
+
+The plugin integrates seamlessly with Payload's draft/publish system:
+
+- **Draft**: Create and edit broadcasts without sending
+- **Publish**: Publishing a broadcast automatically sends it via your configured email provider
+- **Schedule**: Use Payload's scheduled publishing to send broadcasts at a future time
+
+**How it works:**
+1. Create a broadcast and save as draft
+2. When ready, click "Publish" to send immediately
+3. Or use "Schedule" to publish (and send) at a specific date/time
+
+**Important**: Scheduled publishing requires configuring Payload's Jobs Queue. For Vercel deployments, add this to your `vercel.json`:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/payload-jobs/run",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+```
+
+And secure the endpoint in your `payload.config.ts`:
+
+```typescript
+export default buildConfig({
+  // ... other config
+  jobs: {
+    access: {
+      run: ({ req }) => {
+        if (req.user) return true
+        const authHeader = req.headers.get('authorization')
+        return authHeader === `Bearer ${process.env.CRON_SECRET}`
+      },
+    },
+  },
+})
+```
 
 ### Custom Email Templates (v0.12.0+)
 

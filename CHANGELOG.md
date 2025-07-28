@@ -1,3 +1,47 @@
+## [0.16.0] - 2025-07-27
+
+### Changed
+- **Send = Publish Workflow** - Simplified broadcast sending to use Payload's native draft/publish system
+  - Publishing a broadcast now automatically sends it via the configured email provider
+  - Removed custom Send/Schedule modal in favor of Payload's built-in UI
+  - Scheduled publishing supported via Payload's Jobs Queue system
+  - Breaking: Removed `SendBroadcastModal` and `ActionsCell` components
+- **Streamlined UI** - Removed custom action buttons from broadcasts list view
+  - Users now use standard Payload publish/schedule functionality
+  - Cleaner interface that follows Payload's patterns
+  - Less code to maintain while providing better integration
+
+### Added
+- **Automatic Send on Publish** - New `afterChange` hook that sends broadcasts when published
+  - Checks if broadcast is transitioning to published status
+  - Automatically calls provider's send method
+  - Updates broadcast status to "sending" after successful send
+  - Handles failures gracefully with status update to "failed"
+- **Jobs Queue Documentation** - Added comprehensive setup instructions for scheduled publishing
+  - Vercel Cron configuration example
+  - Security setup with CRON_SECRET
+  - Step-by-step guide for enabling scheduled broadcasts
+
+### Removed
+- **Custom UI Components** (Breaking Change)
+  - `SendBroadcastModal` - Custom send/schedule modal
+  - `ActionsCell` - Custom action buttons in list view
+  - `actions` field from Broadcasts collection
+  - These are replaced by Payload's native publish/schedule functionality
+
+### Technical
+- Enabled `versions` configuration on Broadcasts collection with drafts and scheduled publishing
+- Updated default columns to show both `_status` (Draft/Published) and `status` (send status)
+- Improved TypeScript exports by removing deleted component references
+- All tests passing with minor version upgrade
+
+### Migration Guide
+If you were using the custom Send/Schedule modal:
+1. The functionality is now built into Payload's publish system
+2. To send immediately: Click "Publish"
+3. To schedule: Click "Schedule" (requires Jobs Queue setup)
+4. Remove any imports of `SendBroadcastModal` or `ActionsCell` from your code
+
 ## [0.15.1] - 2025-07-27
 
 ### Fixed

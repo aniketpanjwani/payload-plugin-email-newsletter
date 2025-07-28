@@ -17,7 +17,6 @@ export { EmailRenderer } from '../components/Broadcasts/EmailRenderer'
 
 // List view components
 export { StatusBadge } from '../components/Broadcasts/StatusBadge'
-export { ActionsCell } from '../components/Broadcasts/ActionsCell'
 export { EmptyField } from '../components/Broadcasts/EmptyField'
 
 // Email templates

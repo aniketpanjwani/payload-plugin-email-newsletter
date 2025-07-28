@@ -11,6 +11,12 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
   return {
     slug: 'broadcasts',
+    versions: {
+      drafts: {
+        autosave: true,
+        schedulePublish: true,
+      }
+    },
     labels: {
       singular: 'Broadcast',
       plural: 'Broadcasts',
@@ -18,7 +24,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
     admin: {
       useAsTitle: 'subject',
       description: 'Individual email campaigns sent to subscribers',
-      defaultColumns: ['subject', 'status', 'sentAt', 'recipientCount', 'actions'],
+      defaultColumns: ['subject', '_status', 'status', 'sentAt', 'recipientCount'],
     },
     fields: [
       {
@@ -239,18 +245,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           condition: () => false, // Hidden by default
         },
       },
-      // UI Field for custom actions in list view
-      {
-        name: 'actions',
-        type: 'ui',
-        admin: {
-          components: {
-            Cell: 'payload-plugin-newsletter/components#ActionsCell',
-            Field: 'payload-plugin-newsletter/components#EmptyField',
-          },
-          disableListColumn: false,
-        },
-      },
     ],
     hooks: {
       // Sync with provider on create
@@ -387,6 +381,62 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             req.payload.logger.error('Failed to delete broadcast from provider:', error)
           }
 
+          return doc
+        },
+        // Hook to send when published
+        async ({ doc, req }) => {
+          // Only send if published and has a providerId
+          if (doc._status === 'published' && doc.providerId) {
+            // Check if already sent
+            if (doc.status === 'sent' || doc.status === 'sending') {
+              return doc
+            }
+            
+            try {
+              const broadcastConfig = pluginConfig.providers?.broadcast
+              const resendConfig = pluginConfig.providers?.resend
+              
+              if (!broadcastConfig && !resendConfig) {
+                req.payload.logger.error('No provider configured for sending')
+                return doc
+              }
+              
+              // Send via provider
+              if (broadcastConfig) {
+                const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+                const provider = new BroadcastApiProvider(broadcastConfig)
+                await provider.send(doc.providerId)
+              }
+              // Add resend provider support here when needed
+              
+              // Update status
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: doc.id,
+                data: {
+                  status: BroadcastStatus.SENDING,
+                  sentAt: new Date().toISOString(),
+                },
+                req,
+              })
+              
+              req.payload.logger.info(`Broadcast ${doc.id} sent successfully`)
+              
+            } catch (error) {
+              req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, error)
+              
+              // Update status to failed
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: doc.id,
+                data: {
+                  status: BroadcastStatus.FAILED,
+                },
+                req,
+              })
+            }
+          }
+          
           return doc
         },
       ],
