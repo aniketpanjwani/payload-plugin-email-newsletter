@@ -296,7 +296,18 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               providerData: providerBroadcast.providerData,
             }
           } catch (error) {
-            req.payload.logger.error('Failed to create broadcast in provider:', error)
+            // Log full error details for debugging
+            if (error instanceof Error) {
+              req.payload.logger.error('Failed to create broadcast in provider:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+                // If it's a BroadcastProviderError, it might have additional details
+                ...(error as any).details
+              })
+            } else {
+              req.payload.logger.error('Failed to create broadcast in provider:', error)
+            }
             return doc
           }
         },
@@ -346,7 +357,18 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               req.payload.logger.info(`Broadcast ${doc.id} sent successfully`)
               
             } catch (error) {
-              req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, error)
+              // Log full error details for debugging
+              if (error instanceof Error) {
+                req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, {
+                  message: error.message,
+                  stack: error.stack,
+                  name: error.name,
+                  // If it's a BroadcastProviderError, it might have additional details
+                  ...(error as any).details
+                })
+              } else {
+                req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, error)
+              }
               
               // Update status to failed
               await req.payload.update({
@@ -412,7 +434,18 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               await provider.update(originalDoc.providerId, updates)
             }
           } catch (error) {
-            req.payload.logger.error('Failed to update broadcast in provider:', error)
+            // Log full error details for debugging
+            if (error instanceof Error) {
+              req.payload.logger.error('Failed to update broadcast in provider:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+                // If it's a BroadcastProviderError, it might have additional details
+                ...(error as any).details
+              })
+            } else {
+              req.payload.logger.error('Failed to update broadcast in provider:', error)
+            }
             // Continue with local update even if provider fails
           }
 
@@ -441,7 +474,18 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               await provider.delete(doc.providerId)
             }
           } catch (error) {
-            req.payload.logger.error('Failed to delete broadcast from provider:', error)
+            // Log full error details for debugging
+            if (error instanceof Error) {
+              req.payload.logger.error('Failed to delete broadcast from provider:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+                // If it's a BroadcastProviderError, it might have additional details
+                ...(error as any).details
+              })
+            } else {
+              req.payload.logger.error('Failed to delete broadcast from provider:', error)
+            }
           }
 
           return doc

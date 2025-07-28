@@ -1,3 +1,12 @@
+## [0.16.3] - 2025-07-27
+
+### Improved
+- **Enhanced Error Logging** - Improved error logging for broadcast operations
+  - Now logs full error details including message, stack trace, and any additional error properties
+  - Helps diagnose API connection issues, authentication failures, and validation errors
+  - Structured error logging makes it easier to identify root causes
+  - Applied to all broadcast hooks: create, update, delete, and send
+
 ## [0.16.2] - 2025-07-27
 
 ### Fixed
