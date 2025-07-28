@@ -4,6 +4,7 @@ import { BroadcastStatus } from '../types'
 import { createEmailContentField, createEmailLexicalEditor } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
+import { getBroadcastConfig } from '../utils/getBroadcastConfig'
 
 export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig): CollectionConfig => {
   const hasProviders = !!(pluginConfig.providers?.broadcast || pluginConfig.providers?.resend)
@@ -253,10 +254,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || operation !== 'create') return doc
 
           try {
-            // Get provider from config
-            const providerConfig = pluginConfig.providers?.broadcast
-            if (!providerConfig) {
-              req.payload.logger.error('Broadcast provider not configured')
+            // Get provider config from settings first, then fall back to env vars
+            const providerConfig = await getBroadcastConfig(req, pluginConfig)
+            if (!providerConfig || !providerConfig.token) {
+              req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
               return doc
             }
 
@@ -314,16 +315,17 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             }
             
             try {
-              const broadcastConfig = pluginConfig.providers?.broadcast
-              const resendConfig = pluginConfig.providers?.resend
+              // Get provider config from settings first, then fall back to env vars
+              const broadcastConfig = await getBroadcastConfig(req, pluginConfig)
+              const resendConfig = pluginConfig.providers?.resend // TODO: Add getResendConfig utility
               
               if (!broadcastConfig && !resendConfig) {
-                req.payload.logger.error('No provider configured for sending')
+                req.payload.logger.error('No provider configured for sending in Newsletter Settings or environment variables')
                 return doc
               }
               
               // Send via provider
-              if (broadcastConfig) {
+              if (broadcastConfig && broadcastConfig.token) {
                 const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
                 const provider = new BroadcastApiProvider(broadcastConfig)
                 await provider.send(doc.providerId)
@@ -367,10 +369,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || !originalDoc?.providerId || operation !== 'update') return data
 
           try {
-            // Get provider from config
-            const providerConfig = pluginConfig.providers?.broadcast
-            if (!providerConfig) {
-              req.payload.logger.error('Broadcast provider not configured')
+            // Get provider config from settings first, then fall back to env vars
+            const providerConfig = await getBroadcastConfig(req, pluginConfig)
+            if (!providerConfig || !providerConfig.token) {
+              req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
               return data
             }
 
@@ -423,10 +425,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || !doc?.providerId) return doc
 
           try {
-            // Get provider from config
-            const providerConfig = pluginConfig.providers?.broadcast
-            if (!providerConfig) {
-              req.payload.logger.error('Broadcast provider not configured')
+            // Get provider config from settings first, then fall back to env vars
+            const providerConfig = await getBroadcastConfig(req, pluginConfig)
+            if (!providerConfig || !providerConfig.token) {
+              req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
               return doc
             }
 

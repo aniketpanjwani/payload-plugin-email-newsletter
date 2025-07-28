@@ -1,3 +1,18 @@
+## [0.16.2] - 2025-07-27
+
+### Fixed
+- **Configuration Consistency** - Fixed broadcast operations to read from Newsletter Settings collection
+  - Broadcast create/update/delete operations now check Newsletter Settings first before falling back to env vars
+  - This matches the behavior of email operations (magic links, welcome emails)
+  - Resolves issue where broadcasts failed when env vars were missing despite settings being configured
+  - Added `getBroadcastConfig` utility for consistent configuration retrieval
+
+### Added
+- **Configuration Utilities** - New utilities for consistent provider configuration
+  - `getBroadcastConfig` - Gets Broadcast provider config from settings or env vars
+  - `getResendConfig` - Gets Resend provider config from settings or env vars
+  - Both utilities handle errors gracefully with fallback to env vars
+
 ## [0.16.1] - 2025-07-27
 
 ### Fixed

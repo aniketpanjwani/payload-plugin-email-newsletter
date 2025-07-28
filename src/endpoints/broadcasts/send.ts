@@ -2,6 +2,7 @@ import type { Endpoint, PayloadHandler, PayloadRequest } from 'payload'
 import type { NewsletterPluginConfig, SendBroadcastOptions } from '../../types'
 import { NewsletterProviderError, NewsletterStatus } from '../../types'
 import { requireAdmin } from '../../utils/auth'
+import { getBroadcastConfig } from '../../utils/getBroadcastConfig'
 
 export const createSendBroadcastEndpoint = (
   config: NewsletterPluginConfig,
@@ -58,12 +59,12 @@ export const createSendBroadcastEndpoint = (
           }, { status: 404 })
         }
 
-        // Get provider from config
-        const providerConfig = config.providers?.broadcast
-        if (!providerConfig) {
+        // Get provider config from settings first, then fall back to env vars
+        const providerConfig = await getBroadcastConfig(req, config)
+        if (!providerConfig || !providerConfig.token) {
           return Response.json({
             success: false,
-            error: 'Broadcast provider not configured',
+            error: 'Broadcast provider not configured in Newsletter Settings or environment variables',
           }, { status: 500 })
         }
 
