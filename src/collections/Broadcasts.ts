@@ -385,7 +385,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           }
           
           // Handle update operation
-          if (operation === 'update' && doc.providerId) {
+          if (operation === 'update') {
             req.payload.logger.info('Broadcast afterChange update hook triggered', {
               operation,
               hasProviderId: !!doc.providerId,
@@ -404,13 +404,111 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
               const provider = new BroadcastApiProvider(providerConfig)
 
-              // Only sync if broadcast is still editable
-              const capabilities = provider.getCapabilities()
-              const sendStatus = doc.sendStatus || BroadcastStatus.DRAFT
-              if (!capabilities.editableStatuses.includes(sendStatus)) {
-                req.payload.logger.info(`Skipping sync for broadcast in status: ${sendStatus}`)
-                return doc
+              // If no providerId exists yet, we need to create in provider first (deferred from initial create)
+              if (!doc.providerId) {
+                // Check if we have minimum required fields now
+                if (!doc.subject || !doc.contentSection?.content) {
+                  req.payload.logger.info('Still missing required fields for provider sync')
+                  return doc
+                }
+
+                try {
+                  // Convert rich text to HTML
+                  req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
+                  const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
+
+                  // Skip if content is empty after conversion
+                  if (!htmlContent || htmlContent.trim() === '') {
+                    req.payload.logger.info('Skipping provider sync - content is empty after conversion')
+                    return doc
+                  }
+
+                  // Create broadcast in provider
+                  const createData = {
+                    name: doc.subject,
+                    subject: doc.subject,
+                    preheader: doc.contentSection?.preheader,
+                    content: htmlContent,
+                    trackOpens: doc.settings?.trackOpens,
+                    trackClicks: doc.settings?.trackClicks,
+                    replyTo: doc.settings?.replyTo || providerConfig.replyTo,
+                    audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
+                  }
+
+                  req.payload.logger.info('Creating broadcast with data:', {
+                    name: createData.name,
+                    subject: createData.subject,
+                    preheader: createData.preheader || 'NONE',
+                    contentLength: htmlContent ? htmlContent.length : 0,
+                    contentPreview: htmlContent ? htmlContent.substring(0, 100) + '...' : 'EMPTY',
+                    apiUrl: providerConfig.apiUrl,
+                    hasToken: !!providerConfig.token,
+                  })
+
+                  const providerBroadcast = await provider.create(createData)
+
+                  // Update with provider ID
+                  await req.payload.update({
+                    collection: 'broadcasts',
+                    id: doc.id,
+                    data: {
+                      providerId: providerBroadcast.id,
+                      providerData: providerBroadcast.providerData,
+                    },
+                    req,
+                  })
+
+                  req.payload.logger.info(`Broadcast ${doc.id} created in provider successfully (deferred)`)
+
+                  return {
+                    ...doc,
+                    providerId: providerBroadcast.id,
+                    providerData: providerBroadcast.providerData,
+                  }
+                } catch (error) {
+                  // Use the same enhanced error logging as create operation
+                  req.payload.logger.error('Raw error from broadcast provider (deferred create):')
+                  req.payload.logger.error(error)
+                  
+                  if (error instanceof Error) {
+                    req.payload.logger.error('Error is instance of Error:', {
+                      message: error.message,
+                      stack: error.stack,
+                      name: error.name,
+                      ...(error as any).details,
+                      ...(error as any).response,
+                      ...(error as any).data,
+                      ...(error as any).status,
+                      ...(error as any).statusText,
+                    })
+                  } else if (typeof error === 'string') {
+                    req.payload.logger.error('Error is a string:', error)
+                  } else if (error && typeof error === 'object') {
+                    req.payload.logger.error('Error is an object:', JSON.stringify(error, null, 2))
+                  } else {
+                    req.payload.logger.error('Unknown error type:', typeof error)
+                  }
+                  
+                  req.payload.logger.error('Failed broadcast document (deferred create):', {
+                    id: doc.id,
+                    subject: doc.subject,
+                    hasContent: !!doc.contentSection?.content,
+                    contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
+                  })
+                  
+                  return doc
+                }
               }
+
+              // Handle normal updates to existing broadcasts (only if providerId exists)
+              if (doc.providerId) {
+                // Only sync if broadcast is still editable
+                const capabilities = provider.getCapabilities()
+                const sendStatus = doc.sendStatus || BroadcastStatus.DRAFT
+                if (!capabilities.editableStatuses.includes(sendStatus)) {
+                  req.payload.logger.info(`Skipping sync for broadcast in status: ${sendStatus}`)
+                  return doc
+                }
 
               // Check what has changed
               const contentChanged = 
@@ -470,6 +568,21 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 })
               } else {
                 req.payload.logger.error('Failed to sync broadcast update to provider:', error)
+              }
+              // Don't throw - allow Payload update to succeed even if provider sync fails
+            }
+              }
+            } catch (error) {
+              // Log full error details for debugging
+              if (error instanceof Error) {
+                req.payload.logger.error('Failed to handle broadcast update operation:', {
+                  message: error.message,
+                  stack: error.stack,
+                  name: error.name,
+                  ...(error as any).details
+                })
+              } else {
+                req.payload.logger.error('Failed to handle broadcast update operation:', error)
               }
               // Don't throw - allow Payload update to succeed even if provider sync fails
             }

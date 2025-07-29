@@ -1,3 +1,18 @@
+## [0.16.9] - 2025-01-29
+
+### Fixed
+- **Deferred Provider Sync for Empty Broadcasts** - Fixed issue where broadcasts created empty were never synced to provider
+  - Update operation now handles "deferred create" scenario when providerId is missing
+  - When a broadcast has subject and content but no providerId, it creates the broadcast in the provider
+  - Normal update sync works for broadcasts that already exist in the provider
+  - Resolves workflow: create empty → add content → save → now syncs to provider
+
+### Technical
+- Modified update operation handler to check for missing providerId
+- Added deferred create logic in update afterChange hook
+- Separated normal update logic to only run when providerId exists
+- Added comprehensive error handling for both deferred create and normal update scenarios
+
 ## [0.16.8] - 2025-01-29
 
 ### Fixed
