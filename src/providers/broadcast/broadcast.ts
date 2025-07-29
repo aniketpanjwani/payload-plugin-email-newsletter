@@ -134,30 +134,55 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
     try {
       this.validateRequiredFields(data, ['name', 'subject', 'content'])
 
+      const requestBody = {
+        broadcast: {
+          name: data.name,
+          subject: data.subject,
+          preheader: data.preheader,
+          body: data.content,
+          html_body: true,
+          track_opens: data.trackOpens ?? true,
+          track_clicks: data.trackClicks ?? true,
+          reply_to: data.replyTo,
+          segment_ids: data.audienceIds,
+        }
+      }
+
+      // Log the request details (without exposing the token)
+      console.log('[BroadcastApiProvider] Creating broadcast:', {
+        url: `${this.apiUrl}/api/v1/broadcasts`,
+        method: 'POST',
+        hasToken: !!this.token,
+        tokenLength: this.token?.length,
+        body: JSON.stringify(requestBody, null, 2),
+      })
+
       const response = await fetch(`${this.apiUrl}/api/v1/broadcasts`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          broadcast: {
-            name: data.name,
-            subject: data.subject,
-            preheader: data.preheader,
-            body: data.content,
-            html_body: true,
-            track_opens: data.trackOpens ?? true,
-            track_clicks: data.trackClicks ?? true,
-            reply_to: data.replyTo,
-            segment_ids: data.audienceIds,
-          }
-        }),
+        body: JSON.stringify(requestBody),
       })
 
+      console.log('[BroadcastApiProvider] Response status:', response.status)
+      console.log('[BroadcastApiProvider] Response headers:', Object.fromEntries(response.headers.entries()))
+
       if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`Broadcast API error: ${response.status} - ${error}`)
+        const errorText = await response.text()
+        console.error('[BroadcastApiProvider] Error response body:', errorText)
+        
+        // Try to parse as JSON if possible
+        let errorDetails
+        try {
+          errorDetails = JSON.parse(errorText)
+          console.error('[BroadcastApiProvider] Parsed error:', errorDetails)
+        } catch {
+          // Not JSON, use as is
+        }
+        
+        throw new Error(`Broadcast API error: ${response.status} - ${errorText}`)
       }
 
       const result = await response.json()

@@ -1,3 +1,27 @@
+## [0.16.7] - 2025-07-29
+
+### Added
+- **Comprehensive Diagnostic Logging** - Added extensive logging to diagnose broadcast sync issues
+  - Logs the HTML content conversion process
+  - Shows exactly what data is being sent to the Broadcast API (with preview)
+  - Displays request URL, method, and body structure
+  - Shows API response status and headers
+  - Captures and logs all error types (Error objects, strings, JSON responses)
+  - Logs raw errors to identify unexpected error formats
+
+### Improved
+- **Better Error Visibility** - Enhanced error handling to capture more details
+  - Raw error logging to see the actual error structure
+  - Multiple error format handlers (Error, string, object, unknown)
+  - Response body parsing for API errors
+  - Document context logging when errors occur
+  - API request/response details in provider logs
+
+### Technical
+- Added pre-API call logging in afterChange hook
+- Added comprehensive error logging in BroadcastApiProvider
+- Logs help identify if issues are with content, API format, or authentication
+
 ## [0.16.6] - 2025-07-29
 
 ### Fixed

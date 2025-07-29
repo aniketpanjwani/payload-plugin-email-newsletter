@@ -284,10 +284,11 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               const provider = new BroadcastApiProvider(providerConfig)
 
               // Convert rich text to HTML
+              req.payload.logger.info('Converting content to HTML...')
               const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
-
-              // Create broadcast in provider
-              const providerBroadcast = await provider.create({
+              
+              // Log what we're about to send
+              const createData = {
                 name: doc.subject, // Use subject as name since we removed the name field
                 subject: doc.subject,
                 preheader: doc.contentSection?.preheader,
@@ -296,7 +297,24 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 trackClicks: doc.settings?.trackClicks,
                 replyTo: doc.settings?.replyTo || providerConfig.replyTo,
                 audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
+              }
+              
+              req.payload.logger.info('Creating broadcast with data:', {
+                name: createData.name,
+                subject: createData.subject,
+                preheader: createData.preheader || 'NONE',
+                contentLength: htmlContent ? htmlContent.length : 0,
+                contentPreview: htmlContent ? htmlContent.substring(0, 100) + '...' : 'EMPTY',
+                trackOpens: createData.trackOpens,
+                trackClicks: createData.trackClicks,
+                replyTo: createData.replyTo,
+                audienceIds: createData.audienceIds || [],
+                apiUrl: providerConfig.apiUrl,
+                hasToken: !!providerConfig.token,
               })
+
+              // Create broadcast in provider
+              const providerBroadcast = await provider.create(createData)
 
               // Update with provider ID
               await req.payload.update({
@@ -314,19 +332,41 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 providerId: providerBroadcast.id,
                 providerData: providerBroadcast.providerData,
               }
-            } catch (error) {
-              // Log full error details for debugging
+            } catch (error: unknown) {
+              // Log the raw error first to see what we're dealing with
+              req.payload.logger.error('Raw error from broadcast provider:')
+              req.payload.logger.error(error)
+              
+              // Try different error formats
               if (error instanceof Error) {
-                req.payload.logger.error('Failed to create broadcast in provider:', {
+                req.payload.logger.error('Error is instance of Error:', {
                   message: error.message,
                   stack: error.stack,
                   name: error.name,
                   // If it's a BroadcastProviderError, it might have additional details
-                  ...(error as any).details
+                  ...(error as any).details,
+                  // Check if it's a fetch response error
+                  ...(error as any).response,
+                  ...(error as any).data,
+                  ...(error as any).status,
+                  ...(error as any).statusText,
                 })
+              } else if (typeof error === 'string') {
+                req.payload.logger.error('Error is a string:', error)
+              } else if (error && typeof error === 'object') {
+                req.payload.logger.error('Error is an object:', JSON.stringify(error, null, 2))
               } else {
-                req.payload.logger.error('Failed to create broadcast in provider:', error)
+                req.payload.logger.error('Unknown error type:', typeof error)
               }
+              
+              // Also log the doc info for context
+              req.payload.logger.error('Failed broadcast document:', {
+                id: doc.id,
+                subject: doc.subject,
+                hasContent: !!doc.contentSection?.content,
+                contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
+              })
+              
               return doc
             }
           }
