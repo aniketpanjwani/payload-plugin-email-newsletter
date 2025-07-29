@@ -1,3 +1,24 @@
+## [0.16.6] - 2025-07-29
+
+### Fixed
+- **Critical: Update Sync Now Works** - Fixed the afterChange hook that was blocking update operations
+  - Removed the `operation !== 'create'` check that prevented the afterChange hook from running on updates
+  - Moved update sync logic from beforeChange to afterChange for proper architectural pattern
+  - Updates are now synced AFTER they're saved to Payload, ensuring consistency
+  - Provider sync failures no longer block Payload updates
+
+### Improved
+- **Better Hook Architecture** - Sync operations now happen in the correct lifecycle stage
+  - beforeChange was architecturally wrong - if provider sync failed, data would be inconsistent
+  - afterChange ensures Payload data is saved first, then syncs to provider
+  - More resilient to network failures and API errors
+
+### Technical
+- Consolidated create and update logic in a single afterChange hook
+- Added comprehensive content change detection before syncing
+- Enhanced logging for update sync operations
+- Removed redundant beforeChange hook logic
+
 ## [0.16.5] - 2025-07-29
 
 ### Breaking Changes

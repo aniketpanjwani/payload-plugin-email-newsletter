@@ -265,68 +265,164 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
       },
     ],
     hooks: {
-      // Sync with provider on create
+      // Sync with provider on create and update
       afterChange: [
-        async ({ doc, operation, req }) => {
-          if (!hasProviders || operation !== 'create') return doc
+        async ({ doc, operation, req, previousDoc }) => {
+          if (!hasProviders) return doc
 
-          try {
-            // Get provider config from settings first, then fall back to env vars
-            const providerConfig = await getBroadcastConfig(req, pluginConfig)
-            if (!providerConfig || !providerConfig.token) {
-              req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
-              return doc
-            }
+          // Handle create operation
+          if (operation === 'create') {
+            try {
+              // Get provider config from settings first, then fall back to env vars
+              const providerConfig = await getBroadcastConfig(req, pluginConfig)
+              if (!providerConfig || !providerConfig.token) {
+                req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
+                return doc
+              }
 
-            const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-            const provider = new BroadcastApiProvider(providerConfig)
+              const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+              const provider = new BroadcastApiProvider(providerConfig)
 
-            // Convert rich text to HTML
-            const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
+              // Convert rich text to HTML
+              const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
 
-            // Create broadcast in provider
-            const providerBroadcast = await provider.create({
-              name: doc.subject, // Use subject as name since we removed the name field
-              subject: doc.subject,
-              preheader: doc.contentSection?.preheader,
-              content: htmlContent,
-              trackOpens: doc.settings?.trackOpens,
-              trackClicks: doc.settings?.trackClicks,
-              replyTo: doc.settings?.replyTo || providerConfig.replyTo,
-              audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
-            })
+              // Create broadcast in provider
+              const providerBroadcast = await provider.create({
+                name: doc.subject, // Use subject as name since we removed the name field
+                subject: doc.subject,
+                preheader: doc.contentSection?.preheader,
+                content: htmlContent,
+                trackOpens: doc.settings?.trackOpens,
+                trackClicks: doc.settings?.trackClicks,
+                replyTo: doc.settings?.replyTo || providerConfig.replyTo,
+                audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
+              })
 
-            // Update with provider ID
-            await req.payload.update({
-              collection: 'broadcasts',
-              id: doc.id,
-              data: {
+              // Update with provider ID
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: doc.id,
+                data: {
+                  providerId: providerBroadcast.id,
+                  providerData: providerBroadcast.providerData,
+                },
+                req,
+              })
+
+              return {
+                ...doc,
                 providerId: providerBroadcast.id,
                 providerData: providerBroadcast.providerData,
-              },
-              req,
+              }
+            } catch (error) {
+              // Log full error details for debugging
+              if (error instanceof Error) {
+                req.payload.logger.error('Failed to create broadcast in provider:', {
+                  message: error.message,
+                  stack: error.stack,
+                  name: error.name,
+                  // If it's a BroadcastProviderError, it might have additional details
+                  ...(error as any).details
+                })
+              } else {
+                req.payload.logger.error('Failed to create broadcast in provider:', error)
+              }
+              return doc
+            }
+          }
+          
+          // Handle update operation
+          if (operation === 'update' && doc.providerId) {
+            req.payload.logger.info('Broadcast afterChange update hook triggered', {
+              operation,
+              hasProviderId: !!doc.providerId,
+              sendStatus: doc.sendStatus,
+              publishStatus: doc._status
             })
 
-            return {
-              ...doc,
-              providerId: providerBroadcast.id,
-              providerData: providerBroadcast.providerData,
+            try {
+              // Get provider config from settings first, then fall back to env vars
+              const providerConfig = await getBroadcastConfig(req, pluginConfig)
+              if (!providerConfig || !providerConfig.token) {
+                req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
+                return doc
+              }
+
+              const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
+              const provider = new BroadcastApiProvider(providerConfig)
+
+              // Only sync if broadcast is still editable
+              const capabilities = provider.getCapabilities()
+              const sendStatus = doc.sendStatus || BroadcastStatus.DRAFT
+              if (!capabilities.editableStatuses.includes(sendStatus)) {
+                req.payload.logger.info(`Skipping sync for broadcast in status: ${sendStatus}`)
+                return doc
+              }
+
+              // Check what has changed
+              const contentChanged = 
+                doc.subject !== previousDoc?.subject ||
+                doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader ||
+                JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content) ||
+                doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens ||
+                doc.settings?.trackClicks !== previousDoc?.settings?.trackClicks ||
+                doc.settings?.replyTo !== previousDoc?.settings?.replyTo ||
+                JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)
+
+              if (contentChanged) {
+                // Build update data
+                const updates: any = {}
+                if (doc.subject !== previousDoc?.subject) {
+                  updates.name = doc.subject // Use subject as name in the provider
+                  updates.subject = doc.subject
+                }
+                if (doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader) {
+                  updates.preheader = doc.contentSection?.preheader
+                }
+                if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
+                  updates.content = await convertToEmailSafeHtml(doc.contentSection?.content)
+                }
+                if (doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens) {
+                  updates.trackOpens = doc.settings.trackOpens
+                }
+                if (doc.settings?.trackClicks !== previousDoc?.settings?.trackClicks) {
+                  updates.trackClicks = doc.settings.trackClicks
+                }
+                if (doc.settings?.replyTo !== previousDoc?.settings?.replyTo) {
+                  updates.replyTo = doc.settings.replyTo || providerConfig.replyTo
+                }
+                if (JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)) {
+                  updates.audienceIds = doc.audienceIds?.map((a: any) => a.audienceId)
+                }
+
+                req.payload.logger.info('Syncing broadcast updates to provider', {
+                  providerId: doc.providerId,
+                  updates
+                })
+                
+                await provider.update(doc.providerId, updates)
+                req.payload.logger.info(`Broadcast ${doc.id} synced to provider successfully`)
+              } else {
+                req.payload.logger.info('No content changes to sync to provider')
+              }
+            } catch (error) {
+              // Log full error details for debugging
+              if (error instanceof Error) {
+                req.payload.logger.error('Failed to sync broadcast update to provider:', {
+                  message: error.message,
+                  stack: error.stack,
+                  name: error.name,
+                  // If it's a BroadcastProviderError, it might have additional details
+                  ...(error as any).details
+                })
+              } else {
+                req.payload.logger.error('Failed to sync broadcast update to provider:', error)
+              }
+              // Don't throw - allow Payload update to succeed even if provider sync fails
             }
-          } catch (error) {
-            // Log full error details for debugging
-            if (error instanceof Error) {
-              req.payload.logger.error('Failed to create broadcast in provider:', {
-                message: error.message,
-                stack: error.stack,
-                name: error.name,
-                // If it's a BroadcastProviderError, it might have additional details
-                ...(error as any).details
-              })
-            } else {
-              req.payload.logger.error('Failed to create broadcast in provider:', error)
-            }
-            return doc
           }
+
+          return doc
         },
         // Hook to send when published
         async ({ doc, operation, previousDoc, req }) => {
@@ -402,92 +498,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           return doc
         },
       ],
-      // Sync updates with provider
-      beforeChange: [
-        async ({ data, originalDoc, operation, req }) => {
-          if (!hasProviders || !originalDoc?.providerId || operation !== 'update') return data
-
-          req.payload.logger.info('Broadcast beforeChange update hook triggered', {
-            operation,
-            hasProviderId: !!originalDoc?.providerId,
-            originalSendStatus: originalDoc?.sendStatus,
-            originalPublishStatus: originalDoc?._status,
-            newSendStatus: data?.sendStatus,
-            newPublishStatus: data?._status
-          })
-
-          try {
-            // Get provider config from settings first, then fall back to env vars
-            const providerConfig = await getBroadcastConfig(req, pluginConfig)
-            if (!providerConfig || !providerConfig.token) {
-              req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
-              return data
-            }
-
-            const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-            const provider = new BroadcastApiProvider(providerConfig)
-
-            // Only sync if broadcast is still editable
-            const capabilities = provider.getCapabilities()
-            // Check the send status, not the draft/publish status
-            const sendStatus = originalDoc.sendStatus || BroadcastStatus.DRAFT
-            if (!capabilities.editableStatuses.includes(sendStatus)) {
-              req.payload.logger.info(`Skipping sync for broadcast in status: ${sendStatus}`)
-              return data
-            }
-
-            // Build update data
-            const updates: any = {}
-            if (data.subject !== originalDoc.subject) {
-              updates.name = data.subject // Use subject as name in the provider
-              updates.subject = data.subject
-            }
-            if (data.contentSection?.preheader !== originalDoc.contentSection?.preheader) updates.preheader = data.contentSection?.preheader
-            if (data.contentSection?.content !== originalDoc.contentSection?.content) {
-              updates.content = await convertToEmailSafeHtml(data.contentSection?.content)
-            }
-            if (data.settings?.trackOpens !== originalDoc.settings?.trackOpens) {
-              updates.trackOpens = data.settings.trackOpens
-            }
-            if (data.settings?.trackClicks !== originalDoc.settings?.trackClicks) {
-              updates.trackClicks = data.settings.trackClicks
-            }
-            if (data.settings?.replyTo !== originalDoc.settings?.replyTo) {
-              updates.replyTo = data.settings.replyTo || providerConfig.replyTo
-            }
-            if (JSON.stringify(data.audienceIds) !== JSON.stringify(originalDoc.audienceIds)) {
-              updates.audienceIds = data.audienceIds?.map((a: any) => a.audienceId)
-            }
-
-            if (Object.keys(updates).length > 0) {
-              req.payload.logger.info('Syncing broadcast updates to provider', {
-                providerId: originalDoc.providerId,
-                updates
-              })
-              await provider.update(originalDoc.providerId, updates)
-              req.payload.logger.info('Successfully synced broadcast updates to provider')
-            } else {
-              req.payload.logger.info('No broadcast updates to sync to provider')
-            }
-          } catch (error) {
-            // Log full error details for debugging
-            if (error instanceof Error) {
-              req.payload.logger.error('Failed to update broadcast in provider:', {
-                message: error.message,
-                stack: error.stack,
-                name: error.name,
-                // If it's a BroadcastProviderError, it might have additional details
-                ...(error as any).details
-              })
-            } else {
-              req.payload.logger.error('Failed to update broadcast in provider:', error)
-            }
-            // Continue with local update even if provider fails
-          }
-
-          return data
-        },
-      ],
+      // beforeChange hooks can be added here if needed
+      beforeChange: [],
       // Handle deletion
       afterDelete: [
         async ({ doc, req }) => {
