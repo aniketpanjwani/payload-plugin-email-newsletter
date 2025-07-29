@@ -412,91 +412,57 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   return doc
                 }
 
-                try {
-                  // Convert rich text to HTML
-                  req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
-                  const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
+                // Convert rich text to HTML
+                req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
+                const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
 
-                  // Skip if content is empty after conversion
-                  if (!htmlContent || htmlContent.trim() === '') {
-                    req.payload.logger.info('Skipping provider sync - content is empty after conversion')
-                    return doc
-                  }
+                // Skip if content is empty after conversion
+                if (!htmlContent || htmlContent.trim() === '') {
+                  req.payload.logger.info('Skipping provider sync - content is empty after conversion')
+                  return doc
+                }
 
-                  // Create broadcast in provider
-                  const createData = {
-                    name: doc.subject,
-                    subject: doc.subject,
-                    preheader: doc.contentSection?.preheader,
-                    content: htmlContent,
-                    trackOpens: doc.settings?.trackOpens,
-                    trackClicks: doc.settings?.trackClicks,
-                    replyTo: doc.settings?.replyTo || providerConfig.replyTo,
-                    audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
-                  }
+                // Create broadcast in provider
+                const createData = {
+                  name: doc.subject,
+                  subject: doc.subject,
+                  preheader: doc.contentSection?.preheader,
+                  content: htmlContent,
+                  trackOpens: doc.settings?.trackOpens,
+                  trackClicks: doc.settings?.trackClicks,
+                  replyTo: doc.settings?.replyTo || providerConfig.replyTo,
+                  audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
+                }
 
-                  req.payload.logger.info('Creating broadcast with data:', {
-                    name: createData.name,
-                    subject: createData.subject,
-                    preheader: createData.preheader || 'NONE',
-                    contentLength: htmlContent ? htmlContent.length : 0,
-                    contentPreview: htmlContent ? htmlContent.substring(0, 100) + '...' : 'EMPTY',
-                    apiUrl: providerConfig.apiUrl,
-                    hasToken: !!providerConfig.token,
-                  })
+                req.payload.logger.info('Creating broadcast with data:', {
+                  name: createData.name,
+                  subject: createData.subject,
+                  preheader: createData.preheader || 'NONE',
+                  contentLength: htmlContent ? htmlContent.length : 0,
+                  contentPreview: htmlContent ? htmlContent.substring(0, 100) + '...' : 'EMPTY',
+                  apiUrl: providerConfig.apiUrl,
+                  hasToken: !!providerConfig.token,
+                })
 
-                  const providerBroadcast = await provider.create(createData)
+                const providerBroadcast = await provider.create(createData)
 
-                  // Update with provider ID
-                  await req.payload.update({
-                    collection: 'broadcasts',
-                    id: doc.id,
-                    data: {
-                      providerId: providerBroadcast.id,
-                      providerData: providerBroadcast.providerData,
-                    },
-                    req,
-                  })
-
-                  req.payload.logger.info(`Broadcast ${doc.id} created in provider successfully (deferred)`)
-
-                  return {
-                    ...doc,
+                // Update with provider ID
+                await req.payload.update({
+                  collection: 'broadcasts',
+                  id: doc.id,
+                  data: {
                     providerId: providerBroadcast.id,
                     providerData: providerBroadcast.providerData,
-                  }
-                } catch (error) {
-                  // Use the same enhanced error logging as create operation
-                  req.payload.logger.error('Raw error from broadcast provider (deferred create):')
-                  req.payload.logger.error(error)
-                  
-                  if (error instanceof Error) {
-                    req.payload.logger.error('Error is instance of Error:', {
-                      message: error.message,
-                      stack: error.stack,
-                      name: error.name,
-                      ...(error as any).details,
-                      ...(error as any).response,
-                      ...(error as any).data,
-                      ...(error as any).status,
-                      ...(error as any).statusText,
-                    })
-                  } else if (typeof error === 'string') {
-                    req.payload.logger.error('Error is a string:', error)
-                  } else if (error && typeof error === 'object') {
-                    req.payload.logger.error('Error is an object:', JSON.stringify(error, null, 2))
-                  } else {
-                    req.payload.logger.error('Unknown error type:', typeof error)
-                  }
-                  
-                  req.payload.logger.error('Failed broadcast document (deferred create):', {
-                    id: doc.id,
-                    subject: doc.subject,
-                    hasContent: !!doc.contentSection?.content,
-                    contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
-                  })
-                  
-                  return doc
+                  },
+                  req,
+                })
+
+                req.payload.logger.info(`Broadcast ${doc.id} created in provider successfully (deferred)`)
+
+                return {
+                  ...doc,
+                  providerId: providerBroadcast.id,
+                  providerData: providerBroadcast.providerData,
                 }
               }
 
@@ -510,80 +476,84 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   return doc
                 }
 
-              // Check what has changed
-              const contentChanged = 
-                doc.subject !== previousDoc?.subject ||
-                doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader ||
-                JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content) ||
-                doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens ||
-                doc.settings?.trackClicks !== previousDoc?.settings?.trackClicks ||
-                doc.settings?.replyTo !== previousDoc?.settings?.replyTo ||
-                JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)
+                // Check what has changed
+                const contentChanged = 
+                  doc.subject !== previousDoc?.subject ||
+                  doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader ||
+                  JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content) ||
+                  doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens ||
+                  doc.settings?.trackClicks !== previousDoc?.settings?.trackClicks ||
+                  doc.settings?.replyTo !== previousDoc?.settings?.replyTo ||
+                  JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)
 
-              if (contentChanged) {
-                // Build update data
-                const updates: any = {}
-                if (doc.subject !== previousDoc?.subject) {
-                  updates.name = doc.subject // Use subject as name in the provider
-                  updates.subject = doc.subject
-                }
-                if (doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader) {
-                  updates.preheader = doc.contentSection?.preheader
-                }
-                if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
-                  updates.content = await convertToEmailSafeHtml(doc.contentSection?.content)
-                }
-                if (doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens) {
-                  updates.trackOpens = doc.settings.trackOpens
-                }
-                if (doc.settings?.trackClicks !== previousDoc?.settings?.trackClicks) {
-                  updates.trackClicks = doc.settings.trackClicks
-                }
-                if (doc.settings?.replyTo !== previousDoc?.settings?.replyTo) {
-                  updates.replyTo = doc.settings.replyTo || providerConfig.replyTo
-                }
-                if (JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)) {
-                  updates.audienceIds = doc.audienceIds?.map((a: any) => a.audienceId)
-                }
+                if (contentChanged) {
+                  // Build update data
+                  const updates: any = {}
+                  if (doc.subject !== previousDoc?.subject) {
+                    updates.name = doc.subject // Use subject as name in the provider
+                    updates.subject = doc.subject
+                  }
+                  if (doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader) {
+                    updates.preheader = doc.contentSection?.preheader
+                  }
+                  if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
+                    updates.content = await convertToEmailSafeHtml(doc.contentSection?.content)
+                  }
+                  if (doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens) {
+                    updates.trackOpens = doc.settings.trackOpens
+                  }
+                  if (doc.settings?.trackClicks !== previousDoc?.settings?.trackClicks) {
+                    updates.trackClicks = doc.settings.trackClicks
+                  }
+                  if (doc.settings?.replyTo !== previousDoc?.settings?.replyTo) {
+                    updates.replyTo = doc.settings.replyTo || providerConfig.replyTo
+                  }
+                  if (JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)) {
+                    updates.audienceIds = doc.audienceIds?.map((a: any) => a.audienceId)
+                  }
 
-                req.payload.logger.info('Syncing broadcast updates to provider', {
-                  providerId: doc.providerId,
-                  updates
-                })
-                
-                await provider.update(doc.providerId, updates)
-                req.payload.logger.info(`Broadcast ${doc.id} synced to provider successfully`)
-              } else {
-                req.payload.logger.info('No content changes to sync to provider')
+                  req.payload.logger.info('Syncing broadcast updates to provider', {
+                    providerId: doc.providerId,
+                    updates
+                  })
+                  
+                  await provider.update(doc.providerId, updates)
+                  req.payload.logger.info(`Broadcast ${doc.id} synced to provider successfully`)
+                } else {
+                  req.payload.logger.info('No content changes to sync to provider')
+                }
               }
             } catch (error) {
-              // Log full error details for debugging
+              // Enhanced error logging for debugging
+              req.payload.logger.error('Raw error from broadcast update operation:')
+              req.payload.logger.error(error)
+              
               if (error instanceof Error) {
-                req.payload.logger.error('Failed to sync broadcast update to provider:', {
+                req.payload.logger.error('Error is instance of Error:', {
                   message: error.message,
                   stack: error.stack,
                   name: error.name,
-                  // If it's a BroadcastProviderError, it might have additional details
-                  ...(error as any).details
+                  ...(error as any).details,
+                  ...(error as any).response,
+                  ...(error as any).data,
+                  ...(error as any).status,
+                  ...(error as any).statusText,
                 })
+              } else if (typeof error === 'string') {
+                req.payload.logger.error('Error is a string:', error)
+              } else if (error && typeof error === 'object') {
+                req.payload.logger.error('Error is an object:', JSON.stringify(error, null, 2))
               } else {
-                req.payload.logger.error('Failed to sync broadcast update to provider:', error)
+                req.payload.logger.error('Unknown error type:', typeof error)
               }
-              // Don't throw - allow Payload update to succeed even if provider sync fails
-            }
-              }
-            } catch (error) {
-              // Log full error details for debugging
-              if (error instanceof Error) {
-                req.payload.logger.error('Failed to handle broadcast update operation:', {
-                  message: error.message,
-                  stack: error.stack,
-                  name: error.name,
-                  ...(error as any).details
-                })
-              } else {
-                req.payload.logger.error('Failed to handle broadcast update operation:', error)
-              }
+              
+              req.payload.logger.error('Failed broadcast document (update operation):', {
+                id: doc.id,
+                subject: doc.subject,
+                hasContent: !!doc.contentSection?.content,
+                contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
+              })
+              
               // Don't throw - allow Payload update to succeed even if provider sync fails
             }
           }
