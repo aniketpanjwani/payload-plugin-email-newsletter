@@ -29,13 +29,18 @@ export const EMAIL_SAFE_CONFIG = {
  * Converts Lexical editor state to email-safe HTML
  */
 export async function convertToEmailSafeHtml(
-  editorState: SerializedEditorState,
+  editorState: SerializedEditorState | undefined | null,
   options?: {
     wrapInTemplate?: boolean
     preheader?: string
     mediaUrl?: string // Base URL for media files
   }
 ): Promise<string> {
+  // Handle empty content
+  if (!editorState) {
+    return ''
+  }
+  
   // First, convert Lexical state to HTML using custom converters
   const rawHtml = await lexicalToEmailHtml(editorState, options?.mediaUrl)
   

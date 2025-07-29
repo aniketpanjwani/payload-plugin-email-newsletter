@@ -272,6 +272,13 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
           // Handle create operation
           if (operation === 'create') {
+            // Skip provider sync if essential fields are missing
+            // Broadcast API requires both subject and body
+            if (!doc.subject || !doc.contentSection?.content) {
+              req.payload.logger.info('Skipping provider sync - broadcast has no subject or content yet')
+              return doc
+            }
+            
             try {
               // Get provider config from settings first, then fall back to env vars
               const providerConfig = await getBroadcastConfig(req, pluginConfig)
@@ -286,6 +293,12 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               // Convert rich text to HTML
               req.payload.logger.info('Converting content to HTML...')
               const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
+              
+              // Skip if content is empty after conversion
+              if (!htmlContent || htmlContent.trim() === '') {
+                req.payload.logger.info('Skipping provider sync - content is empty after conversion')
+                return doc
+              }
               
               // Log what we're about to send
               const createData = {

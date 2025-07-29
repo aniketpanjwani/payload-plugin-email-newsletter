@@ -1,3 +1,18 @@
+## [0.16.8] - 2025-01-29
+
+### Fixed
+- **Handle Empty Content When Creating Broadcasts** - Fixed error when creating broadcasts without content
+  - Added null/undefined check in convertToEmailSafeHtml function
+  - Skip provider sync when subject or content is missing on create
+  - Skip provider sync when content is empty after conversion
+  - Prevents "Cannot destructure property 'root' of 'editorState'" error
+  - Broadcasts can now be created empty and synced later when content is added
+
+### Technical
+- Updated convertToEmailSafeHtml to accept undefined/null editorState
+- Added pre-sync validation in afterChange hook for create operations
+- Empty broadcasts are saved in Payload but not synced to provider until content is added
+
 ## [0.16.7] - 2025-07-29
 
 ### Added
