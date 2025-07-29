@@ -1,3 +1,18 @@
+## [0.16.10] - 2025-01-29
+
+### Fixed
+- **Corrected Syntax Errors** - Fixed TypeScript compilation errors in broadcast afterChange hook
+  - Simplified deferred create logic to avoid nested try-catch blocks
+  - Removed duplicate error handling and extra braces
+  - Fixed all TypeScript compilation errors
+  - Maintained functionality for deferred provider sync
+
+### Technical
+- Cleaned up afterChange hook structure
+- Simplified error handling flow
+- Removed redundant code blocks
+- All TypeScript errors resolved
+
 ## [0.16.9] - 2025-01-29
 
 ### Fixed
