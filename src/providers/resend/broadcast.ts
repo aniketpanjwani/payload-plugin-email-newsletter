@@ -170,7 +170,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
           name: 'Unknown',
           subject: 'Unknown',
           content: '',
-          status: BroadcastStatus.SENDING,
+          sendStatus: BroadcastStatus.SENDING,
           trackOpens: true,
           trackClicks: true,
           createdAt: new Date(),
@@ -266,7 +266,7 @@ export class ResendBroadcastProvider extends BaseBroadcastProvider {
       subject: broadcast.subject,
       preheader: broadcast.preheader,
       content: broadcast.content?.html || broadcast.html || '',
-      status: this.mapResendStatus(broadcast.status),
+      sendStatus: this.mapResendStatus(broadcast.status),
       trackOpens: true, // Resend tracks by default
       trackClicks: true, // Resend tracks by default
       replyTo: broadcast.reply_to,

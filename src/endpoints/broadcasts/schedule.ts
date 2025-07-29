@@ -103,7 +103,7 @@ export const createScheduleBroadcastEndpoint = (
           collection: collectionSlug,
           id,
           data: {
-            status: NewsletterStatus.SCHEDULED,
+            sendStatus: NewsletterStatus.SCHEDULED,
             scheduledAt: scheduledDate.toISOString(),
           },
           user: auth.user,

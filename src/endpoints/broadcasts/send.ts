@@ -79,7 +79,7 @@ export const createSendBroadcastEndpoint = (
           collection: collectionSlug,
           id,
           data: {
-            status: NewsletterStatus.SENDING,
+            sendStatus: NewsletterStatus.SENDING,
             sentAt: new Date().toISOString(),
           },
           user: auth.user,

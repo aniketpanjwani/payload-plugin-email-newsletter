@@ -179,9 +179,9 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
     try {
       // First check if the broadcast can be edited
       const existing = await this.get(id)
-      if (!this.canEditInStatus(existing.status)) {
+      if (!this.canEditInStatus(existing.sendStatus)) {
         throw new BroadcastProviderError(
-          `Cannot update broadcast in status: ${existing.status}`,
+          `Cannot update broadcast in status: ${existing.sendStatus}`,
           BroadcastErrorCode.INVALID_STATUS,
           this.name
         )
@@ -230,9 +230,9 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
     try {
       // First check if the broadcast can be deleted
       const existing = await this.get(id)
-      if (!this.canEditInStatus(existing.status)) {
+      if (!this.canEditInStatus(existing.sendStatus)) {
         throw new BroadcastProviderError(
-          `Cannot delete broadcast in status: ${existing.status}`,
+          `Cannot delete broadcast in status: ${existing.sendStatus}`,
           BroadcastErrorCode.INVALID_STATUS,
           this.name
         )
@@ -417,7 +417,7 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
       subject: broadcast.subject,
       preheader: broadcast.preheader,
       content: broadcast.body,
-      status: this.mapBroadcastStatus(broadcast.status),
+      sendStatus: this.mapBroadcastStatus(broadcast.status),
       trackOpens: broadcast.track_opens,
       trackClicks: broadcast.track_clicks,
       replyTo: broadcast.reply_to,

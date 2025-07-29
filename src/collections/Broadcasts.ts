@@ -12,6 +12,21 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
   return {
     slug: 'broadcasts',
+    access: {
+      read: () => true, // Public read access
+      create: ({ req: { user } }) => {
+        // Allow authenticated users to create
+        return Boolean(user)
+      },
+      update: ({ req: { user } }) => {
+        // Allow authenticated users to update
+        return Boolean(user)
+      },
+      delete: ({ req: { user } }) => {
+        // Allow authenticated users to delete
+        return Boolean(user)
+      },
+    },
     versions: {
       drafts: {
         autosave: true,
@@ -25,7 +40,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
     admin: {
       useAsTitle: 'subject',
       description: 'Individual email campaigns sent to subscribers',
-      defaultColumns: ['subject', '_status', 'status', 'sentAt', 'recipientCount'],
+      defaultColumns: ['subject', '_status', 'sendStatus', 'sentAt', 'recipientCount'],
     },
     fields: [
       {
@@ -92,8 +107,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         ],
       },
       {
-        name: 'status',
+        name: 'sendStatus',
         type: 'select',
+        label: 'Send Status',
         required: true,
         defaultValue: BroadcastStatus.DRAFT,
         options: [
@@ -107,6 +123,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         ],
         admin: {
           readOnly: true,
+          description: 'The status of the email send operation',
           components: {
             Cell: 'payload-plugin-newsletter/components#StatusBadge',
           },
@@ -164,7 +181,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         type: 'group',
         admin: {
           readOnly: true,
-          condition: (data) => data?.status === BroadcastStatus.SENT,
+          condition: (data) => data?.sendStatus === BroadcastStatus.SENT,
         },
         fields: [
           {
@@ -223,7 +240,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         name: 'scheduledAt',
         type: 'date',
         admin: {
-          condition: (data) => data?.status === BroadcastStatus.SCHEDULED,
+          condition: (data) => data?.sendStatus === BroadcastStatus.SCHEDULED,
           date: {
             displayFormat: 'MMM d, yyyy h:mm a',
           },
@@ -321,7 +338,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           
           if (wasUnpublished && isNowPublished && doc.providerId) {
             // Check if already sent
-            if (doc.status === 'sent' || doc.status === 'sending') {
+            if (doc.sendStatus === BroadcastStatus.SENT || doc.sendStatus === BroadcastStatus.SENDING) {
               return doc
             }
             
@@ -348,7 +365,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 collection: 'broadcasts',
                 id: doc.id,
                 data: {
-                  status: BroadcastStatus.SENDING,
+                  sendStatus: BroadcastStatus.SENDING,
                   sentAt: new Date().toISOString(),
                 },
                 req,
@@ -375,7 +392,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 collection: 'broadcasts',
                 id: doc.id,
                 data: {
-                  status: BroadcastStatus.FAILED,
+                  sendStatus: BroadcastStatus.FAILED,
                 },
                 req,
               })
@@ -390,6 +407,15 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         async ({ data, originalDoc, operation, req }) => {
           if (!hasProviders || !originalDoc?.providerId || operation !== 'update') return data
 
+          req.payload.logger.info('Broadcast beforeChange update hook triggered', {
+            operation,
+            hasProviderId: !!originalDoc?.providerId,
+            originalSendStatus: originalDoc?.sendStatus,
+            originalPublishStatus: originalDoc?._status,
+            newSendStatus: data?.sendStatus,
+            newPublishStatus: data?._status
+          })
+
           try {
             // Get provider config from settings first, then fall back to env vars
             const providerConfig = await getBroadcastConfig(req, pluginConfig)
@@ -403,7 +429,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Only sync if broadcast is still editable
             const capabilities = provider.getCapabilities()
-            if (!capabilities.editableStatuses.includes(originalDoc.status)) {
+            // Check the send status, not the draft/publish status
+            const sendStatus = originalDoc.sendStatus || BroadcastStatus.DRAFT
+            if (!capabilities.editableStatuses.includes(sendStatus)) {
+              req.payload.logger.info(`Skipping sync for broadcast in status: ${sendStatus}`)
               return data
             }
 
@@ -431,7 +460,14 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             }
 
             if (Object.keys(updates).length > 0) {
+              req.payload.logger.info('Syncing broadcast updates to provider', {
+                providerId: originalDoc.providerId,
+                updates
+              })
               await provider.update(originalDoc.providerId, updates)
+              req.payload.logger.info('Successfully synced broadcast updates to provider')
+            } else {
+              req.payload.logger.info('No broadcast updates to sync to provider')
             }
           } catch (error) {
             // Log full error details for debugging
@@ -470,7 +506,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
             // Only delete if broadcast is still editable
             const capabilities = provider.getCapabilities()
-            if (capabilities.editableStatuses.includes(doc.status)) {
+            if (capabilities.editableStatuses.includes(doc.sendStatus)) {
               await provider.delete(doc.providerId)
             }
           } catch (error) {

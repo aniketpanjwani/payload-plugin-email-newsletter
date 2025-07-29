@@ -11,7 +11,7 @@ export interface Broadcast {
   subject: string;
   preheader?: string;
   content: string; // HTML content
-  status: BroadcastStatus;
+  sendStatus: BroadcastStatus;
   trackOpens: boolean;
   trackClicks: boolean;
   replyTo?: string;

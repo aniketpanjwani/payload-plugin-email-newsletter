@@ -1,3 +1,44 @@
+## [0.16.5] - 2025-07-29
+
+### Breaking Changes
+- **Field Renaming** - Renamed `status` field to `sendStatus` throughout the codebase
+  - This avoids confusion with Payload's built-in `_status` field (draft/published)
+  - Database field is now `sendStatus` for email send status (draft, scheduled, sending, sent, etc.)
+  - All references in providers, endpoints, and types have been updated
+  - If you have existing broadcast data with a `status` field, you'll need to migrate it to `sendStatus`
+
+### Fixed
+- **Update Sync** - Fixed issue where broadcast updates made in Payload weren't syncing to the Broadcast provider
+  - The update hook now correctly checks `sendStatus` instead of the non-existent `status` field
+  - Provider can now properly determine if a broadcast is editable based on its send status
+
+### Technical
+- Updated `Broadcast` type interface to use `sendStatus` property
+- Updated all provider implementations (Broadcast and Resend) to use `sendStatus`
+- Updated send and schedule endpoints to set `sendStatus` field
+- All TypeScript errors resolved
+
+## [0.16.4] - 2025-07-27
+
+### Added
+- **Access Control for Broadcasts** - Added proper access control to the Broadcasts collection
+  - Public read access for all users
+  - Create, update, and delete operations require authenticated users
+  - Prevents unauthorized modifications to broadcast content
+  - Follows Payload's standard access control patterns
+
+### Improved
+- **Enhanced Update Sync Debugging** - Added detailed logging for broadcast update synchronization
+  - Logs when update hooks are triggered with operation details
+  - Shows what fields are being synced to the provider
+  - Helps diagnose why updates might not be syncing
+  - Added info logging for skipped updates due to status restrictions
+- **Clearer Field Naming** - Renamed `status` field to `sendStatus` to avoid confusion with Payload's `_status`
+  - Database field is now `sendStatus` (draft, scheduled, sending, sent, etc.)
+  - Payload's versioning field remains `_status` (draft, published)
+  - Added virtual `status` field for API backward compatibility
+  - Makes it clear which status controls email sending vs content publishing
+
 ## [0.16.3] - 2025-07-27
 
 ### Improved
