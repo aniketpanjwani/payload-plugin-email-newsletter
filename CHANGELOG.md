@@ -1,3 +1,11 @@
+## [0.17.1] - 2025-07-29
+
+### Fixed
+- **Email Preview Endpoint Path** - Fixed incorrect path for broadcast preview endpoint
+  - Removed extra `/api` prefix from preview endpoint path
+  - Preview endpoint now correctly registers at `/{collectionSlug}/preview`
+  - Fixes 404 error when accessing email preview from the admin UI
+
 ## [0.17.0] - 2025-07-29
 
 ### Added
