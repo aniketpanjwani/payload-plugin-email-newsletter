@@ -1,3 +1,66 @@
+## [0.19.0] - 2025-07-30
+
+### Added
+- **Responsive Email Design** - Complete overhaul of email template for mobile-first responsive design
+  - Mobile-optimized email template with responsive CSS media queries
+  - Responsive typography with proper mobile font sizes and line heights
+  - Mobile-friendly image scaling and spacing
+  - Dark mode support with `prefers-color-scheme` media queries
+  - Comprehensive email client compatibility (Outlook, Gmail, Apple Mail)
+  - Mobile-specific CSS classes for precise responsive control
+
+### Enhanced
+- **Email Template Architecture**
+  - Completely redesigned `wrapInEmailTemplate` function with responsive structure
+  - Added proper viewport meta tags and email client compatibility headers
+  - Enhanced preheader text formatting with proper hiding techniques
+  - Improved table-based layout structure for email client consistency
+  - Better font rendering with `-webkit-font-smoothing` and `-moz-osx-font-smoothing`
+
+- **Typography System**
+  - Responsive heading sizes that scale appropriately on mobile devices
+  - H1: 32px desktop → 24px mobile with optimized line-height
+  - H2: 24px desktop → 20px mobile with optimized line-height  
+  - H3: 20px desktop → 16px mobile with optimized line-height
+  - Enhanced paragraph styling with consistent font-size and line-height
+  - Improved list styling with proper spacing and typography
+
+- **Image Handling**
+  - Responsive images with `mobile-width-100` class for full-width scaling
+  - Enhanced image captions with mobile-optimized typography
+  - Proper image border-radius for modern email design
+  - Better image centering and spacing on all screen sizes
+
+### Technical Improvements
+- **CSS Media Queries** - Comprehensive mobile-first responsive design
+  - `@media only screen and (max-width: 640px)` breakpoint
+  - Mobile utility classes: `.mobile-hide`, `.mobile-center`, `.mobile-width-100`
+  - Mobile padding classes: `.mobile-padding`, `.mobile-padding-sm`
+  - Mobile typography classes: `.mobile-font-size-14/16/20/24`
+  - Mobile spacing classes: `.mobile-margin-bottom-16/20`
+
+- **Email Client Compatibility**
+  - Outlook-specific MSO conditional comments and fixes
+  - Apple Mail message reformatting prevention
+  - Gmail and other client table-based layout optimization
+  - Cross-client font fallback stack
+
+- **Dark Mode Support**
+  - CSS custom properties for dark mode backgrounds and text
+  - Proper border color adjustments for dark themes
+  - Future-ready design system for theme customization
+
+### Breaking Changes
+- None - all changes maintain backward compatibility with existing email content
+
+### Browser/Client Support
+- ✅ Outlook 2016+ (Windows/Mac)
+- ✅ Gmail (Web/Mobile/App)
+- ✅ Apple Mail (macOS/iOS)
+- ✅ Yahoo Mail
+- ✅ Thunderbird
+- ✅ Mobile email clients (iOS/Android)
+
 ## [0.18.0] - 2025-07-30
 
 ### Added

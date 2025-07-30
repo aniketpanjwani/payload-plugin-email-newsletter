@@ -138,10 +138,10 @@ async function convertParagraph(
   const children = childParts.join('')
   
   if (!children.trim()) {
-    return '<p style="margin: 0 0 16px 0; min-height: 1em;">&nbsp;</p>'
+    return '<p class="mobile-margin-bottom-16" style="margin: 0 0 16px 0; min-height: 1em;">&nbsp;</p>'
   }
   
-  return `<p style="margin: 0 0 16px 0; text-align: ${align};">${children}</p>`
+  return `<p class="mobile-margin-bottom-16" style="margin: 0 0 16px 0; text-align: ${align}; font-size: 16px; line-height: 1.5;">${children}</p>`
 }
 
 /**
@@ -166,9 +166,16 @@ async function convertHeading(
     h3: 'font-size: 20px; font-weight: 600; margin: 0 0 12px 0; line-height: 1.4;',
   }
   
-  const style = `${styles[tag] || styles.h3} text-align: ${align};`
+  const mobileClasses: Record<string, string> = {
+    h1: 'mobile-font-size-24',
+    h2: 'mobile-font-size-20',
+    h3: 'mobile-font-size-16',
+  }
   
-  return `<${tag} style="${style}">${children}</${tag}>`
+  const style = `${styles[tag] || styles.h3} text-align: ${align};`
+  const mobileClass = mobileClasses[tag] || mobileClasses.h3
+  
+  return `<${tag} class="${mobileClass}" style="${style}">${children}</${tag}>`
 }
 
 /**
@@ -187,10 +194,10 @@ async function convertList(
   const children = childParts.join('')
   
   const style = tag === 'ul' 
-    ? 'margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc;'
-    : 'margin: 0 0 16px 0; padding-left: 24px; list-style-type: decimal;'
+    ? 'margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc; font-size: 16px; line-height: 1.5;'
+    : 'margin: 0 0 16px 0; padding-left: 24px; list-style-type: decimal; font-size: 16px; line-height: 1.5;'
   
-  return `<${tag} style="${style}">${children}</${tag}>`
+  return `<${tag} class="mobile-margin-bottom-16" style="${style}">${children}</${tag}>`
 }
 
 /**
@@ -296,19 +303,19 @@ function convertUpload(node: any, mediaUrl?: string): string {
   const alt = node.fields?.altText || upload.alt || ''
   const caption = node.fields?.caption || ''
   
-  // Email-safe image with max-width for responsiveness
-  const imgHtml = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />`
+  // Responsive email-safe image
+  const imgHtml = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="mobile-width-100" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 6px;" />`
   
   if (caption) {
     return `
-      <div style="margin: 0 0 16px 0; text-align: center;">
+      <div style="margin: 0 0 16px 0; text-align: center;" class="mobile-margin-bottom-16">
         ${imgHtml}
-        <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280; font-style: italic;">${escapeHtml(caption)}</p>
+        <p style="margin: 8px 0 0 0; font-size: 14px; color: #6b7280; font-style: italic; text-align: center;" class="mobile-font-size-14">${escapeHtml(caption)}</p>
       </div>
     `
   }
   
-  return `<div style="margin: 0 0 16px 0; text-align: center;">${imgHtml}</div>`
+  return `<div style="margin: 0 0 16px 0; text-align: center;" class="mobile-margin-bottom-16">${imgHtml}</div>`
 }
 
 /**
@@ -423,15 +430,18 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Wrap content in a basic email template
+ * Wrap content in a responsive email template
  */
 function wrapInEmailTemplate(content: string, preheader?: string): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Email</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Newsletter</title>
+  
   <!--[if mso]>
   <noscript>
     <xml>
@@ -441,16 +451,155 @@ function wrapInEmailTemplate(content: string, preheader?: string): string {
     </xml>
   </noscript>
   <![endif]-->
+  
+  <style>
+    /* Reset and base styles */
+    * {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #1A1A1A;
+      background-color: #f8f9fa;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    table {
+      border-spacing: 0 !important;
+      border-collapse: collapse !important;
+      table-layout: fixed !important;
+      margin: 0 auto !important;
+    }
+    
+    table table table {
+      table-layout: auto;
+    }
+    
+    img {
+      -ms-interpolation-mode: bicubic;
+      max-width: 100%;
+      height: auto;
+      border: 0;
+      outline: none;
+      text-decoration: none;
+    }
+    
+    /* Responsive styles */
+    @media only screen and (max-width: 640px) {
+      .mobile-hide {
+        display: none !important;
+      }
+      
+      .mobile-center {
+        text-align: center !important;
+      }
+      
+      .mobile-width-100 {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      
+      .mobile-padding {
+        padding: 20px !important;
+      }
+      
+      .mobile-padding-sm {
+        padding: 16px !important;
+      }
+      
+      .mobile-font-size-14 {
+        font-size: 14px !important;
+      }
+      
+      .mobile-font-size-16 {
+        font-size: 16px !important;
+      }
+      
+      .mobile-font-size-20 {
+        font-size: 20px !important;
+        line-height: 1.3 !important;
+      }
+      
+      .mobile-font-size-24 {
+        font-size: 24px !important;
+        line-height: 1.2 !important;
+      }
+      
+      /* Stack sections on mobile */
+      .mobile-stack {
+        display: block !important;
+        width: 100% !important;
+      }
+      
+      /* Mobile-specific spacing */
+      .mobile-margin-bottom-16 {
+        margin-bottom: 16px !important;
+      }
+      
+      .mobile-margin-bottom-20 {
+        margin-bottom: 20px !important;
+      }
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      .dark-mode-bg {
+        background-color: #1a1a1a !important;
+      }
+      
+      .dark-mode-text {
+        color: #ffffff !important;
+      }
+      
+      .dark-mode-border {
+        border-color: #333333 !important;
+      }
+    }
+    
+    /* Outlook-specific fixes */
+    <!--[if mso]>
+    <style>
+      table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        border: none;
+        margin: 0;
+      }
+      
+      div, p {
+        margin: 0;
+      }
+    </style>
+    <![endif]-->
+  </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #333333; background-color: #f3f4f6;">
-  ${preheader ? `<div style="display: none; max-height: 0; overflow: hidden;">${escapeHtml(preheader)}</div>` : ''}
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 0;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #1A1A1A; background-color: #f8f9fa;">
+  ${preheader ? `
+  <!-- Preheader text -->
+  <div style="display: none; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: transparent;">
+    ${escapeHtml(preheader)}
+  </div>
+  ` : ''}
+  
+  <!-- Main container -->
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 0; background-color: #f8f9fa;">
     <tr>
-      <td align="center" style="padding: 20px 0;">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+      <td align="center" style="padding: 20px 10px;">
+        <!-- Email wrapper -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="600" class="mobile-width-100" style="margin: 0 auto; max-width: 600px;">
           <tr>
-            <td style="padding: 40px 30px;">
-              ${content}
+            <td class="mobile-padding" style="padding: 0;">
+              <!-- Content area with light background -->
+              <div style="background-color: #ffffff; padding: 40px 30px; border-radius: 8px;" class="mobile-padding">
+                ${content}
+              </div>
             </td>
           </tr>
         </table>
