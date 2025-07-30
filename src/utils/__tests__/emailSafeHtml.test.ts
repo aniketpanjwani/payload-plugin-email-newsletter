@@ -36,7 +36,7 @@ describe('emailSafeHtml', () => {
       }
 
       const html = await convertToEmailSafeHtml(editorState)
-      expect(html).toContain('<p style="margin: 0 0 16px 0; text-align: left;">Hello World</p>')
+      expect(html).toContain('<p style="margin: 0 0 16px 0; text-align: left; font-size: 16px; line-height: 1.5;">Hello World</p>')
     })
 
     it('should handle text formatting', async () => {
