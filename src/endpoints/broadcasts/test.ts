@@ -62,6 +62,7 @@ export const createTestBroadcastEndpoint = (
         const htmlContent = await convertToEmailSafeHtml(broadcast.content, {
           wrapInTemplate: true,
           preheader: broadcast.preheader,
+          customBlockConverter: config.customizations?.broadcasts?.customBlockConverter,
         })
 
         // Get email service

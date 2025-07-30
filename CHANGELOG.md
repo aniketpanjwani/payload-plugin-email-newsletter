@@ -1,3 +1,31 @@
+## [0.17.0] - 2025-07-29
+
+### Added
+- **Custom Block Email Converter Support** - Added support for custom block email conversion in broadcasts
+  - New `customBlockConverter` option in `BroadcastCustomizations` interface
+  - Allows users to provide their own email conversion logic for custom Lexical blocks
+  - Converter receives block node and media URL, returns email-safe HTML
+  - Supports async operations for fetching external data during conversion
+
+- **Server-Side Email Preview Generation** - Implemented server-side email preview for accurate rendering
+  - New `/api/broadcasts/preview` endpoint for generating email previews
+  - Updated BroadcastInlinePreview component to use server-side preview
+  - Ensures preview exactly matches what will be sent via email
+  - Custom block converters work in both preview and sent emails
+
+### Changed
+- **Email Conversion Functions Now Async** - All email conversion functions are now async to support custom converters
+  - `convertToEmailSafeHtml` and all internal converters are now async
+  - Maintains backward compatibility - existing code continues to work
+  - Enables custom converters to perform async operations like API calls
+
+### Technical
+- Updated `convertNode`, `convertParagraph`, `convertHeading`, etc. to be async functions
+- Added `customBlockConverter` parameter throughout the email conversion pipeline
+- Custom converter is called first, falls back to default handling if it returns empty
+- Error handling for custom converter failures with graceful fallback
+- Preview endpoint uses same conversion logic as email sending for consistency
+
 ## [0.16.10] - 2025-01-29
 
 ### Fixed

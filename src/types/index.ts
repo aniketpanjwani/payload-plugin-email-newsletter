@@ -14,6 +14,13 @@ export interface BroadcastCustomizations {
   fieldOverrides?: {
     content?: (defaultField: RichTextField) => RichTextField
   }
+  /**
+   * Custom block email converter
+   * @param node - The block node from Lexical editor state
+   * @param mediaUrl - Base URL for media files
+   * @returns Promise<string> - The email-safe HTML for the block
+   */
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
 }
 
 export interface NewsletterPluginConfig {

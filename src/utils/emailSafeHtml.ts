@@ -34,6 +34,7 @@ export async function convertToEmailSafeHtml(
     wrapInTemplate?: boolean
     preheader?: string
     mediaUrl?: string // Base URL for media files
+    customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
   }
 ): Promise<string> {
   // Handle empty content
@@ -42,7 +43,7 @@ export async function convertToEmailSafeHtml(
   }
   
   // First, convert Lexical state to HTML using custom converters
-  const rawHtml = await lexicalToEmailHtml(editorState, options?.mediaUrl)
+  const rawHtml = await lexicalToEmailHtml(editorState, options?.mediaUrl, options?.customBlockConverter)
   
   // Sanitize the HTML
   const sanitizedHtml = DOMPurify.sanitize(rawHtml, EMAIL_SAFE_CONFIG)
@@ -58,48 +59,62 @@ export async function convertToEmailSafeHtml(
 /**
  * Custom Lexical to HTML converter for email
  */
-async function lexicalToEmailHtml(editorState: SerializedEditorState, mediaUrl?: string): Promise<string> {
+async function lexicalToEmailHtml(
+  editorState: SerializedEditorState, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
   const { root } = editorState
   
   if (!root || !root.children) {
     return ''
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const html = root.children.map((node: any) => convertNode(node, mediaUrl)).join('')
-  return html
+  // Convert nodes asynchronously to support custom converters
+  const htmlParts = await Promise.all(
+    root.children.map((node: any) => convertNode(node, mediaUrl, customBlockConverter))
+  )
+  
+  return htmlParts.join('')
 }
 
 /**
  * Convert individual Lexical nodes to email-safe HTML
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertNode(node: any, mediaUrl?: string): string {
+async function convertNode(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
   switch (node.type) {
     case 'paragraph':
-      return convertParagraph(node, mediaUrl)
+      return convertParagraph(node, mediaUrl, customBlockConverter)
     case 'heading':
-      return convertHeading(node, mediaUrl)
+      return convertHeading(node, mediaUrl, customBlockConverter)
     case 'list':
-      return convertList(node, mediaUrl)
+      return convertList(node, mediaUrl, customBlockConverter)
     case 'listitem':
-      return convertListItem(node, mediaUrl)
+      return convertListItem(node, mediaUrl, customBlockConverter)
     case 'blockquote':
-      return convertBlockquote(node, mediaUrl)
+      return convertBlockquote(node, mediaUrl, customBlockConverter)
     case 'text':
       return convertText(node)
     case 'link':
-      return convertLink(node, mediaUrl)
+      return convertLink(node, mediaUrl, customBlockConverter)
     case 'linebreak':
       return '<br>'
     case 'upload':
       return convertUpload(node, mediaUrl)
     case 'block':
-      return convertBlock(node, mediaUrl)
+      return await convertBlock(node, mediaUrl, customBlockConverter)
     default:
       // Unknown node type - convert children if any
       if (node.children) {
-        return node.children.map((child: any) => convertNode(child, mediaUrl)).join('')
+        const childParts = await Promise.all(
+          node.children.map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+        )
+        return childParts.join('')
       }
       return ''
   }
@@ -109,9 +124,16 @@ function convertNode(node: any, mediaUrl?: string): string {
  * Convert paragraph node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertParagraph(node: any, mediaUrl?: string): string {
+async function convertParagraph(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
   const align = getAlignment(node.format)
-  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
+  const childParts = await Promise.all(
+    (node.children || []).map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+  )
+  const children = childParts.join('')
   
   if (!children.trim()) {
     return '<p style="margin: 0 0 16px 0; min-height: 1em;">&nbsp;</p>'
@@ -124,10 +146,17 @@ function convertParagraph(node: any, mediaUrl?: string): string {
  * Convert heading node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertHeading(node: any, mediaUrl?: string): string {
+async function convertHeading(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
   const tag = node.tag || 'h1'
   const align = getAlignment(node.format)
-  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
+  const childParts = await Promise.all(
+    (node.children || []).map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+  )
+  const children = childParts.join('')
   
   const styles: Record<string, string> = {
     h1: 'font-size: 32px; font-weight: 700; margin: 0 0 24px 0; line-height: 1.2;',
@@ -144,9 +173,16 @@ function convertHeading(node: any, mediaUrl?: string): string {
  * Convert list node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertList(node: any, mediaUrl?: string): string {
+async function convertList(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
   const tag = node.listType === 'number' ? 'ol' : 'ul'
-  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
+  const childParts = await Promise.all(
+    (node.children || []).map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+  )
+  const children = childParts.join('')
   
   const style = tag === 'ul' 
     ? 'margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc;'
@@ -159,8 +195,15 @@ function convertList(node: any, mediaUrl?: string): string {
  * Convert list item node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertListItem(node: any, mediaUrl?: string): string {
-  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
+async function convertListItem(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
+  const childParts = await Promise.all(
+    (node.children || []).map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+  )
+  const children = childParts.join('')
   return `<li style="margin: 0 0 8px 0;">${children}</li>`
 }
 
@@ -168,8 +211,15 @@ function convertListItem(node: any, mediaUrl?: string): string {
  * Convert blockquote node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertBlockquote(node: any, mediaUrl?: string): string {
-  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
+async function convertBlockquote(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
+  const childParts = await Promise.all(
+    (node.children || []).map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+  )
+  const children = childParts.join('')
   const style = 'margin: 0 0 16px 0; padding-left: 16px; border-left: 4px solid #e5e7eb; color: #6b7280;'
   
   return `<blockquote style="${style}">${children}</blockquote>`
@@ -203,8 +253,15 @@ function convertText(node: any): string {
  * Convert link node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertLink(node: any, mediaUrl?: string): string {
-  const children = node.children?.map((child: any) => convertNode(child, mediaUrl)).join('') || ''
+async function convertLink(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
+  const childParts = await Promise.all(
+    (node.children || []).map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+  )
+  const children = childParts.join('')
   const url = node.fields?.url || '#'
   const newTab = node.fields?.newTab ?? false
   
@@ -256,9 +313,27 @@ function convertUpload(node: any, mediaUrl?: string): string {
  * Convert custom block node
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function convertBlock(node: any, mediaUrl?: string): string {
-  const blockType = node.fields?.blockName
+async function convertBlock(
+  node: any, 
+  mediaUrl?: string,
+  customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+): Promise<string> {
+  const blockType = node.fields?.blockName || node.blockName
   
+  // First, check if there's a custom converter for this block
+  if (customBlockConverter) {
+    try {
+      const customHtml = await customBlockConverter(node, mediaUrl)
+      if (customHtml) {
+        return customHtml
+      }
+    } catch (error) {
+      console.error(`Custom block converter error for ${blockType}:`, error)
+      // Fall through to default handling
+    }
+  }
+  
+  // Default handling for built-in blocks
   switch (blockType) {
     case 'button':
       return convertButtonBlock(node.fields)
@@ -267,7 +342,10 @@ function convertBlock(node: any, mediaUrl?: string): string {
     default:
       // Unknown block type - try to convert children
       if (node.children) {
-        return node.children.map((child: any) => convertNode(child, mediaUrl)).join('')
+        const childParts = await Promise.all(
+          node.children.map((child: any) => convertNode(child, mediaUrl, customBlockConverter))
+        )
+        return childParts.join('')
       }
       return ''
   }

@@ -1,19 +1,13 @@
 'use client'
 import React, { useState, useCallback } from 'react'
 import { useFormFields } from '@payloadcms/ui'
-import { transformContentForPreview } from '../../utils/contentTransformer'
-import { loadTemplate } from '../../utils/templateLoader'
-import { EmailRenderer } from './EmailRenderer'
 import { PreviewControls } from './PreviewControls'
 
 export const BroadcastInlinePreview: React.FC = () => {
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
   const [isLoading, setIsLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
-  const [previewData, setPreviewData] = useState<{
-    template: React.ComponentType<any>
-    data: any
-  } | null>(null)
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [error, setError] = useState<Error | null>(null)
   
   const fields = useFormFields(([fields]) => ({
@@ -32,21 +26,26 @@ export const BroadcastInlinePreview: React.FC = () => {
     setError(null)
     
     try {
-      const htmlContent = await transformContentForPreview(fields.content as any, {
-        mediaUrl: '/api/media',
+      // Call the server-side preview endpoint
+      const response = await fetch('/api/broadcasts/preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: fields.content,
+          preheader: fields.preheader,
+          subject: fields.subject,
+        }),
       })
       
-      const template = await loadTemplate()
+      const data = await response.json()
       
-      setPreviewData({
-        template,
-        data: {
-          subject: fields.subject || '',
-          preheader: fields.preheader || '',
-          content: htmlContent,
-        }
-      })
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate preview')
+      }
       
+      setPreviewHtml(data.preview.html)
       setShowPreview(true)
     } catch (err) {
       setError(err as Error)
@@ -137,7 +136,7 @@ export const BroadcastInlinePreview: React.FC = () => {
                 Retry
               </button>
             </div>
-          ) : previewData ? (
+          ) : previewHtml ? (
             <>
               <PreviewControls 
                 onUpdate={updatePreview}
@@ -145,11 +144,37 @@ export const BroadcastInlinePreview: React.FC = () => {
                 onDeviceChange={setDevice}
                 isLoading={isLoading}
               />
-              <EmailRenderer 
-                template={previewData.template}
-                data={previewData.data}
-                device={device}
-              />
+              <div
+                style={{
+                  flex: 1,
+                  padding: device === 'mobile' ? '1rem' : '2rem',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  overflow: 'auto',
+                }}
+              >
+                <div
+                  style={{
+                    width: device === 'mobile' ? '375px' : '600px',
+                    maxWidth: '100%',
+                    background: 'white',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <iframe
+                    srcDoc={previewHtml}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      minHeight: '600px',
+                      border: 'none',
+                    }}
+                    title="Email Preview"
+                  />
+                </div>
+              </div>
             </>
           ) : null}
         </div>

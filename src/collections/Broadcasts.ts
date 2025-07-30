@@ -292,7 +292,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
               // Convert rich text to HTML
               req.payload.logger.info('Converting content to HTML...')
-              const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
+              const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content, {
+                customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
+              })
               
               // Skip if content is empty after conversion
               if (!htmlContent || htmlContent.trim() === '') {
@@ -414,7 +416,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
                 // Convert rich text to HTML
                 req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
-                const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content)
+                const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content, {
+                  customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
+                })
 
                 // Skip if content is empty after conversion
                 if (!htmlContent || htmlContent.trim() === '') {
@@ -497,7 +501,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     updates.preheader = doc.contentSection?.preheader
                   }
                   if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
-                    updates.content = await convertToEmailSafeHtml(doc.contentSection?.content)
+                    updates.content = await convertToEmailSafeHtml(doc.contentSection?.content, {
+                      customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
+                    })
                   }
                   if (doc.settings?.trackOpens !== previousDoc?.settings?.trackOpens) {
                     updates.trackOpens = doc.settings.trackOpens
