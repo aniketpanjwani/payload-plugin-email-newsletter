@@ -1,3 +1,16 @@
+## [0.17.2] - 2025-07-29
+
+### Fixed
+- **Broadcast Endpoints Registration** - Fixed endpoints not being accessible in Payload v3
+  - Moved broadcast endpoints from global endpoints to collection endpoints
+  - Endpoints are now properly registered on the broadcasts collection
+  - Fixes 404 errors for all broadcast endpoints (/preview, /test, /send, /schedule)
+  - Aligns with Payload v3 architecture where collection endpoints should be defined on the collection
+
+### Changed
+- `createBroadcastManagementEndpoints` now returns empty array (kept for backward compatibility)
+- Broadcast endpoints are defined directly in the broadcasts collection configuration
+
 ## [0.17.1] - 2025-07-29
 
 ### Fixed

@@ -5,13 +5,19 @@ import { createEmailContentField, createEmailLexicalEditor } from '../fields/ema
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 import { getBroadcastConfig } from '../utils/getBroadcastConfig'
+import { createSendBroadcastEndpoint } from '../endpoints/broadcasts/send'
+import { createScheduleBroadcastEndpoint } from '../endpoints/broadcasts/schedule'
+import { createTestBroadcastEndpoint } from '../endpoints/broadcasts/test'
+import { createBroadcastPreviewEndpoint } from '../endpoints/broadcasts/preview'
 
 export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig): CollectionConfig => {
   const hasProviders = !!(pluginConfig.providers?.broadcast || pluginConfig.providers?.resend)
   const customizations = pluginConfig.customizations?.broadcasts
 
+  const collectionSlug = 'broadcasts'
+
   return {
-    slug: 'broadcasts',
+    slug: collectionSlug,
     access: {
       read: () => true, // Public read access
       create: ({ req: { user } }) => {
@@ -42,6 +48,12 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
       description: 'Individual email campaigns sent to subscribers',
       defaultColumns: ['subject', '_status', 'sendStatus', 'sentAt', 'recipientCount'],
     },
+    endpoints: [
+      createSendBroadcastEndpoint(pluginConfig, collectionSlug),
+      createScheduleBroadcastEndpoint(pluginConfig, collectionSlug),
+      createTestBroadcastEndpoint(pluginConfig, collectionSlug),
+      createBroadcastPreviewEndpoint(pluginConfig, collectionSlug),
+    ],
     fields: [
       {
         name: 'subject',

@@ -8,19 +8,7 @@ import { createBroadcastPreviewEndpoint } from './preview'
 export const createBroadcastManagementEndpoints = (
   config: NewsletterPluginConfig
 ): Endpoint[] => {
-  // Only create endpoints if broadcast management is enabled
-  if (!config.features?.newsletterManagement?.enabled) {
-    return []
-  }
-
-  // Only create custom action endpoints
-  // CRUD operations are handled by Payload's automatic REST API
-  const collectionSlug = config.features.newsletterManagement.collections?.broadcasts || 'broadcasts'
-  
-  return [
-    createSendBroadcastEndpoint(config, collectionSlug),
-    createScheduleBroadcastEndpoint(config, collectionSlug),
-    createTestBroadcastEndpoint(config, collectionSlug),
-    createBroadcastPreviewEndpoint(config, collectionSlug),
-  ]
+  // Broadcast endpoints are now added directly to the broadcasts collection
+  // This function is kept for backward compatibility but returns empty array
+  return []
 }
