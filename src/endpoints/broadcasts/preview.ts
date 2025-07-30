@@ -7,7 +7,7 @@ export const createBroadcastPreviewEndpoint = (
   collectionSlug: string
 ): Endpoint => {
   return {
-    path: `/${collectionSlug}/preview`,
+    path: '/preview',
     method: 'post',
     handler: (async (req: PayloadRequest) => {
       try {

@@ -1,3 +1,15 @@
+## [0.17.3] - 2025-07-30
+
+### Fixed
+- **Duplicate Collection Slug in Endpoint Paths** - Fixed broadcast endpoints having duplicate collection slugs
+  - Removed collection slug from endpoint paths as Payload automatically prepends it
+  - Changed `/${collectionSlug}/preview` to `/preview`
+  - Changed `/${collectionSlug}/:id/send` to `/:id/send`
+  - Changed `/${collectionSlug}/:id/schedule` to `/:id/schedule`
+  - Changed `/${collectionSlug}/:id/test` to `/:id/test`
+  - Fixes 404 errors when accessing endpoints from `/api/broadcasts/preview` instead of `/api/broadcasts/broadcasts/preview`
+  - Client code can now properly access endpoints at their expected paths
+
 ## [0.17.2] - 2025-07-29
 
 ### Fixed

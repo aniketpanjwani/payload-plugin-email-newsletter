@@ -8,7 +8,7 @@ export const createScheduleBroadcastEndpoint = (
   collectionSlug: string
 ): Endpoint => {
   return {
-    path: `/${collectionSlug}/:id/schedule`,
+    path: '/:id/schedule',
     method: 'post',
     handler: (async (req: PayloadRequest) => {
       try {

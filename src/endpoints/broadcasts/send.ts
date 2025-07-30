@@ -9,7 +9,7 @@ export const createSendBroadcastEndpoint = (
   collectionSlug: string
 ): Endpoint => {
   return {
-    path: `/${collectionSlug}/:id/send`,
+    path: '/:id/send',
     method: 'post',
     handler: (async (req: PayloadRequest) => {
       try {

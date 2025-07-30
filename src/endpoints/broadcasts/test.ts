@@ -8,7 +8,7 @@ export const createTestBroadcastEndpoint = (
   collectionSlug: string
 ): Endpoint => {
   return {
-    path: `/${collectionSlug}/:id/test`,
+    path: '/:id/test',
     method: 'post',
     handler: (async (req: PayloadRequest) => {
       try {
