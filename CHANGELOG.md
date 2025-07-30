@@ -1,3 +1,11 @@
+## [0.17.4] - 2025-07-30
+
+### Fixed
+- **Resolved Lint Errors** - Fixed CI/CD build failures caused by lint errors
+  - Removed unused imports from `endpoints/broadcasts/index.ts`
+  - Prefixed unused `collectionSlug` parameter with underscore in `preview.ts`
+  - Ensures clean build and successful npm publish
+
 ## [0.17.3] - 2025-07-30
 
 ### Fixed
@@ -9,7 +17,6 @@
   - Changed `/${collectionSlug}/:id/test` to `/:id/test`
   - Fixes 404 errors when accessing endpoints from `/api/broadcasts/preview` instead of `/api/broadcasts/broadcasts/preview`
   - Client code can now properly access endpoints at their expected paths
-  - Fixed unused imports and parameters to resolve lint errors
 
 ## [0.17.2] - 2025-07-29
 
