@@ -1,3 +1,43 @@
+## [0.18.0] - 2025-07-30
+
+### Added
+- **Media Field Population in Custom Blocks** - Fixed critical issue where media fields in custom blocks weren't populated during email conversion
+  - Added automatic media field population in preview endpoint before email conversion
+  - Media fields now receive full media objects with URLs instead of just ID strings
+  - Added `populateFields` option to `BroadcastCustomizations` interface for configurable field population
+  - Added recursive population support for array fields containing upload fields
+  - Comprehensive logging for media population success and failures
+  - Both email previews and sent emails now properly populate media relationships
+
+### Enhanced
+- **Preview Endpoint** - Significantly improved custom block support
+  - Preview endpoint now populates media fields before calling custom block converters
+  - Custom blocks with images now display correctly in email previews
+  - Added detailed logging for debugging media population issues
+  
+- **Broadcast Sync Logic** - Applied media population to all broadcast operations
+  - Create operation now populates media fields before provider sync
+  - Update operation populates media fields when content changes
+  - Deferred create operation (empty → content) now handles media population
+  - Ensures consistency between previews and actual sent emails
+
+### Technical
+- **New Helper Functions**
+  - `populateMediaFields()` - Recursively finds and populates upload fields in Lexical content
+  - `populateBlockMediaFields()` - Handles individual block media field population
+  - Support for both direct upload fields and upload fields within arrays
+  - Automatic detection of upload fields based on custom block configuration
+  - MongoDB ObjectId pattern matching for field population decisions
+
+### Types
+- **Enhanced BroadcastCustomizations Interface**
+  - Added `populateFields` option with string array or function signature
+  - Comprehensive documentation with usage examples
+  - Support for block-type-specific field population logic
+
+### Breaking Changes
+- None - all changes are backward compatible and additive
+
 ## [0.17.4] - 2025-07-30
 
 ### Fixed

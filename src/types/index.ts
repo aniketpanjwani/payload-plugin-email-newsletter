@@ -21,6 +21,25 @@ export interface BroadcastCustomizations {
    * @returns Promise<string> - The email-safe HTML for the block
    */
   customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+  
+  /**
+   * Fields to populate in custom blocks before email conversion
+   * Can be an array of field names or a function that returns field names based on block type
+   * This is useful for upload fields that need to be populated with full media objects
+   * 
+   * @example
+   * // Array of field names to always populate
+   * populateFields: ['bannerImage', 'sponsorLogo']
+   * 
+   * @example
+   * // Function to return fields based on block type
+   * populateFields: (blockType) => {
+   *   if (blockType === 'newsletter-hero') return ['bannerImage', 'sponsorLogo']
+   *   if (blockType === 'content-section') return ['featuredImage']
+   *   return []
+   * }
+   */
+  populateFields?: string[] | ((blockType: string) => string[])
 }
 
 export interface NewsletterPluginConfig {

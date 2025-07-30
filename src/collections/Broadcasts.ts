@@ -8,7 +8,7 @@ import { getBroadcastConfig } from '../utils/getBroadcastConfig'
 import { createSendBroadcastEndpoint } from '../endpoints/broadcasts/send'
 import { createScheduleBroadcastEndpoint } from '../endpoints/broadcasts/schedule'
 import { createTestBroadcastEndpoint } from '../endpoints/broadcasts/test'
-import { createBroadcastPreviewEndpoint } from '../endpoints/broadcasts/preview'
+import { createBroadcastPreviewEndpoint, populateMediaFields } from '../endpoints/broadcasts/preview'
 
 export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig): CollectionConfig => {
   const hasProviders = !!(pluginConfig.providers?.broadcast || pluginConfig.providers?.resend)
@@ -302,9 +302,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
               const provider = new BroadcastApiProvider(providerConfig)
 
-              // Convert rich text to HTML
-              req.payload.logger.info('Converting content to HTML...')
-              const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content, {
+              // Populate media fields and convert rich text to HTML
+              req.payload.logger.info('Populating media fields and converting content to HTML...')
+              const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
+              const htmlContent = await convertToEmailSafeHtml(populatedContent, {
                 customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
               })
               
@@ -426,9 +427,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   return doc
                 }
 
-                // Convert rich text to HTML
+                // Populate media fields and convert rich text to HTML
                 req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
-                const htmlContent = await convertToEmailSafeHtml(doc.contentSection?.content, {
+                const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
+                const htmlContent = await convertToEmailSafeHtml(populatedContent, {
                   customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
                 })
 
@@ -513,7 +515,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     updates.preheader = doc.contentSection?.preheader
                   }
                   if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
-                    updates.content = await convertToEmailSafeHtml(doc.contentSection?.content, {
+                    const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
+                    updates.content = await convertToEmailSafeHtml(populatedContent, {
                       customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
                     })
                   }

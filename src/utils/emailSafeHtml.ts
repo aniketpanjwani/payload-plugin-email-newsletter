@@ -35,6 +35,8 @@ export async function convertToEmailSafeHtml(
     preheader?: string
     mediaUrl?: string // Base URL for media files
     customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
+    payload?: any // Payload instance for populating relationships
+    populateFields?: string[] | ((blockType: string) => string[]) // Fields to populate
   }
 ): Promise<string> {
   // Handle empty content

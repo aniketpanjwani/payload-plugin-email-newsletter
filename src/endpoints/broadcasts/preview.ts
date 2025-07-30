@@ -1,6 +1,108 @@
-import type { Endpoint, PayloadHandler, PayloadRequest } from 'payload'
+import type { Endpoint, PayloadHandler, PayloadRequest, Payload } from 'payload'
 import type { NewsletterPluginConfig } from '../../types'
 import { convertToEmailSafeHtml } from '../../utils/emailSafeHtml'
+
+// Helper function to recursively find and populate media fields in content
+export async function populateMediaFields(content: any, payload: Payload, config: NewsletterPluginConfig): Promise<any> {
+  if (!content || typeof content !== 'object') return content
+  
+  // Handle Lexical editor state
+  if (content.root?.children) {
+    for (const child of content.root.children) {
+      await populateBlockMediaFields(child, payload, config)
+    }
+  }
+  
+  return content
+}
+
+// Helper function to populate media fields in individual blocks
+async function populateBlockMediaFields(node: any, payload: Payload, config: NewsletterPluginConfig): Promise<void> {
+  // Check if this is a block node
+  if (node.type === 'block' && node.fields) {
+    const blockType = node.fields.blockType || node.fields.blockName
+    
+    // Get custom blocks configuration
+    const customBlocks = config.customizations?.broadcasts?.customBlocks || []
+    const blockConfig = customBlocks.find((b: any) => b.slug === blockType)
+    
+    if (blockConfig && blockConfig.fields) {
+      // Find all upload fields in the block
+      for (const field of blockConfig.fields) {
+        if (field.type === 'upload' && field.relationTo && node.fields[field.name]) {
+          const fieldValue = node.fields[field.name]
+          
+          // If it's just an ID string, populate it
+          if (typeof fieldValue === 'string' && fieldValue.match(/^[a-f0-9]{24}$/i)) {
+            try {
+              const media = await payload.findByID({
+                collection: field.relationTo,
+                id: fieldValue,
+                depth: 0,
+              })
+              
+              if (media) {
+                node.fields[field.name] = media
+                payload.logger?.info(`Populated ${field.name} for block ${blockType}:`, {
+                  mediaId: fieldValue,
+                  mediaUrl: media.url,
+                  filename: media.filename
+                })
+              }
+            } catch (error) {
+              payload.logger?.error(`Failed to populate ${field.name} for block ${blockType}:`, error)
+            }
+          }
+        }
+        
+        // Also handle arrays of uploads
+        if (field.type === 'array' && field.fields) {
+          const arrayValue = node.fields[field.name]
+          if (Array.isArray(arrayValue)) {
+            for (const arrayItem of arrayValue) {
+              if (arrayItem && typeof arrayItem === 'object') {
+                // Recursively process array items for upload fields
+                for (const arrayField of field.fields) {
+                  if (arrayField.type === 'upload' && arrayField.relationTo && arrayItem[arrayField.name]) {
+                    const arrayFieldValue = arrayItem[arrayField.name]
+                    
+                    if (typeof arrayFieldValue === 'string' && arrayFieldValue.match(/^[a-f0-9]{24}$/i)) {
+                      try {
+                        const media = await payload.findByID({
+                          collection: arrayField.relationTo,
+                          id: arrayFieldValue,
+                          depth: 0,
+                        })
+                        
+                        if (media) {
+                          arrayItem[arrayField.name] = media
+                          payload.logger?.info(`Populated array ${arrayField.name} for block ${blockType}:`, {
+                            mediaId: arrayFieldValue,
+                            mediaUrl: media.url,
+                            filename: media.filename
+                          })
+                        }
+                      } catch (error) {
+                        payload.logger?.error(`Failed to populate array ${arrayField.name} for block ${blockType}:`, error)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Recursively process children
+  if (node.children) {
+    for (const child of node.children) {
+      await populateBlockMediaFields(child, payload, config)
+    }
+  }
+}
 
 export const createBroadcastPreviewEndpoint = (
   config: NewsletterPluginConfig,
@@ -27,8 +129,12 @@ export const createBroadcastPreviewEndpoint = (
           ? `${req.payload.config.serverURL}/api/media`
           : '/api/media'
 
+        // Populate media fields in custom blocks before conversion
+        req.payload.logger?.info('Populating media fields for email preview...')
+        const populatedContent = await populateMediaFields(content, req.payload, config)
+
         // Convert content to email-safe HTML with custom block converter
-        const htmlContent = await convertToEmailSafeHtml(content, {
+        const htmlContent = await convertToEmailSafeHtml(populatedContent, {
           wrapInTemplate: true,
           preheader: preheader,
           mediaUrl: mediaUrl,
