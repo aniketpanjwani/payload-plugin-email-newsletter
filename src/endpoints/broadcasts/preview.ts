@@ -4,7 +4,7 @@ import { convertToEmailSafeHtml } from '../../utils/emailSafeHtml'
 
 export const createBroadcastPreviewEndpoint = (
   config: NewsletterPluginConfig,
-  collectionSlug: string
+  _collectionSlug: string
 ): Endpoint => {
   return {
     path: '/preview',

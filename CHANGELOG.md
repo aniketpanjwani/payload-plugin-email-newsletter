@@ -9,6 +9,7 @@
   - Changed `/${collectionSlug}/:id/test` to `/:id/test`
   - Fixes 404 errors when accessing endpoints from `/api/broadcasts/preview` instead of `/api/broadcasts/broadcasts/preview`
   - Client code can now properly access endpoints at their expected paths
+  - Fixed unused imports and parameters to resolve lint errors
 
 ## [0.17.2] - 2025-07-29
 
