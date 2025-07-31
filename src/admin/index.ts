@@ -1,8 +1,5 @@
 'use client'
 
-// ONLY import client-safe dependencies
-import React from 'react'
-
 // Import ONLY pure React components that don't have server dependencies
 import { BroadcastInlinePreview } from './components/BroadcastInlinePreview'
 import { StatusBadge } from './components/StatusBadge'

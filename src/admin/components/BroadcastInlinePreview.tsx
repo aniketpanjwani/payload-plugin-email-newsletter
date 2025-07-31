@@ -8,9 +8,9 @@ export interface BroadcastInlinePreviewProps {
 }
 
 export const BroadcastInlinePreview: React.FC<BroadcastInlinePreviewProps> = ({
-  field,
-  data,
-  ...props
+  field: _field,
+  data: _data,
+  ..._props
 }) => {
   // Pure React component
   // NO server-side imports
