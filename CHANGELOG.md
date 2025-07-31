@@ -1,3 +1,30 @@
+## [0.20.3] - 2025-07-31
+
+### Fixed
+- **CRITICAL: Admin Bundle Server Dependencies** - Eliminated all Node.js server dependencies from admin bundle
+  - Reorganized source code into strict server/, client/, admin/, shared/ separation
+  - Created pure React admin components that don't depend on Node.js built-ins
+  - Updated build system with strict external dependencies for admin bundle
+  - Added bundle validation script to prevent server dependencies in browser bundles
+  - Fixed Next.js App Router compatibility issues with worker_threads, node:assert, and pino dependencies
+
+### Breaking Changes (None)
+- Import paths remain unchanged - full backward compatibility maintained
+- All existing functionality preserved with improved bundle separation
+
+### Technical Changes
+- Reorganized source structure: server/, client/, admin/, shared/ directories
+- Created browser-only admin components without server dependencies
+- Updated tsup config to strictly external Node.js modules in admin bundle
+- Added automated bundle validation in build process
+- Reduced admin bundle size by eliminating server code
+
+### Validation
+- ✅ Admin bundle contains no worker_threads, node:assert, pino dependencies
+- ✅ Client bundle contains no server-side modules  
+- ✅ Server bundle maintains full server functionality
+- ✅ All existing APIs and components work unchanged
+
 ## [0.20.2] - 2025-07-31
 
 ### Fixed

@@ -1,9 +1,9 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig([
-  // Server build - no React components
+  // Server build - Node.js only
   {
-    entry: ['src/server.ts'],
+    entry: { server: 'src/server/index.ts' },
     format: ['esm'],
     outDir: 'dist',
     outExtension: () => ({ js: '.js' }),
@@ -11,15 +11,16 @@ export default defineConfig([
     external: ['payload', 'react', 'react-dom'],
     clean: true,
     minify: false,
-    target: 'es2020',
+    target: 'node18',
+    platform: 'node',
     esbuildOptions(options) {
       options.platform = 'node'
       options.mainFields = ['module', 'main']
     },
   },
-  // Client build - React components with "use client"
+  // Client build - Browser only
   {
-    entry: ['src/client.ts'],
+    entry: { client: 'src/client/index.ts' },
     format: ['esm'],
     outDir: 'dist',
     outExtension: () => ({ js: '.js' }),
@@ -27,6 +28,10 @@ export default defineConfig([
     external: ['payload', 'react', 'react-dom'],
     minify: false,
     target: 'es2020',
+    platform: 'browser',
+    define: {
+      'process.env.NODE_ENV': '"production"',
+    },
     esbuildOptions(options) {
       options.jsx = 'automatic'
       options.platform = 'browser'
@@ -36,23 +41,29 @@ export default defineConfig([
       js: '"use client";',
     },
   },
-  // Admin build - Payload admin components with "use client"
+  // Admin build - Browser only (STRICT)
   {
-    entry: ['src/admin.ts'],
+    entry: { admin: 'src/admin/index.ts' },
     format: ['esm'],
     outDir: 'dist',
     outExtension: () => ({ js: '.js' }),
     dts: true,
     external: [
       'payload',
-      'react',
+      'react', 
       'react-dom',
-      '@payloadcms/ui',
-      '@payloadcms/richtext-lexical',
-      '@payloadcms/translations',
+      // Critical: External all Node.js modules
+      'fs', 'path', 'crypto', 'os', 'util', 'assert',
+      'worker_threads', 'stream', 'buffer', 'url',
+      'querystring', 'node:*',
+      // External Payload server utilities
+      '@payloadcms/next/utilities',
+      'pino', 'pino-pretty', 'pino-abstract-transport'
     ],
-    minify: false,
+    platform: 'browser',
     target: 'es2020',
+    noExternal: [], // Nothing should be bundled that's not explicitly allowed
+    minify: false,
     esbuildOptions(options) {
       options.jsx = 'automatic'
       options.platform = 'browser'

@@ -1,6 +1,6 @@
 {
   "name": "payload-plugin-newsletter",
-  "version": "0.20.2",
+  "version": "0.20.3",
   "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
   "type": "module",
   "main": "./dist/index.js",
@@ -85,7 +85,8 @@
     "test:coverage": "bunx vitest run --coverage",
     "test:ui": "bunx vitest --ui",
     "generate:types": "tsc --emitDeclarationOnly --outDir dist",
-    "prepublishOnly": "bun run clean && bun run build",
+    "validate:bundles": "node scripts/validate-bundles.cjs",
+    "prepublishOnly": "bun run clean && bun run build && bun run validate:bundles",
     "release:patch": "./scripts/release.sh patch",
     "release:minor": "./scripts/release.sh minor",
     "release:major": "./scripts/release.sh major"
