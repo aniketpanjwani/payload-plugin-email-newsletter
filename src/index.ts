@@ -9,6 +9,7 @@ import { createUnsubscribeSyncJob } from './jobs/sync-unsubscribes'
 import { createBroadcastsCollection } from './collections/Broadcasts'
 import { BroadcastApiProvider } from './providers/broadcast/broadcast'
 import { ResendBroadcastProvider } from './providers/resend/broadcast'
+import { setPluginConfig } from './contexts/ServerContext'
 
 // Extend Payload type to include our email service and broadcast provider
 declare module 'payload' {
@@ -34,6 +35,9 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
     },
     ...pluginConfig,
   }
+
+  // Store config in server-safe way
+  setPluginConfig(config)
 
   // If plugin is disabled, return config unchanged
   if (!config.enabled) {
@@ -247,5 +251,5 @@ export { newsletterPlugin as default }
 // Export session utilities
 export * from './utilities/session'
 
-// Export contexts for advanced users
-export * from './contexts/PluginConfigContext'
+// Export server-safe utilities
+export * from './contexts/ServerContext'

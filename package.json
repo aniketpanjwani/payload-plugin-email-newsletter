@@ -1,6 +1,6 @@
 {
   "name": "payload-plugin-newsletter",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,24 +8,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
     },
     "./client": {
-      "import": {
-        "types": "./dist/client.d.ts",
-        "default": "./dist/client.js"
-      },
-      "require": {
-        "types": "./dist/client.d.cts",
-        "default": "./dist/client.cjs"
-      }
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./admin": {
+      "import": "./dist/admin.js",
+      "types": "./dist/admin.d.ts"
+    },
+    "./components": {
+      "import": "./dist/admin.js",
+      "types": "./dist/admin.d.ts"
     },
     "./types": {
       "import": {
@@ -35,16 +35,6 @@
       "require": {
         "types": "./dist/types.d.cts",
         "default": "./dist/types.cjs"
-      }
-    },
-    "./components": {
-      "import": {
-        "types": "./dist/components.d.ts",
-        "default": "./dist/components.js"
-      },
-      "require": {
-        "types": "./dist/components.d.cts",
-        "default": "./dist/components.cjs"
       }
     },
     "./utils": {

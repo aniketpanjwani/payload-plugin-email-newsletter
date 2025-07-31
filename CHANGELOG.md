@@ -1,3 +1,31 @@
+## [0.20.2] - 2025-07-31
+
+### Fixed
+- **CRITICAL: Next.js App Router createContext Error** - Complete architectural fix for Next.js App Router compatibility
+  - Separated server and client entry points to prevent React context issues during server-side initialization
+  - Created dedicated `server.ts`, `client.ts`, and `admin.ts` entry points
+  - Fixed server-side React context imports that caused `createContext is not a function` errors
+  - Updated package.json exports to properly route to server-safe and client-safe bundles
+  - Implemented server-safe plugin configuration storage using simple object store
+  - Updated build system to generate separate bundles with proper "use client" directives
+
+### Breaking Changes (Minor)
+- **Import Path Changes**:
+  - Admin components: `import { BroadcastInlinePreview } from 'payload-plugin-newsletter/admin'` (was `/components`)
+  - Client components: `import { NewsletterForm } from 'payload-plugin-newsletter/client'`
+  - Server exports: `import { newsletterPlugin } from 'payload-plugin-newsletter'` (unchanged)
+- **Context API Changes**:
+  - Server-side config access through `getPluginConfig()` instead of React context
+  - Client-side React context requires explicit `PluginConfigProvider` setup
+
+### Technical Changes
+- Added separate entry points: `src/server.ts`, `src/client.ts`, `src/admin.ts`
+- Created `ServerContext.ts` for server-safe configuration storage
+- Created `ClientContext.tsx` for client-side React context
+- Updated tsup config to build multiple entry points with proper directives
+- Fixed plugin initialization to use server-safe config storage
+- Updated package.json exports to route to appropriate bundles
+
 ## [0.20.1] - 2025-07-31
 
 ### Fixed
