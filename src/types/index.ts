@@ -40,6 +40,32 @@ export interface BroadcastCustomizations {
    * }
    */
   populateFields?: string[] | ((blockType: string) => string[])
+  
+  /**
+   * Email preview customization options
+   */
+  emailPreview?: {
+    /**
+     * Whether to wrap preview content in default email template
+     * @default true
+     */
+    wrapInTemplate?: boolean
+    
+    /**
+     * Custom wrapper function for preview content
+     * Receives the converted HTML and should return wrapped HTML
+     */
+    customWrapper?: (content: string, options?: {
+      subject?: string
+      preheader?: string
+    }) => string | Promise<string>
+    
+    /**
+     * Custom preview component to replace the default one entirely
+     * If provided, this component will be used instead of the default EmailPreview
+     */
+    customPreviewComponent?: string // Path to custom component for import map
+  }
 }
 
 export interface NewsletterPluginConfig {

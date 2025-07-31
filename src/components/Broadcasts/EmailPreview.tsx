@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import type { SerializedEditorState } from 'lexical'
 import { convertToEmailSafeHtml, replacePersonalizationTags } from '../../utils/emailSafeHtml'
 import { validateEmailHtml } from '../../utils/validateEmailHtml'
+import type { NewsletterPluginConfig } from '../../types'
+import { usePluginConfigOptional } from '../../contexts/PluginConfigContext'
 
 interface EmailPreviewProps {
   content: SerializedEditorState | null
@@ -11,6 +13,7 @@ interface EmailPreviewProps {
   preheader?: string
   mode?: 'desktop' | 'mobile'
   onValidation?: (result: { valid: boolean; warnings: string[]; errors: string[] }) => void
+  pluginConfig?: NewsletterPluginConfig // Optional prop for direct config passing
 }
 
 const SAMPLE_DATA = {
@@ -31,7 +34,11 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
   preheader,
   mode = 'desktop',
   onValidation,
+  pluginConfig: propPluginConfig,
 }) => {
+  // Use plugin config from prop or context
+  const contextPluginConfig = usePluginConfigOptional()
+  const pluginConfig = propPluginConfig || contextPluginConfig
   const [html, setHtml] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [validationResult, setValidationResult] = useState<ReturnType<typeof validateEmailHtml> | null>(null)
@@ -47,10 +54,16 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
 
       setLoading(true)
       try {
-        // Convert to email-safe HTML
+        // Get email preview customization options
+        const emailPreviewConfig = pluginConfig?.customizations?.broadcasts?.emailPreview
+        
+        // Convert to email-safe HTML with customization options
         const emailHtml = await convertToEmailSafeHtml(content, {
-          wrapInTemplate: true,
+          wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
           preheader,
+          subject,
+          customWrapper: emailPreviewConfig?.customWrapper,
+          customBlockConverter: pluginConfig?.customizations?.broadcasts?.customBlockConverter,
         })
 
         // Replace personalization tags with sample data
@@ -78,7 +91,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
     }
 
     convertContent()
-  }, [content, subject, preheader, onValidation])
+  }, [content, subject, preheader, onValidation, pluginConfig])
 
   // Update iframe content when HTML changes
   useEffect(() => {

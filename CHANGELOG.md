@@ -1,3 +1,43 @@
+## [0.20.0] - 2025-07-31
+
+### Added
+- **Email Preview Customization** - Full control over email preview rendering
+  - New `emailPreview` customization options in `BroadcastCustomizations` interface
+  - `wrapInTemplate` option to disable default email template wrapping
+  - `customWrapper` function for custom email template wrappers
+  - Support for both sync and async custom wrapper functions
+  - Pass subject and preheader to custom wrapper for complete control
+  - `customPreviewComponent` option (planned) for replacing the entire preview component
+
+### Enhanced
+- **Plugin Configuration Context**
+  - Added `PluginConfigContext` for passing configuration throughout component tree
+  - `usePluginConfig` hook for required config access
+  - `usePluginConfigOptional` hook for safe optional config access
+  - Context provider integration in component hierarchy
+
+- **Email Preview Component**
+  - Updated to respect email preview customization options
+  - Backward compatible with default template wrapping behavior
+  - Support for both prop-based and context-based config passing
+  - Seamless integration with custom wrapper functions
+
+- **Preview Endpoint**
+  - Updated to use email preview customization options
+  - Consistent behavior between UI preview and API preview
+  - Maintains all existing functionality while adding customization
+
+### Technical Improvements
+- **Type Safety** - Full TypeScript support for all customization options
+- **Backward Compatibility** - All changes maintain 100% backward compatibility
+- **Flexible Architecture** - Easy to extend with additional customization options
+- **Performance** - No performance impact when customization is not used
+
+### Developer Experience
+- **Easy Configuration** - Simple to disable template wrapping or provide custom wrapper
+- **Context Support** - Components can access config without prop drilling
+- **Comprehensive Types** - Well-documented interfaces with examples
+
 ## [0.19.0] - 2025-07-30
 
 ### Added

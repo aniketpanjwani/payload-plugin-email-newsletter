@@ -133,12 +133,17 @@ export const createBroadcastPreviewEndpoint = (
         req.payload.logger?.info('Populating media fields for email preview...')
         const populatedContent = await populateMediaFields(content, req.payload, config)
 
-        // Convert content to email-safe HTML with custom block converter
+        // Get email preview customization options
+        const emailPreviewConfig = config.customizations?.broadcasts?.emailPreview
+        
+        // Convert content to email-safe HTML with customization options
         const htmlContent = await convertToEmailSafeHtml(populatedContent, {
-          wrapInTemplate: true,
+          wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
           preheader: preheader,
+          subject: subject,
           mediaUrl: mediaUrl,
           customBlockConverter: config.customizations?.broadcasts?.customBlockConverter,
+          customWrapper: emailPreviewConfig?.customWrapper,
         })
 
         return Response.json({

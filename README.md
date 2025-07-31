@@ -806,6 +806,22 @@ newsletterPlugin({
             description: 'Custom description'
           }
         })
+      },
+      // Email preview customization (v0.20.0+)
+      emailPreview: {
+        // Disable default email template wrapping
+        wrapInTemplate: false,
+        
+        // Or provide a custom wrapper function
+        customWrapper: async (content, { subject, preheader }) => {
+          return `
+            <div class="my-custom-template">
+              <h1>${subject}</h1>
+              ${preheader ? `<p class="preheader">${preheader}</p>` : ''}
+              <div class="content">${content}</div>
+            </div>
+          `
+        }
       }
     }
   }
@@ -813,6 +829,87 @@ newsletterPlugin({
 ```
 
 **Note**: Custom blocks are processed server-side to ensure email compatibility and prevent Next.js serialization errors.
+
+### Email Preview Customization (v0.20.0+)
+
+The plugin now supports full customization of email preview rendering. This is useful when you have custom email templates and want the preview to match what's actually sent.
+
+#### Disable Default Template Wrapping
+
+If you're using your own email template system, you can disable the default template wrapping:
+
+```typescript
+newsletterPlugin({
+  customizations: {
+    broadcasts: {
+      emailPreview: {
+        wrapInTemplate: false // Show raw HTML without email template
+      }
+    }
+  }
+})
+```
+
+#### Custom Email Wrapper
+
+Provide your own wrapper function to match your email service's template:
+
+```typescript
+newsletterPlugin({
+  customizations: {
+    broadcasts: {
+      emailPreview: {
+        customWrapper: async (content, { subject, preheader }) => {
+          // Return your custom email template
+          return `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>${subject}</title>
+                <!-- Your custom styles -->
+              </head>
+              <body>
+                <div class="preheader">${preheader}</div>
+                ${content}
+                <!-- Your footer -->
+              </body>
+            </html>
+          `
+        }
+      }
+    }
+  }
+})
+```
+
+#### Advanced: Using with React Email
+
+If you're using React Email for templates, you can integrate it with the preview:
+
+```typescript
+import { render } from '@react-email/render'
+import { MyEmailTemplate } from './emails/MyEmailTemplate'
+
+newsletterPlugin({
+  customizations: {
+    broadcasts: {
+      emailPreview: {
+        customWrapper: async (content, { subject, preheader }) => {
+          return await render(
+            <MyEmailTemplate 
+              subject={subject}
+              preheader={preheader}
+              content={content}
+            />
+          )
+        }
+      }
+    }
+  }
+})
+```
+
+This ensures your preview exactly matches what subscribers will see.
 
 For complete extensibility documentation, see the [Extension Points Guide](./docs/architecture/extension-points.md).
 

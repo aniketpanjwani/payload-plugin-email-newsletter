@@ -37,6 +37,8 @@ export async function convertToEmailSafeHtml(
     customBlockConverter?: (node: any, mediaUrl?: string) => Promise<string>
     payload?: any // Payload instance for populating relationships
     populateFields?: string[] | ((blockType: string) => string[]) // Fields to populate
+    customWrapper?: (content: string, options?: { preheader?: string; subject?: string }) => string | Promise<string>
+    subject?: string // Email subject for custom wrapper
   }
 ): Promise<string> {
   // Handle empty content
@@ -52,6 +54,12 @@ export async function convertToEmailSafeHtml(
   
   // Optionally wrap in email template
   if (options?.wrapInTemplate) {
+    if (options.customWrapper) {
+      return await Promise.resolve(options.customWrapper(sanitizedHtml, { 
+        preheader: options.preheader,
+        subject: options.subject 
+      }))
+    }
     return wrapInEmailTemplate(sanitizedHtml, options.preheader)
   }
   

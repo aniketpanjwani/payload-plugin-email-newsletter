@@ -246,3 +246,6 @@ export { newsletterPlugin as default }
 
 // Export session utilities
 export * from './utilities/session'
+
+// Export contexts for advanced users
+export * from './contexts/PluginConfigContext'

@@ -3,12 +3,16 @@
 import React, { useState } from 'react'
 import { useFormFields } from '@payloadcms/ui'
 import { EmailPreview } from './EmailPreview'
+import { usePluginConfigOptional } from '../../contexts/PluginConfigContext'
 import type { SerializedEditorState } from 'lexical'
 
 export const EmailPreviewField: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [isValid, setIsValid] = useState(true)
   const [validationSummary, setValidationSummary] = useState<string>('')
+  
+  // Get plugin config from context
+  const pluginConfig = usePluginConfigOptional()
 
   // Get form fields for preview
   const fields = useFormFields(([fields]) => ({
@@ -161,6 +165,7 @@ export const EmailPreviewField: React.FC = () => {
           preheader={fields.preheader?.value as string}
           mode={previewMode}
           onValidation={handleValidation}
+          pluginConfig={pluginConfig || undefined}
         />
       </div>
     </div>
