@@ -1,3 +1,18 @@
+## [0.20.1] - 2025-07-31
+
+### Fixed
+- **Next.js App Router Compatibility** - Fixed React `createContext` error in Next.js App Router
+  - Added missing `"use client"` directive to `PluginConfigContext`
+  - Added `"use client"` directive to component barrel exports
+  - Fixed server-side rendering issues with client components
+  - Improved compatibility with Next.js 15+ App Router
+
+### Technical Changes
+- Added `"use client"` directive to `PluginConfigContext.tsx`
+- Added `"use client"` directive to `EmptyField.tsx`
+- Added `"use client"` directive to component index files
+- Ensured proper server/client component separation
+
 ## [0.20.0] - 2025-07-31
 
 ### Added
