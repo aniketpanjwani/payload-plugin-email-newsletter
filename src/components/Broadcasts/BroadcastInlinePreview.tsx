@@ -10,11 +10,21 @@ export const BroadcastInlinePreview: React.FC = () => {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [error, setError] = useState<Error | null>(null)
   
-  const fields = useFormFields(([fields]) => ({
-    subject: fields['subject']?.value as string,
-    preheader: fields['contentSection.preheader']?.value as string,
-    content: fields['contentSection.content']?.value,
-  }))
+  const fields = useFormFields(([fields]) => {
+    // Debug logging
+    console.log('All form fields:', fields)
+    console.log('Content field paths to try:', {
+      'contentSection.content': fields['contentSection.content'],
+      'contentSection.fields.content': fields['contentSection.fields.content'],
+      'contentSection': fields['contentSection'],
+    })
+    
+    return {
+      subject: fields['subject']?.value as string,
+      preheader: fields['contentSection.preheader']?.value as string,
+      content: fields['contentSection.content']?.value || fields['contentSection.fields.content']?.value,
+    }
+  })
   
   const updatePreview = useCallback(async () => {
     if (!fields.content) {

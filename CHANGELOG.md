@@ -1,3 +1,17 @@
+## [0.20.6] - 2025-08-01
+
+### Fixed
+- **Preview Content Path** - Fixed preview component to correctly access nested content fields
+  - Changed from trying multiple access patterns to using the correct flattened field name
+  - Content is now accessed via `fields?.['contentSection.content']` using dot notation
+  - Removed debug logging and simplified content access logic
+  - Preview now properly finds content in the nested `contentSection.content` field structure
+
+### Technical Changes
+- Updated field access pattern to match Payload's flattened field naming convention
+- Simplified content value retrieval by using the correct dot notation path
+- Removed unnecessary fallback patterns that were trying incorrect field paths
+
 ## [0.20.5] - 2025-08-01
 
 ### Fixed

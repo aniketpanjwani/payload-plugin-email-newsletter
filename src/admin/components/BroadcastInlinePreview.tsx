@@ -18,9 +18,10 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
       setLoading(true)
       setError(null)
 
-      // Access content from the correct path in the form structure
-      const contentSection = fields?.contentSection as any
-      const contentValue = contentSection?.content?.value
+      // Access content using the flattened field name
+      // Payload flattens nested fields with dot notation
+      const contentField = fields?.['contentSection.content']
+      const contentValue = contentField?.value
       
       if (!contentValue) {
         setError('No content available to preview')
