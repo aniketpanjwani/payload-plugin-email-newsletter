@@ -1,3 +1,24 @@
+## [0.20.5] - 2025-08-01
+
+### Fixed
+- **Manual Preview Button** - Replaced automatic preview with manual "Generate Preview" button
+  - Fixed content access issue where preview couldn't find content due to field group separation
+  - Changed from `data.content` to `fields?.contentSection?.content` using `useFormFields` hook
+  - Removed automatic hot-reloading in favor of user-controlled preview generation
+  - Added "Hide Preview" and "Refresh Preview" buttons for better control
+  - Preview now correctly accesses content from nested field groups
+
+### Enhanced
+- **Better Error Handling** - Clear error messages when no content is available
+- **Improved UX** - Manual preview button prevents excessive API calls during content editing
+- **Proper Form Data Access** - Uses Payload's `useFormFields` hook to access all form fields across groups
+
+### Technical Changes
+- Component now implements `UIFieldClientComponent` interface from Payload
+- Removed automatic `useEffect` triggers and debouncing
+- Fixed field path from `data.content` to `fields?.contentSection?.content`
+- Maintains 600px iframe height for consistent preview display
+
 ## [0.20.4] - 2025-07-31
 
 ### Added
