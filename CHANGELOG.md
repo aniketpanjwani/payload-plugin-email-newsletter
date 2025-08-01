@@ -1,3 +1,47 @@
+## [0.20.4] - 2025-07-31
+
+### Added
+- **Email Preview Functionality Restored** - Full email preview functionality in admin interface
+  - Interactive preview component with live content updates
+  - Real-time iframe rendering of email HTML using the preview endpoint
+  - Debounced API calls to prevent excessive requests during content editing
+  - Auto-resizing iframe that adjusts to email content height
+  - Comprehensive error handling with user-friendly error messages
+  - Loading states and empty content placeholders for better UX
+  - Subject line display in preview header
+  - Preview updates automatically when content, subject, or preheader changes
+
+### Enhanced
+- **BroadcastInlinePreview Component**
+  - Replaced placeholder component with fully functional preview
+  - Added React hooks for state management (useState, useEffect, useRef)
+  - Integrated with existing `/api/broadcasts/preview` endpoint
+  - Added proper TypeScript types and interfaces
+  - Includes responsive iframe with cross-origin safety measures
+  - 500ms debounce to optimize API calls during content editing
+
+### Fixed
+- **Preview Endpoint Response Format** - Updated to include both `html` and `preview.html` fields for compatibility
+- **ESLint Compliance** - Resolved all linting errors in admin components
+- **Admin Bundle Integrity** - Maintained separation of server dependencies while restoring functionality
+
+### Technical Changes
+- Updated admin component exports to use direct type imports from components
+- Removed redundant admin/types.ts file in favor of component-level type exports
+- Enhanced preview endpoint to return HTML in multiple response formats
+- Added proper error boundaries and loading states in preview component
+- Maintained all architectural improvements from v0.20.3 bundle separation
+
+### Validation
+- ✅ Preview component fetches and displays email HTML correctly
+- ✅ Preview updates in real-time as content changes  
+- ✅ Error states handled gracefully with retry capability
+- ✅ Loading states provide good user experience
+- ✅ Admin bundle contains no server dependencies
+- ✅ All linting errors resolved
+- ✅ Build and bundle validation passes
+- ✅ TypeScript types are properly exported and available
+
 ## [0.20.3] - 2025-07-31
 
 ### Fixed

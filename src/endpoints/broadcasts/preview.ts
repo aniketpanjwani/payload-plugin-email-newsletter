@@ -148,6 +148,7 @@ export const createBroadcastPreviewEndpoint = (
 
         return Response.json({
           success: true,
+          html: htmlContent,
           preview: {
             subject: subject || 'Preview',
             preheader: preheader || '',
