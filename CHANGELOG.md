@@ -1,3 +1,47 @@
+## [0.20.7] - 2025-08-02
+
+### Added
+- **Comprehensive Email Wrapper System** - Unified email rendering that uses the same wrapper for previews and actual sends
+  - Preview component now passes ALL form fields to the preview endpoint as `documentData`
+  - Custom wrappers receive complete document data, not just content
+  - Consistent HTML output between preview and actual email sends
+  - Support for accessing any custom fields added to broadcasts collection
+  - Wrapper is applied during actual send operations, not just previews
+
+### Enhanced
+- **Email Preview Component** - Builds document data from all form fields for wrapper access
+  - Collects all field values using `useFormFields` hook
+  - Passes complete form state to preview endpoint
+  - Enables custom wrappers to access metadata like slug, issueNumber, custom fields
+
+- **Preview Endpoint** - Updated to accept and forward documentData to email wrapper
+  - Receives documentData from preview component
+  - Passes through to convertToEmailSafeHtml function
+  - Maintains backward compatibility with existing implementations
+
+- **Email Wrapper Interface** - Enhanced type definitions for better developer experience
+  - Added `EmailWrapperOptions` interface with documentData support
+  - Updated `CustomEmailWrapper` type for consistency
+  - Generic `Record<string, any>` allows any custom fields
+
+- **Broadcast Sync Hooks** - Now apply wrapper during actual email sends
+  - Create operation uses wrapper when syncing to provider
+  - Update operation maintains wrapper consistency
+  - Deferred creates (from draft to published) include wrapper
+  - Same HTML template used for both preview and actual sends
+
+### Technical Changes
+- Updated `convertToEmailSafeHtml` to accept documentData in options
+- Modified all sync operations in Broadcasts collection to use email preview config
+- Wrapper customization now available throughout the email lifecycle
+- No breaking changes - wrapper remains optional with sensible defaults
+
+### Benefits
+- **Flexibility** - Users can pass any custom fields without plugin modifications
+- **Consistency** - Identical HTML in preview and actual email sends
+- **Future Proof** - Add new fields to broadcasts without updating plugin code
+- **No Breaking Changes** - Existing implementations continue to work unchanged
+
 ## [0.20.6] - 2025-08-01
 
 ### Fixed

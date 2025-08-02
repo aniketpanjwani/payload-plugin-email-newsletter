@@ -7,6 +7,19 @@ export * from './providers'
 // Export legacy newsletter types for backwards compatibility
 export * from './newsletter'
 
+// Email wrapper options interface
+export interface EmailWrapperOptions {
+  preheader?: string
+  subject?: string
+  documentData?: Record<string, any> // Generic document data
+}
+
+// Re-export for convenience
+export type CustomEmailWrapper = (
+  content: string, 
+  options?: EmailWrapperOptions
+) => string | Promise<string>
+
 // Add new interface for broadcast customizations
 export interface BroadcastCustomizations {
   additionalFields?: Field[]
@@ -55,10 +68,7 @@ export interface BroadcastCustomizations {
      * Custom wrapper function for preview content
      * Receives the converted HTML and should return wrapped HTML
      */
-    customWrapper?: (content: string, options?: {
-      subject?: string
-      preheader?: string
-    }) => string | Promise<string>
+    customWrapper?: (content: string, options?: EmailWrapperOptions) => string | Promise<string>
     
     /**
      * Custom preview component to replace the default one entirely

@@ -305,7 +305,16 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               // Populate media fields and convert rich text to HTML
               req.payload.logger.info('Populating media fields and converting content to HTML...')
               const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
+              
+              // Get email preview customization options
+              const emailPreviewConfig = pluginConfig.customizations?.broadcasts?.emailPreview
+              
               const htmlContent = await convertToEmailSafeHtml(populatedContent, {
+                wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
+                customWrapper: emailPreviewConfig?.customWrapper,
+                preheader: doc.contentSection?.preheader,
+                subject: doc.subject,
+                documentData: doc, // Pass entire document
                 customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
               })
               
@@ -430,7 +439,16 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 // Populate media fields and convert rich text to HTML
                 req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
                 const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
+                
+                // Get email preview customization options
+                const emailPreviewConfig = pluginConfig.customizations?.broadcasts?.emailPreview
+                
                 const htmlContent = await convertToEmailSafeHtml(populatedContent, {
+                  wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
+                  customWrapper: emailPreviewConfig?.customWrapper,
+                  preheader: doc.contentSection?.preheader,
+                  subject: doc.subject,
+                  documentData: doc, // Pass entire document
                   customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
                 })
 
@@ -516,7 +534,16 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   }
                   if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
                     const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
+                    
+                    // Get email preview customization options
+                    const emailPreviewConfig = pluginConfig.customizations?.broadcasts?.emailPreview
+                    
                     updates.content = await convertToEmailSafeHtml(populatedContent, {
+                      wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
+                      customWrapper: emailPreviewConfig?.customWrapper,
+                      preheader: doc.contentSection?.preheader,
+                      subject: doc.subject,
+                      documentData: doc, // Pass entire document
                       customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
                     })
                   }

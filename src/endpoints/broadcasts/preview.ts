@@ -115,7 +115,7 @@ export const createBroadcastPreviewEndpoint = (
       try {
         // Parse request body
         const data = await (req.json?.() || Promise.resolve({}))
-        const { content, preheader, subject } = data
+        const { content, preheader, subject, documentData } = data
 
         if (!content) {
           return Response.json({
@@ -142,6 +142,7 @@ export const createBroadcastPreviewEndpoint = (
           preheader: preheader,
           subject: subject,
           mediaUrl: mediaUrl,
+          documentData, // Pass all document data
           customBlockConverter: config.customizations?.broadcasts?.customBlockConverter,
           customWrapper: emailPreviewConfig?.customWrapper,
         })

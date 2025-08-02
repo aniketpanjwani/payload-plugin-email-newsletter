@@ -29,10 +29,22 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
         return
       }
 
+      // Build document data from all fields
+      const documentData: Record<string, any> = {}
+      Object.entries(fields || {}).forEach(([key, field]) => {
+        // Skip complex fields that might cause serialization issues
+        if (field && typeof field === 'object' && 'value' in field) {
+          documentData[key] = field.value
+        }
+      })
+
       const response = await fetch('/api/broadcasts/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: contentValue }),
+        body: JSON.stringify({ 
+          content: contentValue,
+          documentData, // Pass all form data
+        }),
       })
 
       if (!response.ok) {
