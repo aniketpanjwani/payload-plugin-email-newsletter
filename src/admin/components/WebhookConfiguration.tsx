@@ -33,7 +33,7 @@ export const WebhookConfiguration: React.FC = () => {
       } else {
         toast.error(data.error || 'Verification failed')
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to verify webhook')
     } finally {
       setVerifying(false)
