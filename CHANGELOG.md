@@ -1,3 +1,12 @@
+## [0.21.1] - 2025-08-06
+
+### Fixed
+- Fixed TypeScript and ESLint errors in webhook implementation
+  - Removed unused import (BroadcastQueueingEvent)
+  - Fixed unused parameter warnings with underscore prefix
+  - Added block scopes to switch cases for ESLint compliance
+  - Fixed unused error variable in catch blocks
+
 ## [0.21.0] - 2025-01-31
 
 ### Added
