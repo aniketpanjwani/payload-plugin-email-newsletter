@@ -17,7 +17,7 @@ A complete newsletter management plugin for [Payload CMS](https://github.com/pay
 - 🌍 **Internationalization** - Multi-language support built-in
 - 📊 **Analytics Ready** - UTM tracking and signup metadata collection
 - ⚙️ **Admin UI Configuration** - Manage email settings through Payload admin panel
-- 🔄 **Bidirectional Sync** - Sync unsubscribes from email services back to Payload
+- 🔄 **Real-time Webhook Sync** - Receive subscriber and broadcast events from email services via webhooks
 - 👁️ **Email Preview** - Real-time preview with desktop/mobile views (v0.9.0+)
 - ✅ **Email Validation** - Built-in validation for email client compatibility (v0.9.0+)
 - 📝 **Email-Safe Editor** - Rich text editor limited to email-compatible features (v0.9.0+)
@@ -654,27 +654,44 @@ This adds a "Newsletter Scheduling" group to your articles with:
 - Audience segment selection
 - Send status tracking
 
-## Unsubscribe Sync
+## Webhook Configuration (Broadcast)
 
-The plugin supports bidirectional synchronization of unsubscribe states between Payload and your email service:
+The plugin supports real-time webhook integration with Broadcast for instant updates:
 
-```typescript
-features: {
-  unsubscribeSync: {
-    enabled: true,
-    schedule: '0 * * * *', // Hourly sync
-    queue: 'newsletter-sync' // Optional custom queue name
-  }
-}
-```
+### Automatic Updates
 
-This feature:
-- Polls your email service for unsubscribed users
-- Updates their status in Payload automatically
-- Supports both Broadcast and Resend providers
-- Can run on a schedule or be triggered manually
+When configured, the plugin automatically receives and processes:
+- **Subscriber Events**: `subscribed`, `unsubscribed`
+- **Broadcast Events**: All status changes (`scheduled`, `in_progress`, `sent`, etc.)
 
-For more details, see the [Unsubscribe Sync documentation](./docs/unsubscribe-sync.md).
+### Setup Instructions
+
+1. **Save your Newsletter Settings** in the Payload admin to generate a webhook URL
+2. **Configure in Broadcast**:
+   - Go to your Broadcast dashboard → "Webhook Endpoints"
+   - Click "Add Webhook Endpoint"
+   - Paste the webhook URL from Payload
+   - Select events:
+     - Subscriber Events: `subscribed`, `unsubscribed`
+     - Broadcast Events: All
+   - Create the webhook and copy the webhook secret
+3. **Add the webhook secret** to your Newsletter Settings in Payload
+4. **Save and verify** the webhook connection
+
+### Security
+
+Webhooks are secured with:
+- HMAC-SHA256 signature verification
+- Timestamp validation (5-minute window)
+- Secret key stored in Newsletter Settings
+
+### Data Flow
+
+- **Subscriber events** update the subscriber's status and metadata
+- **Broadcast events** update the broadcast's status and delivery metrics
+- All updates happen in real-time without polling
+
+**Note**: Email engagement events (opens, clicks) remain in Broadcast for analytics.
 
 ## Email Providers
 

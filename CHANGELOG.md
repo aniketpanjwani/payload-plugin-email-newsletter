@@ -1,3 +1,30 @@
+## [0.21.0] - 2025-01-31
+
+### Added
+- **Webhook Support**: Real-time webhook integration for Broadcast provider
+  - Automatic updates for subscriber events (subscribed/unsubscribed)
+  - Real-time broadcast status updates (scheduled, in_progress, sent, etc.)
+  - HMAC-SHA256 signature verification for security
+  - Webhook configuration UI in Newsletter Settings
+  - Manual webhook registration with setup instructions
+
+### Changed
+- **BREAKING**: Removed polling-based unsubscribe synchronization
+  - Webhooks now provide real-time updates instead of scheduled polling
+  - Removed `unsubscribeSync` configuration option
+  - Removed `afterUnsubscribeSync` hook
+  - Removed sync job infrastructure
+
+### Security
+- Added webhook signature verification with timestamp validation
+- Webhook secrets stored securely in Newsletter Settings
+
+### Migration Guide
+If you were using unsubscribe sync:
+1. Remove any `unsubscribeSync` configuration from your plugin setup
+2. Configure webhooks in your Broadcast dashboard (see README)
+3. Add the webhook secret to your Newsletter Settings
+
 ## [0.20.7] - 2025-08-02
 
 ### Added

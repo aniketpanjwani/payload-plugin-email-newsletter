@@ -4,6 +4,7 @@
 export { BroadcastInlinePreview } from './components/BroadcastInlinePreview'
 export { StatusBadge } from './components/StatusBadge'
 export { EmailPreview } from './components/EmailPreview'
+export { WebhookConfiguration } from './components/WebhookConfiguration'
 
 // Export types
 export type { BroadcastInlinePreviewProps } from './components/BroadcastInlinePreview'

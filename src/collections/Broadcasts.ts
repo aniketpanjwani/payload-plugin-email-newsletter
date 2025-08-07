@@ -268,12 +268,90 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         },
       },
       {
+        name: 'externalId',
+        type: 'text',
+        admin: {
+          readOnly: true,
+          description: 'External ID for webhook integration',
+        },
+      },
+      {
         name: 'providerData',
         type: 'json',
         admin: {
           readOnly: true,
           condition: () => false, // Hidden by default
         },
+      },
+      // Webhook tracking fields
+      {
+        name: 'webhookData',
+        type: 'group',
+        label: 'Webhook Data',
+        admin: {
+          condition: () => false, // Hidden by default, used for webhook tracking
+        },
+        fields: [
+          {
+            name: 'lastWebhookEvent',
+            type: 'text',
+            admin: {
+              readOnly: true,
+            },
+          },
+          {
+            name: 'lastWebhookEventAt',
+            type: 'date',
+            admin: {
+              readOnly: true,
+            },
+          },
+          {
+            name: 'hasWarnings',
+            type: 'checkbox',
+            defaultValue: false,
+          },
+          {
+            name: 'failureReason',
+            type: 'text',
+          },
+          {
+            name: 'sentCount',
+            type: 'number',
+          },
+          {
+            name: 'totalCount',
+            type: 'number',
+          },
+          {
+            name: 'failedCount',
+            type: 'number',
+          },
+          {
+            name: 'remainingCount',
+            type: 'number',
+          },
+          {
+            name: 'sendingStartedAt',
+            type: 'date',
+          },
+          {
+            name: 'failedAt',
+            type: 'date',
+          },
+          {
+            name: 'abortedAt',
+            type: 'date',
+          },
+          {
+            name: 'abortReason',
+            type: 'text',
+          },
+          {
+            name: 'pausedAt',
+            type: 'date',
+          },
+        ],
       },
     ],
     hooks: {

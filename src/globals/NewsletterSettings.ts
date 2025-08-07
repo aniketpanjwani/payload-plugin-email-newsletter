@@ -109,6 +109,75 @@ export const createNewsletterSettingsGlobal = (
                       description: 'Your Broadcast API token',
                     },
                   },
+                  {
+                    type: 'collapsible',
+                    label: 'Webhook Configuration',
+                    fields: [
+                      {
+                        name: 'webhookUrl',
+                        type: 'text',
+                        label: 'Webhook URL',
+                        admin: {
+                          readOnly: true,
+                          description: 'Copy this URL to your Broadcast webhook settings',
+                          placeholder: 'URL will be generated after save',
+                        },
+                        hooks: {
+                          beforeChange: [
+                            ({ req }) => {
+                              const host = req.headers.get('host') || 'localhost:3000'
+                              const protocol = req.headers.get('x-forwarded-proto') || 'http'
+                              const baseUrl = process.env.PAYLOAD_PUBLIC_SERVER_URL || `${protocol}://${host}`
+                              return `${baseUrl}/api/newsletter/webhooks/broadcast`
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        name: 'webhookConfiguration',
+                        type: 'ui',
+                        admin: {
+                          components: {
+                            Field: 'payload-plugin-newsletter/admin#WebhookConfiguration',
+                          },
+                        },
+                      },
+                      {
+                        name: 'webhookSecret',
+                        type: 'text',
+                        label: 'Webhook Secret',
+                        admin: {
+                          description: 'Paste the webhook secret from Broadcast here',
+                        },
+                      },
+                      {
+                        name: 'webhookStatus',
+                        type: 'select',
+                        label: 'Status',
+                        options: [
+                          { label: 'Not Configured', value: 'not_configured' },
+                          { label: 'Configured', value: 'configured' },
+                          { label: 'Verified', value: 'verified' },
+                          { label: 'Error', value: 'error' },
+                        ],
+                        defaultValue: 'not_configured',
+                        admin: {
+                          readOnly: true,
+                        },
+                      },
+                      {
+                        name: 'lastWebhookReceived',
+                        type: 'date',
+                        label: 'Last Event Received',
+                        admin: {
+                          readOnly: true,
+                          date: {
+                            displayFormat: 'yyyy-MM-dd HH:mm:ss',
+                          },
+                        },
+                      },
+                    ],
+                  },
                 ],
               },
               {

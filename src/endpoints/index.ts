@@ -8,6 +8,8 @@ import { createSigninEndpoint } from './signin'
 import { createMeEndpoint } from './me'
 import { createSignoutEndpoint } from './signout'
 import { createBroadcastManagementEndpoints } from './broadcasts'
+import { createBroadcastWebhookEndpoint } from './webhooks/broadcast'
+import { createWebhookVerifyEndpoint } from './webhooks/verify'
 
 export function createNewsletterEndpoints(
   config: NewsletterPluginConfig
@@ -31,6 +33,14 @@ export function createNewsletterEndpoints(
 
   // Add broadcast management endpoints if enabled
   endpoints.push(...createBroadcastManagementEndpoints(config))
+  
+  // Add webhook endpoints for Broadcast provider
+  if (config.providers?.broadcast) {
+    endpoints.push(
+      createBroadcastWebhookEndpoint(config),
+      createWebhookVerifyEndpoint(config)
+    )
+  }
 
   return endpoints
 }

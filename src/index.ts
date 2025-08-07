@@ -5,7 +5,6 @@ import { createNewsletterSettingsGlobal } from './globals/NewsletterSettings'
 import { createEmailService } from './providers'
 import { createNewsletterEndpoints } from './endpoints'
 import { createNewsletterSchedulingFields } from './fields/newsletterScheduling'
-import { createUnsubscribeSyncJob } from './jobs/sync-unsubscribes'
 import { createBroadcastsCollection } from './collections/Broadcasts'
 import { BroadcastApiProvider } from './providers/broadcast/broadcast'
 import { ResendBroadcastProvider } from './providers/resend/broadcast'
@@ -80,8 +79,6 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
   // Create API endpoints
   const endpoints = createNewsletterEndpoints(config)
 
-  // Create sync job if enabled
-  const syncJob = config.features?.unsubscribeSync?.enabled ? createUnsubscribeSyncJob(config) : null
 
   // Build the modified config
   const modifiedConfig: Config = {
@@ -95,37 +92,7 @@ export const newsletterPlugin = (pluginConfig: NewsletterPluginConfig) => (incom
       ...(incomingConfig.endpoints || []),
       ...endpoints,
     ],
-    jobs: syncJob ? {
-      ...(incomingConfig.jobs || {}),
-      tasks: [
-        ...(incomingConfig.jobs?.tasks || []),
-        syncJob,
-      ],
-      // Add cron schedule if specified
-      autoRun: config.features?.unsubscribeSync?.schedule ? (
-        Array.isArray(incomingConfig.jobs?.autoRun) 
-          ? [...incomingConfig.jobs.autoRun, {
-              cron: config.features.unsubscribeSync.schedule,
-              queue: 'newsletter-sync',
-              limit: 100,
-            }]
-          : typeof incomingConfig.jobs?.autoRun === 'function'
-            ? async (payload: any) => {
-                const autoRunFn = incomingConfig.jobs!.autoRun as (payload: any) => any[] | Promise<any[]>
-                const existingConfigs = await autoRunFn(payload)
-                return [...existingConfigs, {
-                  cron: config.features!.unsubscribeSync!.schedule,
-                  queue: 'newsletter-sync',
-                  limit: 100,
-                }]
-              }
-            : [{
-                cron: config.features!.unsubscribeSync!.schedule,
-                queue: 'newsletter-sync',
-                limit: 100,
-              }]
-      ) : incomingConfig.jobs?.autoRun,
-    } : incomingConfig.jobs,
+    jobs: incomingConfig.jobs,
     onInit: async (payload) => {
       // Initialize email service
       try {

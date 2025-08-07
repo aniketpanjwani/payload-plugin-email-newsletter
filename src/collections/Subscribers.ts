@@ -54,6 +54,16 @@ export const createSubscribersCollection = (
       hidden: true,
     },
     
+    // External ID for webhook integration
+    {
+      name: 'externalId',
+      type: 'text',
+      admin: {
+        description: 'ID from email service provider',
+        readOnly: true,
+      },
+    },
+    
     // Subscription status
     {
       name: 'subscriptionStatus',
@@ -70,11 +80,28 @@ export const createSubscribersCollection = (
       },
     },
     {
+      name: 'subscribedAt',
+      type: 'date',
+      admin: {
+        description: 'When the user subscribed',
+        readOnly: true,
+      },
+    },
+    {
       name: 'unsubscribedAt',
       type: 'date',
       admin: {
         condition: (data) => data?.subscriptionStatus === 'unsubscribed',
         description: 'When the user unsubscribed',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'unsubscribeReason',
+      type: 'text',
+      admin: {
+        condition: (data) => data?.subscriptionStatus === 'unsubscribed',
+        description: 'Reason for unsubscribing',
         readOnly: true,
       },
     },
