@@ -29,7 +29,7 @@ export const createBroadcastWebhookEndpoint = (
         const headers = req.headers as Headers
         const signature = headers.get('broadcast-webhook-signature')
         const timestamp = headers.get('broadcast-webhook-timestamp')
-        const webhookId = headers.get('broadcast-webhook-id')
+        const _webhookId = headers.get('broadcast-webhook-id')
         
         if (!signature || !timestamp) {
           console.error('[Broadcast Webhook] Missing signature or timestamp headers')
