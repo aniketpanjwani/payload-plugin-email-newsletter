@@ -1,3 +1,8 @@
+## [0.21.4] - 2025-08-07
+
+### Fixed
+- Fixed ESLint error by prefixing unused webhookId variable with underscore
+
 ## [0.21.3] - 2025-08-06
 
 ### Fixed
