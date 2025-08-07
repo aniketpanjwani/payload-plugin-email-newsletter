@@ -25,14 +25,23 @@ export const createBroadcastWebhookEndpoint = (
           return Response.json({ error: 'Webhook not configured' }, { status: 401 })
         }
         
-        // Extract headers
+        // Extract headers - Broadcast uses specific header names
         const headers = req.headers as Headers
-        const signature = headers.get('x-broadcast-signature')
-        const timestamp = headers.get('x-broadcast-timestamp')
+        const signature = headers.get('broadcast-webhook-signature')
+        const timestamp = headers.get('broadcast-webhook-timestamp')
+        const webhookId = headers.get('broadcast-webhook-id')
         
         if (!signature || !timestamp) {
-          console.error('[Broadcast Webhook] Missing signature or timestamp')
+          console.error('[Broadcast Webhook] Missing signature or timestamp headers')
           return Response.json({ error: 'Invalid request' }, { status: 401 })
+        }
+        
+        // Validate timestamp to prevent replay attacks (5 minute window)
+        const timestampNum = parseInt(timestamp, 10)
+        const currentTime = Math.floor(Date.now() / 1000)
+        if (Math.abs(currentTime - timestampNum) > 300) {
+          console.error('[Broadcast Webhook] Timestamp too old or invalid')
+          return Response.json({ error: 'Invalid timestamp' }, { status: 401 })
         }
         
         // Get raw body for signature verification

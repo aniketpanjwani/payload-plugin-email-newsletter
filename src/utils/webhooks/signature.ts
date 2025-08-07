@@ -66,9 +66,11 @@ export function verifyBroadcastWebhookSignature(
 export function extractWebhookHeaders(req: Request): {
   signature?: string
   timestamp?: string
+  webhookId?: string
 } {
-  const signature = req.headers.get('x-broadcast-signature') || undefined
-  const timestamp = req.headers.get('x-broadcast-timestamp') || undefined
+  const signature = req.headers.get('broadcast-webhook-signature') || undefined
+  const timestamp = req.headers.get('broadcast-webhook-timestamp') || undefined
+  const webhookId = req.headers.get('broadcast-webhook-id') || undefined
   
-  return { signature, timestamp }
+  return { signature, timestamp, webhookId }
 }

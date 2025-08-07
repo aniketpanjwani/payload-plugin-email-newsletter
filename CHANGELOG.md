@@ -1,3 +1,13 @@
+## [0.21.3] - 2025-08-06
+
+### Fixed
+- Fixed webhook authentication by using correct Broadcast header names
+  - Changed from `x-broadcast-signature` to `broadcast-webhook-signature`
+  - Changed from `x-broadcast-timestamp` to `broadcast-webhook-timestamp`
+  - Added support for optional `broadcast-webhook-id` header
+  - Added timestamp validation to prevent replay attacks (5 minute window)
+  - Headers now match Broadcast's actual webhook implementation
+
 ## [0.21.2] - 2025-08-06
 
 ### Fixed
