@@ -9,7 +9,7 @@ export const createBroadcastWebhookEndpoint = (
   config: NewsletterPluginConfig
 ): Endpoint => {
   return {
-    path: '/webhooks/broadcast',
+    path: '/newsletter/webhooks/broadcast',
     method: 'post',
     handler: async (req: PayloadRequest) => {
       try {

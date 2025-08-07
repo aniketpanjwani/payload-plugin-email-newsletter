@@ -6,7 +6,7 @@ export const createWebhookVerifyEndpoint = (
   config: NewsletterPluginConfig
 ): Endpoint => {
   return {
-    path: '/webhooks/verify',
+    path: '/newsletter/webhooks/verify',
     method: 'post',
     handler: async (req: PayloadRequest) => {
       try {

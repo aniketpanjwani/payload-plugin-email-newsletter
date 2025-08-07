@@ -1,3 +1,11 @@
+## [0.21.2] - 2025-08-06
+
+### Fixed
+- Fixed webhook endpoint paths to include `/newsletter` prefix for proper API routing
+  - Changed `/webhooks/broadcast` to `/newsletter/webhooks/broadcast`
+  - Changed `/webhooks/verify` to `/newsletter/webhooks/verify`
+  - This ensures webhooks work correctly with Payload's API routing
+
 ## [0.21.1] - 2025-08-06
 
 ### Fixed
