@@ -143,6 +143,18 @@ export const createSubscribersCollection = (
         description: 'Where the subscriber signed up from',
       },
     },
+    
+    // Import tracking
+    {
+      name: 'importedFromProvider',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Indicates this subscriber was imported from an external provider via webhook',
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
   ]
 
   // Add UTM tracking fields if enabled

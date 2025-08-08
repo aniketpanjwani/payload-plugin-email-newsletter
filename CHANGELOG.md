@@ -1,3 +1,11 @@
+## [0.24.0] - 2025-08-08
+
+### Added
+- **Skip welcome email for webhook imports**: Added `importedFromProvider` field to subscribers
+  - Set to `true` for all subscribers created via webhook events
+  - Allows projects to skip welcome emails for bulk imports from Broadcast
+  - Field is read-only in admin UI to prevent accidental changes
+
 ## [0.23.0] - 2025-08-07
 
 ### Added

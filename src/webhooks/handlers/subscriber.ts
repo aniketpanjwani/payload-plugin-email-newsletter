@@ -90,6 +90,7 @@ async function handleSubscriberSubscribed(
           subscriptionStatus: 'active',
           subscribedAt: data.subscribed_at,
           externalId: data.id,
+          importedFromProvider: true,
           attributes: data.attributes || {},
         },
       })
@@ -191,6 +192,7 @@ async function handleSubscriberCreated(
           subscriptionStatus: 'pending', // New subscribers start as pending
           externalId: data.id,
           source: data.source,
+          importedFromProvider: true,
           attributes: data.attributes || {},
         },
       })

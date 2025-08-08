@@ -374,6 +374,7 @@ export interface Subscriber {
     [key: string]: boolean | undefined
   }
   source?: string
+  importedFromProvider?: boolean
   utmParameters?: {
     source?: string
     medium?: string
