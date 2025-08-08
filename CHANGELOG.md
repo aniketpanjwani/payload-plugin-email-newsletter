@@ -1,3 +1,17 @@
+## [0.22.0] - 2025-08-07
+
+### Changed
+- **Improved Broadcast sync**: Now uses proper subscribe/unsubscribe endpoints
+  - Uses `/api/v1/subscribers/unsubscribe.json` for unsubscribing (sets `unsubscribed_at` timestamp)
+  - Uses `/api/v1/subscribers.json` for both new subscriptions and resubscriptions
+  - Removed language tagging as per user preference
+  - Simplified resubscription flow - no special error handling needed
+- **Better compliance tracking**: Broadcast now properly tracks unsubscribe timestamps for compliance
+
+### Fixed
+- Fixed Broadcast provider to properly handle subscription status changes
+- Removed unnecessary contact existence checks (Broadcast API handles this gracefully)
+
 ## [0.21.4] - 2025-08-07
 
 ### Fixed

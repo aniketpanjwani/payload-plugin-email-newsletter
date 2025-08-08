@@ -78,14 +78,12 @@ export class BroadcastProvider implements EmailProvider {
             email: contact.email,
             first_name: firstName || undefined,
             last_name: lastName || undefined,
-            tags: [`lang:${contact.locale || 'en'}`],
-            is_active: contact.subscriptionStatus === 'active',
             source: contact.source,
           },
         }),
       })
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 201) {
         const error = await response.text()
         throw new Error(`Broadcast API error: ${response.status} - ${error}`)
       }
@@ -100,53 +98,46 @@ export class BroadcastProvider implements EmailProvider {
 
   async updateContact(contact: Subscriber): Promise<void> {
     try {
-      // First, try to find the contact
-      const searchResponse = await fetch(
-        `${this.apiUrl}/api/v1/subscribers/find.json?email=${encodeURIComponent(contact.email)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-          },
-        }
-      )
-
-      if (!searchResponse.ok) {
-        // If contact doesn't exist, create it
-        await this.addContact(contact)
-        return
-      }
-
-      const existingContact = await searchResponse.json()
-
-      if (!existingContact || !existingContact.id) {
-        await this.addContact(contact)
-        return
-      }
-
       const [firstName, ...lastNameParts] = (contact.name || '').split(' ')
       const lastName = lastNameParts.join(' ')
 
-      // Update existing contact
-      // According to Broadcast docs, email should be at root level for identification
+      // Handle unsubscribe
+      if (contact.subscriptionStatus === 'unsubscribed') {
+        const response = await fetch(`${this.apiUrl}/api/v1/subscribers/unsubscribe.json`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: contact.email }),
+        })
+
+        if (!response.ok) {
+          const error = await response.text()
+          throw new Error(`Broadcast API error: ${response.status} - ${error}`)
+        }
+        return
+      }
+
+      // Handle subscribe/resubscribe or update
+      // Use the create endpoint which handles both new and existing subscribers
       const response = await fetch(`${this.apiUrl}/api/v1/subscribers.json`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: contact.email, // Email at root level to identify the subscriber
           subscriber: {
+            email: contact.email,
             first_name: firstName || undefined,
             last_name: lastName || undefined,
-            tags: [`lang:${contact.locale || 'en'}`],
-            is_active: contact.subscriptionStatus === 'active',
             source: contact.source,
           },
         }),
       })
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 201) {
         const error = await response.text()
         throw new Error(`Broadcast API error: ${response.status} - ${error}`)
       }
@@ -161,29 +152,8 @@ export class BroadcastProvider implements EmailProvider {
 
   async removeContact(email: string): Promise<void> {
     try {
-      // First, find the contact
-      const searchResponse = await fetch(
-        `${this.apiUrl}/api/v1/subscribers/find.json?email=${encodeURIComponent(email)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-          },
-        }
-      )
-
-      if (!searchResponse.ok) {
-        // Contact doesn't exist, nothing to remove
-        return
-      }
-
-      const contact = await searchResponse.json()
-
-      if (!contact || !contact.id) {
-        return
-      }
-
-      // Deactivate the contact
-      const response = await fetch(`${this.apiUrl}/api/v1/subscribers/deactivate.json`, {
+      // Use unsubscribe endpoint to properly mark contact as unsubscribed
+      const response = await fetch(`${this.apiUrl}/api/v1/subscribers/unsubscribe.json`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.token}`,
