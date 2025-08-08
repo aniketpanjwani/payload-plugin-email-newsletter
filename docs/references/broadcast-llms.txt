@@ -1,0 +1,1156 @@
+# Broadcast - Self-Hosted Email Marketing Platform
+
+Broadcast is a comprehensive self-hosted email marketing software that users can purchase and install on their own Ubuntu servers. This documentation covers all features, API endpoints, installation methods, and system capabilities.
+
+## System Overview
+
+**Broadcast** (formerly EmailWithBroadcast) is a self-hosted email marketing solution designed for users who want complete control over their email infrastructure.
+
+### Key Characteristics
+- **Self-hosted**: Install on your own Ubuntu server
+- **Complete solution**: Handles broadcasts, sequences, and transactional emails
+- **Channel-based**: Organize different audiences in isolated channels
+- **API-driven**: Full REST API for integration with external systems
+- **Webhook support**: Real-time notifications for all email events
+
+## System Requirements
+
+### Operating System
+- **Primary**: Ubuntu 24.04 LTS (server edition) - officially supported
+- **Compatible**: Ubuntu 22.04 LTS (works but not officially supported)
+
+### Minimum Requirements
+- 2 GB of RAM
+- 1 CPU Core
+- 40 GB of disk space
+
+### Recommended Requirements
+- 4 GB of RAM
+- 2 CPU Cores
+- 60+ GB of disk space
+
+### Supported Hosting Providers
+- **Hetzner Cloud** (recommended) - €20 credit via referral
+- **Digital Ocean** - $200 credit via referral
+- **Linode** - $100 credit for 60 days via referral
+
+## Installation Methods
+
+### 1. Automatic Installation (Recommended)
+**Duration**: 5-10 minutes
+**Features**:
+- Automated server setup via cloud-init
+- Automatic updates
+- Built-in backup system
+- SSL certificate management
+- Multi-domain support with reverse proxy
+
+
+### 2. Manual Installation
+**Complexity**: Advanced users only
+**Method**: Docker containers via docker-compose
+
+**Container Architecture**:
+```yaml
+services:
+  app:        # Main Rails application
+  job:        # Background job processor  
+  postgres:   # PostgreSQL database
+```
+
+**Missing Features in Manual Installation**:
+- No automatic updates
+- No automatic backups
+- Manual SSL certificate management
+- Manual reverse proxy configuration
+
+**Docker Setup**:
+```bash
+# Clone installation scripts
+git clone https://github.com/Furvur/broadcast-script.git /home/user/broadcast
+
+# Configure environment files
+# - app/.env (application configuration)
+# - db/.env (database configuration)
+
+# Generate secrets
+openssl rand -hex 64  # SECRET_KEY_BASE
+openssl rand -hex 32  # POSTGRES_PASSWORD
+
+# Login to private registry
+docker login gitea.hostedapp.org
+
+# Run containers
+docker compose -f docker-compose.manual.yml up -d
+```
+
+## Core Terminology
+
+### Broadcast Channels
+**Channels** (equivalent to "lists" in other platforms) are isolated silos for organizing subscribers and email campaigns. Each channel operates independently with its own:
+- Subscribers and subscriber data
+- Email servers and sending configuration
+- Broadcasts, sequences, and templates
+- Analytics and reporting
+- Suppression lists and opt-in forms
+
+### Email Types
+1. **Broadcast Emails**: Manual one-time campaigns sent to subscribers
+2. **Email Sequences**: Automated drip campaigns with conditional logic
+3. **Transactional Emails**: API-triggered emails for user actions
+
+### Subscriber Management
+**Subscribers** are individuals who receive emails. They can be:
+- Added manually through the interface
+- Imported via TSV files
+- Created via API calls
+- Added through opt-in forms
+
+## Channel Management
+
+### Creating and Switching Channels
+**Create New Channel**:
+1. Click switch channel icon (↕️) in sidebar
+2. Select "create a new one"
+3. Enter descriptive name (e.g., "Enterprise Customers")
+4. Click "Create channel"
+
+**Channel Isolation**: All data is channel-specific including subscribers, broadcasts, sequences, templates, and analytics.
+
+**Use Cases for Multiple Channels**:
+- Business segmentation (B2B vs B2C)
+- Brand separation (different product lines)
+- Geographic regions
+- Customer types (enterprise vs individual)
+- Content types (newsletter vs promotional)
+
+### Channel Configuration
+
+#### Email Server Setup
+Each channel requires at least one email server. Broadcast supports:
+- **AWS SES**
+- **SendGrid** 
+- **Postmark**
+- **Mailgun**
+- **Inboxroad**
+- **Resend**
+- **Other** (custom SMTP)
+
+**SMTP Configuration**:
+```
+Required Fields:
+- SMTP Address (hostname)
+- SMTP Port (usually 587, 465, or 25)
+- SMTP Username
+- SMTP Password  
+- SMTP Authentication (Plain, Login, or CRAM-MD5)
+
+Advanced Options:
+- Custom headers for tracking/metadata
+- Email type routing (broadcasts/sequences/transactional)
+- Unsubscribe link customization
+- Rate limiting configuration
+```
+
+**Load Balancing**: Multiple servers automatically distribute sending load for better deliverability.
+
+#### Channel Deactivation
+Channels can be deactivated (not deleted) to preserve data:
+- All scheduled broadcasts are cancelled
+- Active sequences are paused
+- No transactional emails are sent
+- Can be reactivated at any time
+
+## Subscriber Management
+
+### Subscriber Data Structure
+```json
+{
+  "email": "user@example.com",          // Required
+  "first_name": "John",
+  "last_name": "Doe", 
+  "ip_address": "192.168.1.1",
+  "is_active": true,                    // Active status
+  "source": "web_form",                 // How they were added
+  "subscribed_at": "2024-01-01T00:00:00Z",
+  "unsubscribed_at": null,              // Unsubscribe timestamp
+  "last_email_sent_at": "2024-01-05T12:00:00Z",
+  "tags": ["premium", "newsletter"],    // Array of tags
+  "custom_data": {                      // JSON object for custom fields
+    "company": "Example Corp",
+    "plan": "enterprise"
+  }
+}
+```
+
+### Adding Subscribers
+
+#### 1. Manual Entry
+Navigate to Subscribers → Add subscriber and fill required fields.
+
+#### 2. TSV Import
+- Support for tab-separated values files
+- Bulk import with field mapping
+- Can specify subscribed_at dates during import
+- Validation and error reporting
+
+#### 3. API Integration (see API section below)
+
+### Subscriber Status Management
+
+**Active vs Inactive**:
+- **Active**: Set by administrator, receives all email types
+- **Inactive**: Set by administrator, no emails sent
+
+**Subscribed vs Unsubscribed**:
+- **Subscribed**: User opted in, unsubscribed_at is null
+- **Unsubscribed**: User opted out, unsubscribed_at has timestamp
+
+**Status Combinations**:
+```
+Active + Subscribed = Receives all emails
+Active + Unsubscribed = No emails (user opted out)
+Inactive + Subscribed = No emails (admin deactivated)
+Inactive + Unsubscribed = No emails (both)
+```
+
+### Mass Operations
+
+#### Mass Deactivation
+- Upload .txt file with one email per line
+- Maximum 5,000 addresses per file
+- 10MB file size limit
+- Permanent action (cannot be undone)
+- Only affects active subscribers
+
+## Email Templates
+
+### Template Types
+1. **Rich Text**: WYSIWYG editor with formatting tools
+2. **HTML**: Custom HTML code editor
+
+### Template Components
+```
+Fields:
+- Label: Internal identification name
+- Subject: Email subject line
+- Preheader: Preview text for email clients
+- Body: Main email content (rich text or HTML)
+```
+
+### Template Usage
+- Available when creating new broadcasts
+- Cannot be applied to existing drafts
+- Content can be modified after applying template
+- Supports both broadcasts and sequences
+
+## Broadcast Emails
+
+Broadcast emails are one-time manual campaigns sent to channel subscribers.
+
+### Creating Broadcasts
+
+#### Content Format Selection
+- **Rich Text**: Visual editor with formatting toolbar
+- **HTML**: Direct HTML code editing
+
+#### Broadcast Configuration
+```
+Basic Information:
+- Name: Internal reference (e.g., "Newsletter #3")
+- Subject: Email subject line
+- Preheader: Preview text
+- Reply-To: Custom reply address (optional)
+
+Content Editor Features:
+- Font selection and text formatting
+- Lists (bulleted and numbered)
+- Links and images
+- Text color customization
+- Undo/redo functionality
+
+Advanced Options:
+- Track opens: Invisible pixel tracking
+- Track clicks: Link rewriting for analytics
+- Email server selection
+- Custom headers
+- Internal tagging for organization
+```
+
+### Testing and Sending
+
+#### Test Email Process
+1. Click "Open options" → "Send test email"
+2. Enter test email address
+3. Verify appearance and functionality
+4. Test across multiple email clients
+
+#### Sending Options
+- **Send now**: Immediate delivery
+- **Schedule send**: Future delivery with timezone selection
+- **Broadcast status**: Draft → Queueing → Sending → Sent/Failed
+
+### Analytics and Reporting
+
+**Key Metrics**:
+- Delivery rate (successful deliveries vs total sent)
+- Open rate (percentage who opened email)
+- Click rate (percentage who clicked links)
+- Bounce rate (undeliverable emails)
+- Unsubscribe rate (opt-outs after broadcast)
+
+**Individual Subscriber Tracking**:
+- Open timestamps and frequency
+- Link click details
+- Device and location data (when available)
+- Engagement history across campaigns
+
+## Email Sequences (Drip Campaigns)
+
+Email sequences are automated campaigns that send emails based on triggers and delays.
+
+### Sequence Architecture
+
+#### Entry Point
+Every sequence starts with an **Entry Point** step that cannot be deleted. All subsequent steps follow from this entry point.
+
+#### Step Types
+1. **Send Email**: Deliver email to subscriber
+2. **Add Delay**: Wait specified time before next step  
+3. **Add Delay Until Specific Time**: Wait until specific time (e.g., 8:00 AM next day)
+4. **Add Condition**: Branch logic based on email interactions
+5. **Move Subscribers to Sequence**: Transfer to another sequence
+6. **Add Tags to Subscriber**: Apply tags for segmentation
+7. **Remove Tags from Subscriber**: Remove specified tags
+8. **Make Subscriber Inactive**: Deactivate subscriber
+
+### Conditional Logic
+
+#### Available Conditions
+1. **Any email opened**: Any sequence email was opened
+2. **Previous email opened**: Last email was opened
+3. **Any email clicked**: Any sequence email was clicked  
+4. **Previous email clicked**: Last email was clicked
+
+#### Branching
+Each condition creates true/false branches allowing complex automation flows.
+
+**Example Flow**:
+```
+Entry Point
+  ↓
+Send Welcome Email
+  ↓ 
+Delay 24 hours
+  ↓
+Condition: Previous email opened?
+  ↓                    ↓
+YES: Tag as "engaged"  NO: Delay 1 week → Second condition
+  ↓                         ↓
+Move to VIP sequence       Check for click
+```
+
+### Subscriber Management in Sequences
+
+#### Adding Subscribers
+1. **Manual**: Select from subscriber list in sequence dashboard
+2. **Tag-based**: Automatic addition when specific tag is added
+3. **API**: Programmatic addition via API calls
+
+#### Removing Subscribers
+1. **Unsubscribe**: Removes from all sequences
+2. **Manual removal**: From sequence dashboard
+3. **Tag removal**: Automatic when specified tag is removed
+4. **Set as removed**: Manual flagging in sequence
+
+## Transactional Emails
+
+Transactional emails are API-triggered messages for user actions like password resets, receipts, and notifications.
+
+### Key Features
+- **API-only**: Must be sent via API, not through interface
+- **No subscriber requirement**: Can send to any email address
+- **Automatic association**: Links to existing subscribers when possible
+- **Template support**: Can use predefined templates
+- **Real-time sending**: Immediate delivery
+
+### Integration Options
+- Direct API calls from applications
+- Zapier integration
+- Make (Integromat) integration
+- Custom webhook integrations
+
+## API Documentation
+
+### Authentication
+All API endpoints require authentication via Access Token in the Authorization header:
+```http
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+#### Access Token Scopes
+```
+Available Permissions:
+- List and read broadcasts (Read)
+- Send and update broadcasts (Write)  
+- List and read transactional emails (Read)
+- Send transactional emails (Write)
+- List and read subscribers (Read)
+- Create and update subscribers (Write)
+- List and read subscribers in sequences (Read)
+- Add or remove subscribers from sequences (Write)
+```
+
+#### Token Management
+- **Non-expiring**: Tokens don't expire by default
+- **Refreshable**: Generate new tokens while maintaining permissions
+- **Revocable**: Immediately invalidate old tokens when refreshed
+
+### Subscribers API
+
+#### List Subscribers
+```http
+GET /api/v1/subscribers.json
+```
+
+**Filtering Parameters**:
+```
+Subscription Status:
+- subscription_status: subscribed|unsubscribed|active|inactive
+
+Source Filtering:
+- source: website|api|import|manual
+
+Date Range Filtering:
+- subscribed_after: ISO 8601 date
+- subscribed_before: ISO 8601 date  
+- emailed_after: ISO 8601 date
+- emailed_before: ISO 8601 date
+
+Email Pattern:
+- email_contains: partial email text
+
+Tag-Based Filtering:
+- tags[]: array of tags
+- tag_match_type: any|all (OR vs AND logic)
+
+Custom Data:
+- custom_data[field_name]: value
+```
+
+**Response**:
+```json
+{
+  "subscribers": [
+    {
+      "id": "123",
+      "email": "user@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "ip_address": "192.168.1.1",
+      "is_active": true,
+      "source": "web_form",
+      "subscribed_at": "2024-03-20T10:00:00Z",
+      "unsubscribed_at": null,
+      "last_email_sent_at": "2024-03-25T14:30:00Z",
+      "tags": ["newsletter", "premium"],
+      "custom_data": {"plan": "enterprise"}
+    }
+  ],
+  "pagination": {
+    "total": 1500,
+    "count": 250,
+    "current": 1,
+    "total_pages": 6
+  }
+}
+```
+
+#### Create/Update Subscriber
+```http
+POST /api/v1/subscribers.json
+PATCH /api/v1/subscribers.json
+```
+
+**Request**:
+```json
+{
+  "subscriber": {
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "ip_address": "192.168.1.1",
+    "is_active": true,
+    "source": "api",
+    "subscribed_at": "2024-03-20T10:00:00Z",
+    "tags": ["newsletter", "api-user"],
+    "custom_data": {
+      "company": "Example Corp",
+      "plan": "premium"
+    }
+  }
+}
+```
+
+#### Subscriber Operations
+```http
+# Find subscriber by email
+GET /api/v1/subscribers/find.json?email=user@example.com
+
+# Activate/Deactivate
+POST /api/v1/subscribers/activate.json
+POST /api/v1/subscribers/deactivate.json
+
+# Subscribe/Unsubscribe  
+POST /api/v1/subscribers/resubscribe.json
+POST /api/v1/subscribers/unsubscribe.json
+
+# Tag Management
+POST /api/v1/subscribers/add_tag.json
+DELETE /api/v1/subscribers/remove_tag.json
+```
+
+### Broadcasts API
+
+#### List Broadcasts
+```http
+GET /api/v1/broadcasts
+```
+
+**Response**:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Weekly Newsletter",
+      "subject": "Your Weekly Update", 
+      "status": "draft",
+      "total_recipients": 150,
+      "sent_at": null,
+      "created_at": "2024-01-01T12:00:00Z"
+    }
+  ]
+}
+```
+
+#### Create Broadcast
+```http
+POST /api/v1/broadcasts
+```
+
+**Request**:
+```json
+{
+  "broadcast": {
+    "subject": "Newsletter Subject",
+    "body": "<p>Email content here</p>",
+    "name": "Internal Name",
+    "preheader": "Preview text",
+    "reply_to": "support@example.com",
+    "track_opens": true,
+    "track_clicks": true,
+    "scheduled_send_at": "2024-01-15T10:00:00Z",
+    "scheduled_timezone": "UTC"
+  }
+}
+```
+
+#### Send Broadcast
+```http
+POST /api/v1/broadcasts/:id/send_broadcast
+```
+
+**Broadcast Status Values**:
+- `draft`: Being composed, editable
+- `scheduled`: Scheduled for future sending
+- `queueing`: Being prepared for send
+- `sending`: Currently being sent
+- `sent`: Successfully completed
+- `failed`: Failed to send
+- `partial_failure`: Some recipients failed
+
+### Transactional Email API
+
+#### Send Transactional Email
+```http
+POST /api/v1/transactionals.json
+```
+
+**Request**:
+```json
+{
+  "to": "recipient@example.com",
+  "subject": "Welcome to Our Service",
+  "body": "Thank you for signing up!",
+  "reply_to": "support@example.com"
+}
+```
+
+**Response**:
+```json
+{
+  "id": "123",
+  "recipient_email": "recipient@example.com",
+  "subject": "Welcome to Our Service",
+  "body": "Thank you for signing up!",
+  "reply_to": "support@example.com",
+  "queue_at": "2024-03-21T10:00:00Z",
+  "sent_at": null,
+  "status_url": "https://your-domain.com/api/v1/transactionals/123.json"
+}
+```
+
+### Sequences API
+
+The Sequences API allows you to add and remove subscribers within sequences programmatically, as well as list current subscribers in a sequence.
+
+**Note**: This API is not for modifying or creating sequences themselves. This must be done within Broadcast's user interface.
+
+**Required Permissions**:
+- List and read subscribers in sequences (Read)
+- Add or remove subscribers from sequences (Write)
+
+#### Subscriber Sequence Object
+```json
+{
+  "id": "123",
+  "status": "active",
+  "started_at": "2024-03-20T10:00:00Z",
+  "completed_at": null,
+  "next_trigger_at": "2024-03-21T10:00:00Z",
+  "subscriber": {
+    "id": "456",
+    "email": "user@example.com"
+  }
+}
+```
+
+#### List Subscribers in Sequence
+```http
+GET /api/v1/sequences/:id/list_subscribers.json?page=1
+```
+
+**Parameters**:
+- `id` (required): The ID of the sequence (found in the sequence URL)
+- `page`: The page number to return (default is 1)
+
+**Response**:
+```json
+{
+  "subscriber_sequences": [
+    {
+      "id": "123",
+      "status": "active",
+      "started_at": "2024-03-20T10:00:00Z",
+      "completed_at": null,
+      "next_trigger_at": "2024-03-21T10:00:00Z",
+      "subscriber": {
+        "id": "456",
+        "email": "user@example.com"
+      }
+    }
+  ],
+  "pagination": {
+    "prev": null,
+    "next": 2,
+    "count": 95,
+    "pages": 10,
+    "page": 1
+  }
+}
+```
+
+#### Add Subscriber to Sequence
+```http
+POST /api/v1/sequences/:id/add_subscriber.json
+```
+
+**Note**: This endpoint will add an existing subscriber to the sequence based on email address. If the subscriber email does not exist, the subscriber will be created and added to the sequence.
+
+**Parameters**:
+- `id` (required): The ID of the sequence
+
+**Request**:
+```json
+{
+  "subscriber": {
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe"
+  }
+}
+```
+
+**Response**: Returns `201 Created` on success or `422 Unprocessable Entity` if the request fails.
+
+#### Remove Subscriber from Sequence
+```http
+DELETE /api/v1/sequences/:id/remove_subscriber
+```
+
+**Parameters**:
+- `id` (required): The ID of the sequence
+- `email` (required): The email address of the subscriber to remove
+
+**Request**:
+```json
+{
+  "subscriber": {
+    "email": "user@example.com"
+  }
+}
+```
+
+**Response**: Returns `200 OK` on success or `422 Unprocessable Entity` if the request fails.
+
+### Segments API
+
+The Segments API allows you to list your segments that you defined in your channel, as well as query specific segments for a list of subscribers that belong within that segment.
+
+**Note**: This API is not for modifying or creating segments themselves. This must be done within Broadcast's user interface.
+
+**Required Permissions**:
+- List and read segments (Read)
+
+#### Segment Object
+```json
+{
+  "id": 1,
+  "name": "Active Subscribers",
+  "description": "Subscribers who have opened at least one email in the last 30 days.",
+  "created_at": "2024-06-01T12:34:56Z"
+}
+```
+
+#### List Segments
+```http
+GET /api/v1/segments.json?page=1
+```
+
+**Parameters**:
+- `page`: Optional page number (default is 1)
+
+**Response**:
+```json
+{
+  "segments": [
+    {
+      "id": 1,
+      "name": "Active Subscribers",
+      "description": "Subscribers who have opened at least one email in the last 30 days.",
+      "created_at": "2024-06-01T12:34:56Z"
+    }
+  ]
+}
+```
+
+#### List Subscribers in Segment
+```http
+GET /api/v1/segments/:id.json?page=1
+```
+
+**Parameters**:
+- `id` (required): The ID of the segment
+- `page`: Optional page number (default is 1)
+
+**Response** (up to 250 subscribers per page):
+```json
+{
+  "segment": {
+    "id": 1,
+    "name": "Active Subscribers",
+    "description": "Subscribers who have opened at least one email in the last 30 days.",
+    "created_at": "2024-06-01T12:34:56Z"
+  },
+  "subscribers": [
+    {
+      "id": "123",
+      "email": "user@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "ip_address": "192.168.1.1",
+      "is_active": true,
+      "source": "web_form",
+      "subscribed_at": "2024-03-20T10:00:00Z",
+      "unsubscribed_at": null,
+      "created_at": "2024-03-20T10:00:00Z",
+      "tags": ["newsletter", "product-updates"]
+    }
+  ]
+}
+
+## Webhooks System
+
+Broadcast provides comprehensive webhook support for real-time event notifications.
+
+### Event Types
+
+#### Email Events
+- `email.sent`: Email successfully sent
+- `email.delivered`: Email delivered to inbox
+- `email.delivery_delayed`: Delivery delayed
+- `email.bounced`: Email bounced (hard/soft)
+- `email.complained`: Marked as spam
+- `email.opened`: Recipient opened email
+- `email.clicked`: Recipient clicked link
+- `email.failed`: Send failed
+
+#### Subscriber Events  
+- `subscriber.created`: New subscriber added
+- `subscriber.updated`: Subscriber info updated
+- `subscriber.deleted`: Subscriber deleted
+- `subscriber.subscribed`: Subscriber opted in
+- `subscriber.unsubscribed`: Subscriber opted out
+- `subscriber.resubscribed`: Previously unsubscribed user opted back in
+- `subscriber.bounced`: Subscriber email bounced
+- `subscriber.complained`: Subscriber reported spam
+
+#### Broadcast Events
+- `broadcast.scheduled`: Broadcast scheduled
+- `broadcast.queueing`: Broadcast being queued
+- `broadcast.sending`: Broadcast currently sending
+- `broadcast.sent`: Broadcast completed successfully
+- `broadcast.failed`: Broadcast failed completely
+- `broadcast.partial_failure`: Broadcast partially failed
+- `broadcast.aborted`: Broadcast manually stopped
+- `broadcast.paused`: Broadcast paused
+
+### Webhook Configuration
+
+#### Setup Requirements
+- **HTTPS only**: HTTP URLs are rejected
+- **Signature verification**: HMAC-SHA256 authentication
+- **Event selection**: Choose specific events to receive
+- **Retry mechanism**: 6 attempts with exponential backoff
+
+#### Payload Structure
+```json
+{
+  "id": 123,
+  "type": "email.opened",
+  "created_at": "2024-01-15T10:30:00Z",
+  "data": {
+    "receipt_id": 456,
+    "email": "subscriber@example.com",
+    "identifier": "unique-email-id",
+    "opened_at": "2024-01-15T10:30:00Z",
+    "delivered": true,
+    "opened": true,
+    "clicked": false,
+    "bounced": false,
+    "complaint": false,
+    "unsubscribed": false
+  }
+}
+```
+
+#### Security Headers
+```
+broadcast-webhook-id: Unique event identifier
+broadcast-webhook-timestamp: Unix timestamp
+broadcast-webhook-signature: HMAC-SHA256 signature
+```
+
+#### Signature Verification
+```javascript
+function verifyWebhook(payload, headers, secret) {
+  const signature = headers['broadcast-webhook-signature'];
+  const timestamp = headers['broadcast-webhook-timestamp'];
+  
+  // Check timestamp (within 5 minutes)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - timestamp) > 300) return false;
+  
+  // Calculate expected signature
+  const signedPayload = `${timestamp}.${payload}`;
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('base64');
+    
+  return crypto.timingSafeEqual(
+    Buffer.from(expectedSignature),
+    Buffer.from(signature.split(',')[1])
+  );
+}
+```
+
+## Email Metrics and Tracking
+
+### Native Tracking
+Broadcast provides built-in tracking for:
+- **Open tracking**: Invisible pixel images
+- **Click tracking**: Link rewriting through tracking domain
+- **Bounce detection**: Hard and soft bounces
+- **Unsubscribe tracking**: Opt-out monitoring
+
+### ESP Integration
+Broadcast integrates with Email Service Provider webhooks for enhanced metrics:
+
+#### Supported ESPs
+- **AWS SES**: SNS topic integration
+- **Mailgun**: Webhook endpoints  
+- **Postmark**: Event webhooks
+- **SendGrid**: Event webhook API
+
+#### AWS SES Setup Process
+1. Create SNS topic in AWS Console
+2. Create subscription to Broadcast webhook endpoint
+3. Verify subscription in Broadcast dashboard
+4. Create SES Configuration Set
+5. Add event destinations to SNS topic
+6. Configure server to use Configuration Set
+
+**Test Integration**:
+```bash
+# Add test bounce address
+bounce@simulator.amazonses.com
+
+# Send broadcast to test automatic unsubscribe
+# System detects bounce and deactivates subscriber
+```
+
+## Suppression Lists
+
+Suppression lists prevent emails from being sent to specific addresses.
+
+### Suppression Types
+1. **Channel-specific**: Blocks emails for current channel only
+2. **Global**: Blocks emails across all channels
+
+### Management Operations
+
+#### Adding Suppressions
+**Single Address**:
+1. Navigate to Settings → Suppression List
+2. Click Add Suppression
+3. Enter email address
+4. Select suppression type
+5. Click Add Suppression
+
+**Bulk Upload**:
+1. Create .txt file with one email per line
+2. Upload via Settings → Suppression List
+3. Select suppression type (channel or global)
+4. Review processing summary
+
+#### Suppression Processing
+- **Automatic checking**: All emails checked before sending
+- **Priority order**: Global suppressions override channel-specific
+- **Integration**: Works with broadcasts, sequences, and transactional
+- **Logging**: All suppressed attempts are logged
+
+## Backup and Recovery
+
+### Automatic Installation Backup
+**Manual Backup Creation**:
+1. Go to Application → Backups
+2. Click Create backup
+3. Wait for completion (1-2 minutes)
+4. Download backup file
+
+**Command Line**:
+```bash
+cd /opt/broadcast
+./broadcast.sh backup_database
+# Backup saved to db/backups/ and app/storage
+```
+
+**Backup Contents**:
+- PostgreSQL database dump (custom format)
+- Automatic retention (keeps most recent)
+- Stored in `/opt/broadcast/db/backups/`
+
+### Manual Installation Backup
+```bash
+# Database backup
+docker exec postgres pg_dump -U broadcast broadcast_primary_production \
+  | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+# Files backup  
+tar -czf files_backup_$(date +%Y%m%d_%H%M%S).tar.gz \
+  /path/to/broadcast/storage /path/to/broadcast/uploads
+
+# Configuration backup
+tar -czf config_backup_$(date +%Y%m%d_%H%M%S).tar.gz \
+  /path/to/broadcast/app/.env /path/to/broadcast/db/.env
+```
+
+### Restoration Process
+**Automatic Installation**:
+```bash
+# Stop application
+cd /opt/broadcast && ./broadcast.sh stop
+
+# Extract and restore database
+cd db/backups
+tar -xzf broadcast-backup-TIMESTAMP.tar.gz
+docker exec -i postgres pg_restore -U broadcast \
+  -d broadcast_primary_production --clean /backups/backup.dump
+
+# Start application  
+./broadcast.sh start
+```
+
+**Manual Installation**:
+```bash
+# Stop containers
+docker compose down
+
+# Start postgres only
+docker compose up -d postgres
+
+# Restore database
+gunzip -c database_backup.sql.gz \
+  | docker exec -i postgres psql -U broadcast -d broadcast_primary_production
+
+# Restore files and restart
+tar -xzf files_backup.tar.gz -C /path/to/broadcast/
+docker compose up -d
+```
+
+## Upgrading
+
+### Automatic Upgrade Process
+1. Go to Application → Check for updates
+2. Click Check for updates
+3. Click Upgrade now if available
+4. Confirm upgrade initiation
+5. Wait 5-10 minutes for completion
+
+**Upgrade Steps**:
+- Stop running application
+- Download new version
+- Restart with database migrations
+
+### Manual Troubleshooting
+```bash
+# Check application status
+systemctl status broadcast
+
+# Manual upgrade process
+cd /opt/broadcast
+./broadcast.sh stop
+./broadcast.sh update
+./broadcast.sh trigger
+./broadcast.sh upgrade  
+./broadcast.sh start
+```
+
+## Domain and DNS Configuration
+
+### Domain Setup Requirements
+- **Domain ownership**: Full control over DNS records
+- **SSL certificates**: Automatic Let's Encrypt integration
+- **Subdomain support**: Can use subdomains like broadcast.example.com
+- **Multi-domain**: Support for multiple domains per installation
+
+### DNS Configuration
+**Required Records**:
+```
+A Record: yourdomain.com → server-ip-address
+CNAME: www.yourdomain.com → yourdomain.com (optional)
+MX Records: Configure if receiving emails
+SPF Record: v=spf1 include:yourserver.com ~all
+DKIM: Generated and configured during setup
+DMARC: v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com
+```
+
+## Unsubscribe Settings
+
+### Unsubscribe Methods
+1. **Link-based**: Unsubscribe links in email footers
+2. **List-Unsubscribe header**: Email client unsubscribe buttons
+3. **One-click unsubscribe**: RFC 8058 compliance
+4. **Custom landing pages**: Branded unsubscribe experience
+
+### Configuration Options
+- **Global settings**: Apply to all channels
+- **Channel-specific**: Override per channel
+- **Server-level**: Configure per email server
+- **Custom URLs**: Use branded unsubscribe pages
+
+## Initial Setup Process
+
+### First-Time Installation
+1. **Domain Access**: Navigate to installed domain immediately after installation
+2. **Admin Account**: Create administrative account (single user initially)
+3. **Channel Setup**: Configure default channel name and domain confirmation
+4. **SMTP Configuration**: Add at least one email server for sending
+
+### Channel Configuration Requirements
+```
+Sender Information:
+- Sender name (e.g., "John Doe")
+- Sender email address (john.doe@example.com)
+- Reply-to address (optional override)
+
+SMTP Server Setup:
+- Server address and port
+- Authentication type (None, Login, CRAM-MD5)
+- Username and password
+- Email types (Broadcast, Sequences, Transactional)
+- Test connection verification required
+```
+
+## License Management
+
+### License Types
+- **V1 License**: Current version supporting v1.x series
+- **Server Limits**: 1 server (standard) or 25 servers (extended)
+- **Update Coverage**: All updates within v1.x series included
+- **Future Versions**: V2.x will require new license purchase
+
+### License Features
+- **Domain Activation**: Register license on specific domains
+- **Usage Tracking**: Monitor server usage per license
+- **Deactivation**: Remove domains to free up server slots
+- **Validation**: Real-time license checking during installation
+
+### Version Support
+- **Built on**: Ruby on Rails 8.x
+- **Support Timeline**: Following Rails LTS cycle until 2028-2029
+- **Upgrade Path**: Discounted pricing for v1.x customers upgrading to v2.x
+
+## Security Features
+
+### Authentication Security
+- **bcrypt**: Password hashing
+- **Secure tokens**: Random token generation
+- **Session management**: Secure session handling
+- **Password reset**: Time-limited reset tokens (30 minutes)
+
+### API Security  
+- **Bearer tokens**: API authentication
+- **Rate limiting**: License endpoint protection (10/minute)
+- **Input validation**: Strong parameter filtering
+- **CSRF protection**: Form-based request protection
+
+### Infrastructure Security
+- **HTTPS enforcement**: SSL/TLS encryption
+- **Webhook signatures**: HMAC verification
+- **Database encryption**: At-rest data protection
+- **Regular updates**: Automatic security patches
+
+## Performance and Scalability
+
+### Email Sending
+- **Load balancing**: Automatic distribution across email servers
+- **Rate limiting**: Configurable per-server limits
+- **Queue management**: Background job processing
+- **Retry logic**: Automatic retry for failed sends
+
+### Database Optimization
+- **Indexing**: Optimized queries with proper indexes
+- **Connection pooling**: Efficient database connections
+- **Background processing**: Async job handling
+- **Caching**: Strategic caching for performance
+
+### Monitoring
+- **Error tracking**: Honeybadger integration
+- **Email metrics**: Comprehensive delivery analytics  
+- **System health**: Built-in health checks
+- **Log management**: Structured logging with rotation
+
+This comprehensive documentation covers all aspects of the Broadcast email marketing platform, from installation through advanced API integration and system management.
