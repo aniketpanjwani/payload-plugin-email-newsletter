@@ -1,3 +1,18 @@
+## [0.25.0] - 2025-08-08
+
+### Changed
+- **Improved welcome email behavior**: Plugin now properly handles all subscription scenarios
+  - New signups via frontend: Send welcome email ✓
+  - Resubscriptions via frontend: Send welcome email ✓
+  - Webhook imports (new subscribers): No welcome email ✓
+  - Webhook reactivations: No welcome email ✓
+- **Resubscription support**: Users who resubscribe through the frontend now receive a "Welcome back" email
+- **Better UX**: Welcome emails now check the `importedFromProvider` flag by default
+
+### Fixed
+- Fixed missing welcome emails for user-initiated resubscriptions
+- Fixed unwanted welcome emails for webhook-imported subscribers
+
 ## [0.24.0] - 2025-08-08
 
 ### Added

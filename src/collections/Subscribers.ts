@@ -278,8 +278,8 @@ export const createSubscribersCollection = (
               console.warn('[Newsletter Plugin] No email service configured for subscriber creation')
             }
 
-            // Send welcome email if active
-            if (doc.subscriptionStatus === 'active' && emailService) {
+            // Send welcome email if active and not imported from provider
+            if (doc.subscriptionStatus === 'active' && emailService && !doc.importedFromProvider) {
               try {
                 // Get settings for site name
                 const settings = await req.payload.findGlobal({
@@ -336,6 +336,46 @@ export const createSubscribersCollection = (
                 }
               } else {
                 console.warn('[Newsletter Plugin] No email service configured')
+              }
+            }
+
+            // Handle resubscribe - send welcome email for user-initiated resubscriptions
+            if (
+              doc.subscriptionStatus === 'active' &&
+              previousDoc.subscriptionStatus === 'unsubscribed' &&
+              !doc.importedFromProvider &&
+              emailService
+            ) {
+              try {
+                // Get settings for site name
+                const settings = await req.payload.findGlobal({
+                  slug: pluginConfig.settingsSlug || 'newsletter-settings',
+                })
+                
+                // Render welcome email
+                const serverURL = req.payload.config.serverURL || process.env.PAYLOAD_PUBLIC_SERVER_URL || ''
+                const html = await renderEmail('welcome', {
+                  email: doc.email,
+                  siteName: settings?.brandSettings?.siteName || 'Newsletter',
+                  preferencesUrl: `${serverURL}/account/preferences`,
+                }, pluginConfig)
+                
+                // Send email
+                await emailService.send({
+                  to: doc.email,
+                  subject: settings?.brandSettings?.siteName ? `Welcome back to ${settings.brandSettings.siteName}!` : 'Welcome back!',
+                  html,
+                })
+                
+                console.warn(`Welcome email sent to resubscribed user: ${doc.email}`)
+              } catch (error) {
+                console.error('Failed to send resubscription welcome email:', error)
+                // Don't fail the resubscription if welcome email fails
+              }
+              
+              // Call custom after subscribe hook for resubscriptions
+              if (pluginConfig.hooks?.afterSubscribe) {
+                await pluginConfig.hooks.afterSubscribe({ doc, req })
               }
             }
 
