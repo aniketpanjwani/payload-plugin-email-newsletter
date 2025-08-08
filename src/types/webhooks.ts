@@ -7,7 +7,39 @@ export interface BroadcastWebhookEvent {
   data: Record<string, any>
 }
 
-// Subscriber Events (only handling subscribed/unsubscribed)
+// Subscriber Events
+export interface SubscriberCreatedEvent extends BroadcastWebhookEvent {
+  type: 'subscriber.created'
+  data: {
+    id: string
+    email: string
+    name?: string
+    source?: string
+    created_at: string
+    attributes?: Record<string, any>
+  }
+}
+
+export interface SubscriberUpdatedEvent extends BroadcastWebhookEvent {
+  type: 'subscriber.updated'
+  data: {
+    id: string
+    email: string
+    name?: string
+    updated_at: string
+    attributes?: Record<string, any>
+  }
+}
+
+export interface SubscriberDeletedEvent extends BroadcastWebhookEvent {
+  type: 'subscriber.deleted'
+  data: {
+    id: string
+    email: string
+    deleted_at: string
+  }
+}
+
 export interface SubscriberSubscribedEvent extends BroadcastWebhookEvent {
   type: 'subscriber.subscribed'
   data: {
@@ -113,6 +145,9 @@ export interface BroadcastPausedEvent extends BroadcastWebhookEvent {
 
 // Union type for all handled events
 export type HandledWebhookEvent =
+  | SubscriberCreatedEvent
+  | SubscriberUpdatedEvent
+  | SubscriberDeletedEvent
   | SubscriberSubscribedEvent
   | SubscriberUnsubscribedEvent
   | BroadcastScheduledEvent
@@ -127,6 +162,9 @@ export type HandledWebhookEvent =
 // Event type constants
 export const WEBHOOK_EVENT_TYPES = {
   // Subscriber events
+  SUBSCRIBER_CREATED: 'subscriber.created',
+  SUBSCRIBER_UPDATED: 'subscriber.updated',
+  SUBSCRIBER_DELETED: 'subscriber.deleted',
   SUBSCRIBER_SUBSCRIBED: 'subscriber.subscribed',
   SUBSCRIBER_UNSUBSCRIBED: 'subscriber.unsubscribed',
   
@@ -142,7 +180,7 @@ export const WEBHOOK_EVENT_TYPES = {
 } as const
 
 // Type guard functions
-export function isSubscriberEvent(event: BroadcastWebhookEvent): event is SubscriberSubscribedEvent | SubscriberUnsubscribedEvent {
+export function isSubscriberEvent(event: BroadcastWebhookEvent): event is SubscriberCreatedEvent | SubscriberUpdatedEvent | SubscriberDeletedEvent | SubscriberSubscribedEvent | SubscriberUnsubscribedEvent {
   return event.type.startsWith('subscriber.')
 }
 

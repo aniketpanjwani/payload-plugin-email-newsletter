@@ -1,3 +1,16 @@
+## [0.23.0] - 2025-08-07
+
+### Added
+- **Complete webhook sync for Broadcast subscribers**: Added support for three new webhook events
+  - `subscriber.created`: Syncs new subscribers created in Broadcast interface to Payload
+  - `subscriber.updated`: Syncs subscriber updates from Broadcast to Payload
+  - `subscriber.deleted`: Removes subscribers from Payload when deleted in Broadcast
+- **Bidirectional sync**: Now provides complete two-way synchronization between Broadcast and Payload
+
+### Changed
+- Enhanced webhook event handling to support all subscriber lifecycle events
+- Improved logging for better webhook debugging
+
 ## [0.22.0] - 2025-08-07
 
 ### Changed
