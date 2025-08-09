@@ -189,7 +189,7 @@ async function handleSubscriberCreated(
         data: {
           email: data.email,
           name: data.name,
-          subscriptionStatus: 'pending', // New subscribers start as pending
+          subscriptionStatus: 'active', // Match Broadcast's active status
           externalId: data.id,
           source: data.source,
           importedFromProvider: true,

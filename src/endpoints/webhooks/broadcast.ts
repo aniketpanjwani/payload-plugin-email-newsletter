@@ -82,18 +82,6 @@ export const createBroadcastWebhookEndpoint = (
         // Route event to appropriate handler
         await routeWebhookEvent(data, req, config)
         
-        // Update last webhook received timestamp
-        await req.payload.updateGlobal({
-          slug: config.settingsSlug || 'newsletter-settings',
-          data: {
-            broadcastSettings: {
-              ...(settings?.broadcastSettings || {}),
-              lastWebhookReceived: new Date().toISOString(),
-              webhookStatus: 'verified',
-            },
-          },
-        })
-        
         // Acknowledge receipt
         return Response.json({ success: true }, { status: 200 })
       } catch (error) {
