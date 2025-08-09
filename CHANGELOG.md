@@ -1,3 +1,16 @@
+## [0.25.1] - 2025-08-09
+
+### Fixed
+- **Removed webhook status updates**: Eliminated permission errors when processing Broadcast webhooks
+  - Webhook handler no longer attempts to update global settings
+  - Fixes "Only administrators can modify newsletter settings" errors
+  
+### Changed
+- **Webhook subscribers now start as active**: `subscriber.created` webhook events now set status as 'active' instead of 'pending'
+  - Better aligns with single opt-in workflows
+  - Matches Broadcast's confirmed subscriber status
+  - Welcome emails still prevented by `importedFromProvider` flag
+
 ## [0.25.0] - 2025-08-08
 
 ### Changed
