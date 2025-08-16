@@ -362,13 +362,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
           // Handle create operation
           if (operation === 'create') {
-            // Skip provider sync if essential fields are missing
-            // Broadcast API requires both subject and body
-            if (!doc.subject || !doc.contentSection?.content) {
-              req.payload.logger.info('Skipping provider sync - broadcast has no subject or content yet')
-              return doc
-            }
-            
             try {
               // Get provider config from settings first, then fall back to env vars
               const providerConfig = await getBroadcastConfig(req, pluginConfig)
@@ -380,52 +373,36 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
               const provider = new BroadcastApiProvider(providerConfig)
 
-              // Populate media fields and convert rich text to HTML
-              req.payload.logger.info('Populating media fields and converting content to HTML...')
-              const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
-              
-              // Get email preview customization options
-              const emailPreviewConfig = pluginConfig.customizations?.broadcasts?.emailPreview
-              
-              const htmlContent = await convertToEmailSafeHtml(populatedContent, {
-                wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
-                customWrapper: emailPreviewConfig?.customWrapper,
-                preheader: doc.contentSection?.preheader,
-                subject: doc.subject,
-                documentData: doc, // Pass entire document
-                customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
-              })
-              
-              // Skip if content is empty after conversion
-              if (!htmlContent || htmlContent.trim() === '') {
-                req.payload.logger.info('Skipping provider sync - content is empty after conversion')
-                return doc
-              }
-              
-              // Log what we're about to send
+              // Always create with at least minimal data to get a providerId
+              const subject = doc.subject || `Draft Broadcast ${new Date().toISOString()}`
+              const htmlContent = doc.contentSection?.content 
+                ? await convertToEmailSafeHtml(
+                    await populateMediaFields(doc.contentSection.content, req.payload, pluginConfig),
+                    {
+                      wrapInTemplate: pluginConfig.customizations?.broadcasts?.emailPreview?.wrapInTemplate ?? true,
+                      customWrapper: pluginConfig.customizations?.broadcasts?.emailPreview?.customWrapper,
+                      preheader: doc.contentSection?.preheader,
+                      subject: subject,
+                      documentData: doc,
+                      customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
+                    }
+                  )
+                : '<p>Draft content - to be updated</p>'
+
               const createData = {
-                name: doc.subject, // Use subject as name since we removed the name field
-                subject: doc.subject,
-                preheader: doc.contentSection?.preheader,
+                name: subject, // Use subject as name
+                subject: subject,
+                preheader: doc.contentSection?.preheader || '',
                 content: htmlContent,
-                trackOpens: doc.settings?.trackOpens,
-                trackClicks: doc.settings?.trackClicks,
+                trackOpens: doc.settings?.trackOpens ?? true,
+                trackClicks: doc.settings?.trackClicks ?? true,
                 replyTo: doc.settings?.replyTo || providerConfig.replyTo,
-                audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
+                audienceIds: doc.audienceIds?.map((a: any) => a.audienceId) || [],
               }
               
-              req.payload.logger.info('Creating broadcast with data:', {
-                name: createData.name,
+              req.payload.logger.info('Creating broadcast in provider with minimal data to establish association', {
                 subject: createData.subject,
-                preheader: createData.preheader || 'NONE',
-                contentLength: htmlContent ? htmlContent.length : 0,
-                contentPreview: htmlContent ? htmlContent.substring(0, 100) + '...' : 'EMPTY',
-                trackOpens: createData.trackOpens,
-                trackClicks: createData.trackClicks,
-                replyTo: createData.replyTo,
-                audienceIds: createData.audienceIds || [],
-                apiUrl: providerConfig.apiUrl,
-                hasToken: !!providerConfig.token,
+                hasActualContent: !!doc.contentSection?.content,
               })
 
               // Create broadcast in provider
@@ -442,46 +419,17 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 req,
               })
 
+              req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${providerBroadcast.id}`)
+
               return {
                 ...doc,
                 providerId: providerBroadcast.id,
                 providerData: providerBroadcast.providerData,
               }
             } catch (error: unknown) {
-              // Log the raw error first to see what we're dealing with
-              req.payload.logger.error('Raw error from broadcast provider:')
-              req.payload.logger.error(error)
-              
-              // Try different error formats
-              if (error instanceof Error) {
-                req.payload.logger.error('Error is instance of Error:', {
-                  message: error.message,
-                  stack: error.stack,
-                  name: error.name,
-                  // If it's a BroadcastProviderError, it might have additional details
-                  ...(error as any).details,
-                  // Check if it's a fetch response error
-                  ...(error as any).response,
-                  ...(error as any).data,
-                  ...(error as any).status,
-                  ...(error as any).statusText,
-                })
-              } else if (typeof error === 'string') {
-                req.payload.logger.error('Error is a string:', error)
-              } else if (error && typeof error === 'object') {
-                req.payload.logger.error('Error is an object:', JSON.stringify(error, null, 2))
-              } else {
-                req.payload.logger.error('Unknown error type:', typeof error)
-              }
-              
-              // Also log the doc info for context
-              req.payload.logger.error('Failed broadcast document:', {
-                id: doc.id,
-                subject: doc.subject,
-                hasContent: !!doc.contentSection?.content,
-                contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
-              })
-              
+              // Log the error but don't fail the Payload document creation
+              req.payload.logger.error('Failed to create broadcast in provider during initial creation:', error)
+              // Continue with Payload document creation even if provider sync fails
               return doc
             }
           }
@@ -506,78 +454,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
               const provider = new BroadcastApiProvider(providerConfig)
 
-              // If no providerId exists yet, we need to create in provider first (deferred from initial create)
+              // Log warning if updating without providerId (shouldn't happen with new logic)
               if (!doc.providerId) {
-                // Check if we have minimum required fields now
-                if (!doc.subject || !doc.contentSection?.content) {
-                  req.payload.logger.info('Still missing required fields for provider sync')
-                  return doc
-                }
-
-                // Populate media fields and convert rich text to HTML
-                req.payload.logger.info('Creating broadcast in provider (deferred from initial create)...')
-                const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
-                
-                // Get email preview customization options
-                const emailPreviewConfig = pluginConfig.customizations?.broadcasts?.emailPreview
-                
-                const htmlContent = await convertToEmailSafeHtml(populatedContent, {
-                  wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
-                  customWrapper: emailPreviewConfig?.customWrapper,
-                  preheader: doc.contentSection?.preheader,
-                  subject: doc.subject,
-                  documentData: doc, // Pass entire document
-                  customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
-                })
-
-                // Skip if content is empty after conversion
-                if (!htmlContent || htmlContent.trim() === '') {
-                  req.payload.logger.info('Skipping provider sync - content is empty after conversion')
-                  return doc
-                }
-
-                // Create broadcast in provider
-                const createData = {
-                  name: doc.subject,
-                  subject: doc.subject,
-                  preheader: doc.contentSection?.preheader,
-                  content: htmlContent,
-                  trackOpens: doc.settings?.trackOpens,
-                  trackClicks: doc.settings?.trackClicks,
-                  replyTo: doc.settings?.replyTo || providerConfig.replyTo,
-                  audienceIds: doc.audienceIds?.map((a: any) => a.audienceId),
-                }
-
-                req.payload.logger.info('Creating broadcast with data:', {
-                  name: createData.name,
-                  subject: createData.subject,
-                  preheader: createData.preheader || 'NONE',
-                  contentLength: htmlContent ? htmlContent.length : 0,
-                  contentPreview: htmlContent ? htmlContent.substring(0, 100) + '...' : 'EMPTY',
-                  apiUrl: providerConfig.apiUrl,
-                  hasToken: !!providerConfig.token,
-                })
-
-                const providerBroadcast = await provider.create(createData)
-
-                // Update with provider ID
-                await req.payload.update({
-                  collection: 'broadcasts',
-                  id: doc.id,
-                  data: {
-                    providerId: providerBroadcast.id,
-                    providerData: providerBroadcast.providerData,
-                  },
-                  req,
-                })
-
-                req.payload.logger.info(`Broadcast ${doc.id} created in provider successfully (deferred)`)
-
-                return {
-                  ...doc,
-                  providerId: providerBroadcast.id,
-                  providerData: providerBroadcast.providerData,
-                }
+                req.payload.logger.warn(`Broadcast ${doc.id} has no providerId - provider sync skipped. This shouldn't happen with immediate creation.`)
+                return doc
               }
 
               // Handle normal updates to existing broadcasts (only if providerId exists)

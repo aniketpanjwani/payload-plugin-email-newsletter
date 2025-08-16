@@ -1,3 +1,9 @@
+## [0.25.2] - 2025-08-15
+
+### Fixed
+- Fixed issue where editing draft broadcasts created duplicate entries in the provider instead of updating the existing broadcast
+- Broadcasts now immediately sync to provider on creation with minimal data to establish the association
+
 ## [0.25.1] - 2025-08-09
 
 ### Fixed
