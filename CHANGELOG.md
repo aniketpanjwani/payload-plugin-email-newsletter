@@ -1,3 +1,12 @@
+## [0.25.3] - 2025-08-16
+
+### Added
+- Media population support for upload nodes within rich text fields in custom blocks
+- Rich text fields in custom blocks now properly populate nested image uploads for email rendering
+
+### Fixed
+- Images inserted in rich text editors within custom blocks now render correctly in email previews
+
 ## [0.25.2] - 2025-08-15
 
 ### Fixed

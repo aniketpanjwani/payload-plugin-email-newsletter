@@ -92,6 +92,12 @@ async function populateBlockMediaFields(node: any, payload: Payload, config: New
             }
           }
         }
+        
+        // Also handle rich text fields
+        if (field.type === 'richText' && node.fields[field.name]) {
+          await populateRichTextUploads(node.fields[field.name], payload)
+          payload.logger?.info(`Processed rich text field ${field.name} for upload nodes`)
+        }
       }
     }
   }
@@ -100,6 +106,66 @@ async function populateBlockMediaFields(node: any, payload: Payload, config: New
   if (node.children) {
     for (const child of node.children) {
       await populateBlockMediaFields(child, payload, config)
+    }
+  }
+}
+
+// Helper function to populate upload nodes within rich text content
+async function populateRichTextUploads(content: any, payload: Payload): Promise<void> {
+  if (!content || typeof content !== 'object') return
+  
+  // Handle Lexical root structure
+  if (content.root?.children) {
+    await processNodeArray(content.root.children)
+  }
+  
+  // Handle direct children array
+  if (Array.isArray(content)) {
+    await processNodeArray(content)
+  }
+  
+  async function processNodeArray(nodes: any[]): Promise<void> {
+    await Promise.all(nodes.map(processNode))
+  }
+  
+  async function processNode(node: any): Promise<void> {
+    if (!node || typeof node !== 'object') return
+    
+    // Check if this is an upload node with unpopulated value
+    if (
+      node.type === 'upload' && 
+      node.relationTo === 'media' && 
+      typeof node.value === 'string' &&
+      node.value.match(/^[a-f0-9]{24}$/i)
+    ) {
+      try {
+        const media = await payload.findByID({
+          collection: 'media',
+          id: node.value,
+          depth: 0,
+        })
+        
+        if (media) {
+          node.value = media
+          payload.logger?.info(`Populated rich text upload node:`, {
+            mediaId: node.value,
+            mediaUrl: media.url,
+            filename: media.filename
+          })
+        }
+      } catch (error) {
+        payload.logger?.error(`Failed to populate rich text upload ${node.value}:`, error)
+      }
+    }
+    
+    // Recursively process children
+    if (node.children && Array.isArray(node.children)) {
+      await processNodeArray(node.children)
+    }
+    
+    // Also check for root property (some Lexical structures)
+    if (node.root?.children && Array.isArray(node.root.children)) {
+      await processNodeArray(node.root.children)
     }
   }
 }
