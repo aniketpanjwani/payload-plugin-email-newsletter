@@ -408,12 +408,13 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               // Create broadcast in provider
               const providerBroadcast = await provider.create(createData)
 
-              // Update with provider ID
+              // Update with provider ID and external ID for webhook matching
               await req.payload.update({
                 collection: 'broadcasts',
                 id: doc.id,
                 data: {
                   providerId: providerBroadcast.id,
+                  externalId: providerBroadcast.id, // Set externalId to match providerId for webhook lookup
                   providerData: providerBroadcast.providerData,
                 },
                 req,
@@ -424,6 +425,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               return {
                 ...doc,
                 providerId: providerBroadcast.id,
+                externalId: providerBroadcast.id, // Include externalId in return value
                 providerData: providerBroadcast.providerData,
               }
             } catch (error: unknown) {

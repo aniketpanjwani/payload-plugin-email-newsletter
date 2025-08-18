@@ -1,3 +1,11 @@
+## [0.25.4] - 2025-08-18
+
+### Fixed
+- Fixed External ID not being populated when creating broadcasts, preventing webhook updates from syncing
+  - Both `providerId` and `externalId` are now set when creating broadcasts in the provider
+  - Webhooks can now properly find and update broadcasts by External ID
+  - Ensures full bidirectional sync between Payload CMS and Broadcast software
+
 ## [0.25.3] - 2025-08-16
 
 ### Added
