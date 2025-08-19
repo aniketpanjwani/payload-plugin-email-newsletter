@@ -193,7 +193,7 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
       let result
       try {
         result = JSON.parse(responseText)
-      } catch (e) {
+      } catch {
         throw new Error(`Failed to parse response as JSON: ${responseText}`)
       }
       

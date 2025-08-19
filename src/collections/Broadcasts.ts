@@ -441,7 +441,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   stack: error.stack,
                   name: error.name,
                   // Check for any additional properties
-                  ...(error as any)
+                  ...((error as Record<string, unknown>) || {})
                 })
               } else {
                 req.payload.logger.error('Raw error:', error)
