@@ -1,3 +1,11 @@
+## [0.25.5] - 2025-08-18
+
+### Fixed
+- Fixed "document not found" error when creating broadcasts by removing unnecessary update call during creation
+  - The afterChange hook now properly returns the modified document instead of trying to update it
+  - Added debug logging to help diagnose provider sync issues
+  - Ensures smooth broadcast creation without transaction conflicts
+
 ## [0.25.4] - 2025-08-18
 
 ### Fixed

@@ -363,6 +363,13 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           // Handle create operation
           if (operation === 'create') {
             try {
+              req.payload.logger.info('Broadcast afterChange create hook - doc info:', {
+                docId: doc.id,
+                docIdType: typeof doc.id,
+                hasDoc: !!doc,
+                operation
+              })
+
               // Get provider config from settings first, then fall back to env vars
               const providerConfig = await getBroadcastConfig(req, pluginConfig)
               if (!providerConfig || !providerConfig.token) {
@@ -408,18 +415,14 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               // Create broadcast in provider
               const providerBroadcast = await provider.create(createData)
 
-              // Update with provider ID and external ID for webhook matching
-              await req.payload.update({
-                collection: 'broadcasts',
-                id: doc.id,
-                data: {
-                  providerId: providerBroadcast.id,
-                  externalId: providerBroadcast.id, // Set externalId to match providerId for webhook lookup
-                  providerData: providerBroadcast.providerData,
-                },
-                req,
+              req.payload.logger.info('Provider broadcast created:', {
+                providerBroadcastId: providerBroadcast.id,
+                providerBroadcastIdType: typeof providerBroadcast.id,
+                docId: doc.id,
+                docIdType: typeof doc.id
               })
 
+              // Don't try to update during create - just return the modified doc
               req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${providerBroadcast.id}`)
 
               return {
