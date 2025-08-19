@@ -1,3 +1,16 @@
+## [0.25.9] - 2025-08-19
+
+### Fixed
+- Fixed providerId/externalId not being saved during broadcast creation
+  - Moved provider creation from create to update operation
+  - Provider broadcast is now created on first update when subject and content are present
+  - Ensures IDs are properly persisted to the database
+  - Prevents issues with Payload's create operation not persisting afterChange modifications
+
+### Changed
+- Broadcasts are now created in Payload first, then synced to provider on first meaningful update
+- More robust approach that works with Payload's hook lifecycle
+
 ## [0.25.8] - 2025-08-19
 
 ### Fixed

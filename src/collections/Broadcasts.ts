@@ -360,106 +360,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         async ({ doc, operation, req, previousDoc }) => {
           if (!hasProviders) return doc
 
-          // Handle create operation
+          // Skip create operation - we'll handle provider creation on first update
           if (operation === 'create') {
-            try {
-              req.payload.logger.info('Broadcast afterChange CREATE hook (sync) - doc info:', {
-                docId: doc.id,
-                docIdType: typeof doc.id,
-                hasDoc: !!doc,
-                operation,
-                status: doc._status,
-                hasExternalId: !!doc.externalId,
-                hasProviderId: !!doc.providerId
-              })
-
-              // Skip if already has externalId (prevents double creation)
-              if (doc.externalId || doc.providerId) {
-                req.payload.logger.info('Broadcast already has provider IDs, skipping creation', {
-                  externalId: doc.externalId,
-                  providerId: doc.providerId
-                })
-                return doc
-              }
-
-              // Get provider config from settings first, then fall back to env vars
-              const providerConfig = await getBroadcastConfig(req, pluginConfig)
-              if (!providerConfig || !providerConfig.token) {
-                req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
-                return doc
-              }
-
-              const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-              const provider = new BroadcastApiProvider(providerConfig)
-
-              // Always create with at least minimal data to get a providerId
-              const subject = doc.subject || `Draft Broadcast ${new Date().toISOString()}`
-              const htmlContent = doc.contentSection?.content 
-                ? await convertToEmailSafeHtml(
-                    await populateMediaFields(doc.contentSection.content, req.payload, pluginConfig),
-                    {
-                      wrapInTemplate: pluginConfig.customizations?.broadcasts?.emailPreview?.wrapInTemplate ?? true,
-                      customWrapper: pluginConfig.customizations?.broadcasts?.emailPreview?.customWrapper,
-                      preheader: doc.contentSection?.preheader,
-                      subject: subject,
-                      documentData: doc,
-                      customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
-                    }
-                  )
-                : '<p>Draft content - to be updated</p>'
-
-              const createData = {
-                name: subject, // Use subject as name
-                subject: subject,
-                preheader: doc.contentSection?.preheader || '',
-                content: htmlContent,
-                trackOpens: doc.settings?.trackOpens ?? true,
-                trackClicks: doc.settings?.trackClicks ?? true,
-                replyTo: doc.settings?.replyTo || providerConfig.replyTo,
-                audienceIds: doc.audienceIds?.map((a: any) => a.audienceId) || [],
-              }
-              
-              req.payload.logger.info('Creating broadcast in provider with minimal data to establish association', {
-                subject: createData.subject,
-                hasActualContent: !!doc.contentSection?.content,
-              })
-
-              // Create broadcast in provider
-              const providerBroadcast = await provider.create(createData)
-
-              req.payload.logger.info('Provider broadcast created:', {
-                providerBroadcastId: providerBroadcast.id,
-                providerBroadcastIdType: typeof providerBroadcast.id,
-                docId: doc.id,
-                docIdType: typeof doc.id
-              })
-
-              // Don't try to update during create - just return the modified doc
-              req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${providerBroadcast.id}`)
-
-              return {
-                ...doc,
-                providerId: providerBroadcast.id,
-                externalId: providerBroadcast.id, // Include externalId in return value
-                providerData: providerBroadcast.providerData,
-              }
-            } catch (error: unknown) {
-              // Enhanced error logging
-              req.payload.logger.error('Failed to create broadcast in provider during initial creation:')
-              
-              if (error instanceof Error) {
-                req.payload.logger.error('Error details:', {
-                  message: error.message,
-                  stack: error.stack,
-                  name: error.name
-                })
-              } else {
-                req.payload.logger.error('Raw error:', error)
-              }
-              
-              // Continue with Payload document creation even if provider sync fails
-              return doc
-            }
+            req.payload.logger.info('Broadcast created in Payload, provider sync will happen on first update with content')
+            return doc
           }
           
           // Handle update operation
@@ -467,8 +371,11 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             req.payload.logger.info('Broadcast afterChange update hook triggered', {
               operation,
               hasProviderId: !!doc.providerId,
+              hasExternalId: !!doc.externalId,
               sendStatus: doc.sendStatus,
-              publishStatus: doc._status
+              publishStatus: doc._status,
+              hasSubject: !!doc.subject,
+              hasContent: !!doc.contentSection?.content
             })
 
             try {
@@ -482,9 +389,49 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
               const provider = new BroadcastApiProvider(providerConfig)
 
-              // Log warning if updating without providerId (shouldn't happen with new logic)
+              // If no providerId/externalId and has enough content, create in provider
+              if (!doc.providerId && !doc.externalId && doc.subject && doc.contentSection?.content) {
+                req.payload.logger.info('Creating broadcast in provider on first update with content')
+                
+                const htmlContent = await convertToEmailSafeHtml(
+                  await populateMediaFields(doc.contentSection.content, req.payload, pluginConfig),
+                  {
+                    wrapInTemplate: pluginConfig.customizations?.broadcasts?.emailPreview?.wrapInTemplate ?? true,
+                    customWrapper: pluginConfig.customizations?.broadcasts?.emailPreview?.customWrapper,
+                    preheader: doc.contentSection?.preheader,
+                    subject: doc.subject,
+                    documentData: doc,
+                    customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
+                  }
+                )
+
+                const createData = {
+                  name: doc.subject,
+                  subject: doc.subject,
+                  preheader: doc.contentSection?.preheader || '',
+                  content: htmlContent,
+                  trackOpens: doc.settings?.trackOpens ?? true,
+                  trackClicks: doc.settings?.trackClicks ?? true,
+                  replyTo: doc.settings?.replyTo || providerConfig.replyTo,
+                  audienceIds: doc.audienceIds?.map((a: any) => a.audienceId) || [],
+                }
+
+                const providerBroadcast = await provider.create(createData)
+                
+                req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${providerBroadcast.id}`)
+                
+                // Return the document with provider IDs
+                return {
+                  ...doc,
+                  providerId: providerBroadcast.id,
+                  externalId: providerBroadcast.id,
+                  providerData: providerBroadcast.providerData,
+                }
+              }
+
+              // If no providerId, skip sync
               if (!doc.providerId) {
-                req.payload.logger.warn(`Broadcast ${doc.id} has no providerId - provider sync skipped. This shouldn't happen with immediate creation.`)
+                req.payload.logger.info(`Broadcast ${doc.id} has no providerId and insufficient content for creation - skipping sync`)
                 return doc
               }
 
