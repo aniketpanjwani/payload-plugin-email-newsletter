@@ -1,3 +1,10 @@
+## [0.25.7] - 2025-08-19
+
+### Fixed
+- Fixed TypeScript type errors in error handling code
+- Resolved all linting errors (warnings remain but don't block the build)
+- Simplified error logging to avoid type conversion issues
+
 ## [0.25.6] - 2025-08-19
 
 ### Changed
