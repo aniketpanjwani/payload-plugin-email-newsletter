@@ -96,6 +96,8 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
 
   async get(id: string): Promise<Broadcast> {
     try {
+      console.log('[BroadcastApiProvider] Getting broadcast with ID:', id)
+      
       const response = await fetch(`${this.apiUrl}/api/v1/broadcasts/${id}`, {
         method: 'GET',
         headers: {
@@ -185,7 +187,22 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
         throw new Error(`Broadcast API error: ${response.status} - ${errorText}`)
       }
 
-      const result = await response.json()
+      const responseText = await response.text()
+      console.log('[BroadcastApiProvider] Success response body:', responseText)
+      
+      let result
+      try {
+        result = JSON.parse(responseText)
+      } catch (e) {
+        throw new Error(`Failed to parse response as JSON: ${responseText}`)
+      }
+      
+      console.log('[BroadcastApiProvider] Parsed result:', result)
+      
+      if (!result.id) {
+        throw new Error(`Response missing expected 'id' field: ${JSON.stringify(result)}`)
+      }
+      
       // Broadcast API returns just {id: 123}, so we need to fetch the full object
       return this.get(result.id.toString())
     } catch (error: unknown) {

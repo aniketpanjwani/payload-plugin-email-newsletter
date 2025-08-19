@@ -1,3 +1,12 @@
+## [0.25.6] - 2025-08-19
+
+### Changed
+- Enhanced error logging for Broadcast API provider to diagnose connection issues
+  - Added detailed response logging for successful and failed API calls
+  - Improved error messages to show actual API responses
+  - Added logging for GET requests after broadcast creation
+  - Better JSON parsing error handling with response body details
+
 ## [0.25.5] - 2025-08-18
 
 ### Fixed

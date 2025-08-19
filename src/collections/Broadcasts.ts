@@ -432,8 +432,21 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 providerData: providerBroadcast.providerData,
               }
             } catch (error: unknown) {
-              // Log the error but don't fail the Payload document creation
-              req.payload.logger.error('Failed to create broadcast in provider during initial creation:', error)
+              // Enhanced error logging
+              req.payload.logger.error('Failed to create broadcast in provider during initial creation:')
+              
+              if (error instanceof Error) {
+                req.payload.logger.error('Error details:', {
+                  message: error.message,
+                  stack: error.stack,
+                  name: error.name,
+                  // Check for any additional properties
+                  ...(error as any)
+                })
+              } else {
+                req.payload.logger.error('Raw error:', error)
+              }
+              
               // Continue with Payload document creation even if provider sync fails
               return doc
             }
