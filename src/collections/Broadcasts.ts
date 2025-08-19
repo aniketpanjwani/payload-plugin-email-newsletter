@@ -363,12 +363,24 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           // Handle create operation
           if (operation === 'create') {
             try {
-              req.payload.logger.info('Broadcast afterChange create hook - doc info:', {
+              req.payload.logger.info('Broadcast afterChange CREATE hook (sync) - doc info:', {
                 docId: doc.id,
                 docIdType: typeof doc.id,
                 hasDoc: !!doc,
-                operation
+                operation,
+                status: doc._status,
+                hasExternalId: !!doc.externalId,
+                hasProviderId: !!doc.providerId
               })
+
+              // Skip if already has externalId (prevents double creation)
+              if (doc.externalId || doc.providerId) {
+                req.payload.logger.info('Broadcast already has provider IDs, skipping creation', {
+                  externalId: doc.externalId,
+                  providerId: doc.providerId
+                })
+                return doc
+              }
 
               // Get provider config from settings first, then fall back to env vars
               const providerConfig = await getBroadcastConfig(req, pluginConfig)

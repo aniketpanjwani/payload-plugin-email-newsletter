@@ -119,6 +119,7 @@ export class BroadcastApiProvider extends BaseBroadcastProvider {
       }
 
       const broadcast: BroadcastApiResponse = await response.json()
+      console.log('[BroadcastApiProvider] GET response:', broadcast)
       return this.transformBroadcastFromApi(broadcast)
     } catch (error: unknown) {
       if (error instanceof BroadcastProviderError) throw error

@@ -1,3 +1,14 @@
+## [0.25.8] - 2025-08-19
+
+### Fixed
+- Added check to prevent double broadcast creation if externalId/providerId already exists
+- Enhanced logging to show document status and existing IDs during creation
+- Added logging for GET broadcast response to diagnose sync issues
+- Helps identify root cause of duplicate broadcast creation
+
+### Changed
+- More descriptive hook logging to distinguish between sync and publish hooks
+
 ## [0.25.7] - 2025-08-19
 
 ### Fixed
