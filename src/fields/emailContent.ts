@@ -105,25 +105,8 @@ export const createEmailSafeFeatures = (additionalBlocks?: Block[]): any[] => {
     UnderlineFeature(),
     StrikethroughFeature(),
     
-    // Links with enhanced configuration
-    LinkFeature({
-      fields: [
-        {
-          name: 'url',
-          type: 'text',
-          required: true,
-          admin: {
-            description: 'Enter the full URL (including https://)',
-          },
-        },
-        {
-          name: 'newTab',
-          type: 'checkbox',
-          label: 'Open in new tab',
-          defaultValue: false,
-        },
-      ],
-    }),
+    // Links - use default fields to ensure drawer UI works correctly
+    LinkFeature(),
     
     // Lists
     OrderedListFeature(),
@@ -193,25 +176,8 @@ export const createEmailLexicalEditor = (customBlocks: Block[] = []): any => {
       UnderlineFeature(),
       StrikethroughFeature(),
       
-      // Links with enhanced configuration
-      LinkFeature({
-        fields: [
-          {
-            name: 'url',
-            type: 'text',
-            required: true,
-            admin: {
-              description: 'Enter the full URL (including https://)',
-            },
-          },
-          {
-            name: 'newTab',
-            type: 'checkbox',
-            label: 'Open in new tab',
-            defaultValue: false,
-          },
-        ],
-      }),
+      // Links - use default fields to ensure drawer UI works correctly
+      LinkFeature(),
       
       // Lists
       OrderedListFeature(),

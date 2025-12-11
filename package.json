@@ -1,6 +1,6 @@
 {
   "name": "payload-plugin-newsletter",
-  "version": "0.25.9",
+  "version": "0.25.10",
   "description": "Complete newsletter management plugin for Payload CMS with subscriber management, magic link authentication, and email service integration",
   "type": "module",
   "main": "./dist/index.js",
