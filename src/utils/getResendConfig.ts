@@ -25,7 +25,7 @@ export async function getResendConfig(
     // Fall back to env var config
     return pluginConfig.providers?.resend || null
   } catch (error) {
-    req.payload.logger.error('Failed to get resend config from settings:', error)
+    req.payload.logger.error({ error: String(error) }, 'Failed to get resend config from settings')
     // Fall back to env var config on error
     return pluginConfig.providers?.resend || null
   }

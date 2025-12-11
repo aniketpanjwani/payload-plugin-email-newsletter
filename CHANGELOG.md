@@ -1,9 +1,11 @@
-## [0.25.10] - 2025-12-11
+## [0.25.11] - 2025-12-11
 
 ### Fixed
 - Fixed LinkFeature configuration causing URLs to disappear in the Lexical editor link drawer
   - The custom `fields` array was replacing Payload's default fields, removing the crucial `linkType` field
   - Now uses default LinkFeature fields which include all required fields for the drawer UI to work correctly
+- Fixed TypeScript errors with Payload logger API (pino signature requires object first, then message)
+- Fixed `relationTo` type errors where `string | string[]` was passed to `findByID`
 
 ## [0.25.9] - 2025-08-19
 

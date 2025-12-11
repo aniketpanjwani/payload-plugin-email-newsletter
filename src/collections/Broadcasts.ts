@@ -368,7 +368,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           
           // Handle update operation
           if (operation === 'update') {
-            req.payload.logger.info('Broadcast afterChange update hook triggered', {
+            req.payload.logger.info({
               operation,
               hasProviderId: !!doc.providerId,
               hasExternalId: !!doc.externalId,
@@ -376,7 +376,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               publishStatus: doc._status,
               hasSubject: !!doc.subject,
               hasContent: !!doc.contentSection?.content
-            })
+            }, 'Broadcast afterChange update hook triggered')
 
             try {
               // Get provider config from settings first, then fall back to env vars
@@ -493,10 +493,10 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     updates.audienceIds = doc.audienceIds?.map((a: any) => a.audienceId)
                   }
 
-                  req.payload.logger.info('Syncing broadcast updates to provider', {
+                  req.payload.logger.info({
                     providerId: doc.providerId,
                     updates
-                  })
+                  }, 'Syncing broadcast updates to provider')
                   
                   await provider.update(doc.providerId, updates)
                   req.payload.logger.info(`Broadcast ${doc.id} synced to provider successfully`)
@@ -521,19 +521,19 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   ...(error as any).statusText,
                 })
               } else if (typeof error === 'string') {
-                req.payload.logger.error('Error is a string:', error)
+                req.payload.logger.error({ errorValue: error }, 'Error is a string')
               } else if (error && typeof error === 'object') {
-                req.payload.logger.error('Error is an object:', JSON.stringify(error, null, 2))
+                req.payload.logger.error({ errorValue: JSON.stringify(error, null, 2) }, 'Error is an object')
               } else {
-                req.payload.logger.error('Unknown error type:', typeof error)
+                req.payload.logger.error({ errorType: typeof error }, 'Unknown error type')
               }
-              
-              req.payload.logger.error('Failed broadcast document (update operation):', {
+
+              req.payload.logger.error({
                 id: doc.id,
                 subject: doc.subject,
                 hasContent: !!doc.contentSection?.content,
                 contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
-              })
+              }, 'Failed broadcast document (update operation)')
               
               // Don't throw - allow Payload update to succeed even if provider sync fails
             }
@@ -597,7 +597,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   ...(error as any).details
                 })
               } else {
-                req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, error)
+                req.payload.logger.error({ error: String(error) }, `Failed to send broadcast ${doc.id}`)
               }
               
               // Update status to failed
@@ -649,7 +649,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 ...(error as any).details
               })
             } else {
-              req.payload.logger.error('Failed to delete broadcast from provider:', error)
+              req.payload.logger.error({ error: String(error) }, 'Failed to delete broadcast from provider')
             }
           }
 

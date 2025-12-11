@@ -31,26 +31,27 @@ async function populateBlockMediaFields(node: any, payload: Payload, config: New
       for (const field of blockConfig.fields) {
         if (field.type === 'upload' && field.relationTo && node.fields[field.name]) {
           const fieldValue = node.fields[field.name]
-          
+          const collectionName = Array.isArray(field.relationTo) ? field.relationTo[0] : field.relationTo
+
           // If it's just an ID string, populate it
           if (typeof fieldValue === 'string' && fieldValue.match(/^[a-f0-9]{24}$/i)) {
             try {
               const media = await payload.findByID({
-                collection: field.relationTo,
+                collection: collectionName,
                 id: fieldValue,
                 depth: 0,
               })
               
               if (media) {
                 node.fields[field.name] = media
-                payload.logger?.info(`Populated ${field.name} for block ${blockType}:`, {
+                payload.logger?.info({
                   mediaId: fieldValue,
                   mediaUrl: media.url,
                   filename: media.filename
-                })
+                }, `Populated ${field.name} for block ${blockType}`)
               }
             } catch (error) {
-              payload.logger?.error(`Failed to populate ${field.name} for block ${blockType}:`, error)
+              payload.logger?.error({ error: String(error) }, `Failed to populate ${field.name} for block ${blockType}`)
             }
           }
         }
@@ -65,25 +66,26 @@ async function populateBlockMediaFields(node: any, payload: Payload, config: New
                 for (const arrayField of field.fields) {
                   if (arrayField.type === 'upload' && arrayField.relationTo && arrayItem[arrayField.name]) {
                     const arrayFieldValue = arrayItem[arrayField.name]
-                    
+                    const arrayCollectionName = Array.isArray(arrayField.relationTo) ? arrayField.relationTo[0] : arrayField.relationTo
+
                     if (typeof arrayFieldValue === 'string' && arrayFieldValue.match(/^[a-f0-9]{24}$/i)) {
                       try {
                         const media = await payload.findByID({
-                          collection: arrayField.relationTo,
+                          collection: arrayCollectionName,
                           id: arrayFieldValue,
                           depth: 0,
                         })
                         
                         if (media) {
                           arrayItem[arrayField.name] = media
-                          payload.logger?.info(`Populated array ${arrayField.name} for block ${blockType}:`, {
+                          payload.logger?.info({
                             mediaId: arrayFieldValue,
                             mediaUrl: media.url,
                             filename: media.filename
-                          })
+                          }, `Populated array ${arrayField.name} for block ${blockType}`)
                         }
                       } catch (error) {
-                        payload.logger?.error(`Failed to populate array ${arrayField.name} for block ${blockType}:`, error)
+                        payload.logger?.error({ error: String(error) }, `Failed to populate array ${arrayField.name} for block ${blockType}`)
                       }
                     }
                   }
@@ -147,14 +149,14 @@ async function populateRichTextUploads(content: any, payload: Payload): Promise<
         
         if (media) {
           node.value = media
-          payload.logger?.info(`Populated rich text upload node:`, {
+          payload.logger?.info({
             mediaId: node.value,
             mediaUrl: media.url,
             filename: media.filename
-          })
+          }, 'Populated rich text upload node')
         }
       } catch (error) {
-        payload.logger?.error(`Failed to populate rich text upload ${node.value}:`, error)
+        payload.logger?.error({ error: String(error) }, `Failed to populate rich text upload ${node.value}`)
       }
     }
     
