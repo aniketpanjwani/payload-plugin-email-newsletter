@@ -220,3 +220,11 @@ export * from './utilities/session'
 
 // Export server-safe utilities
 export * from './contexts/ServerContext'
+
+// Export preview utilities for external use (e.g., custom Content API endpoints)
+export { populateMediaFields } from './utils/mediaPopulation'
+export { generateBroadcastPreviewHtml } from './utils/preview'
+export type { PreviewOptions, PreviewResult } from './utils/preview'
+
+// Export email HTML utilities
+export { convertToEmailSafeHtml } from './utils/emailSafeHtml'

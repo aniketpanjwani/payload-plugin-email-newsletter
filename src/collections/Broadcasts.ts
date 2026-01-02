@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import type { SerializedEditorState } from 'lexical'
 import type { NewsletterPluginConfig } from '../types'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField, createEmailLexicalEditor } from '../fields/emailContent'
@@ -394,7 +395,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 req.payload.logger.info('Creating broadcast in provider on first update with content')
                 
                 const htmlContent = await convertToEmailSafeHtml(
-                  await populateMediaFields(doc.contentSection.content, req.payload, pluginConfig),
+                  await populateMediaFields(doc.contentSection.content, req.payload, pluginConfig) as SerializedEditorState | null,
                   {
                     wrapInTemplate: pluginConfig.customizations?.broadcasts?.emailPreview?.wrapInTemplate ?? true,
                     customWrapper: pluginConfig.customizations?.broadcasts?.emailPreview?.customWrapper,
@@ -466,11 +467,11 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     updates.preheader = doc.contentSection?.preheader
                   }
                   if (JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content)) {
-                    const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig)
-                    
+                    const populatedContent = await populateMediaFields(doc.contentSection?.content, req.payload, pluginConfig) as SerializedEditorState | null
+
                     // Get email preview customization options
                     const emailPreviewConfig = pluginConfig.customizations?.broadcasts?.emailPreview
-                    
+
                     updates.content = await convertToEmailSafeHtml(populatedContent, {
                       wrapInTemplate: emailPreviewConfig?.wrapInTemplate ?? true,
                       customWrapper: emailPreviewConfig?.customWrapper,

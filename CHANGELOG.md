@@ -1,3 +1,18 @@
+## [0.25.12] - 2026-01-02
+
+### Added
+- New exported utilities for external preview generation:
+  - `generateBroadcastPreviewHtml()` - Generate preview HTML from broadcast content
+  - `populateMediaFields()` - Resolve Media IDs to full media objects with URLs
+  - `convertToEmailSafeHtml()` - Convert Lexical content to email-safe HTML
+  - `PreviewOptions` and `PreviewResult` types for TypeScript support
+- Extracted media population logic to `src/utils/mediaPopulation.ts` for cleaner code organization
+- Created `src/utils/preview.ts` with high-level preview generation utility
+
+### Changed
+- Refactored `src/endpoints/broadcasts/preview.ts` to use new utility files
+- Improved TypeScript types for media population functions
+
 ## [0.25.11] - 2025-12-11
 
 ### Fixed
