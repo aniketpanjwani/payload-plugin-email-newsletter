@@ -1,12 +1,16 @@
 import type { CollectionConfig } from 'payload'
 import type { SerializedEditorState } from 'lexical'
 import type { NewsletterPluginConfig } from '../types'
+import type { BroadcastDocument, BroadcastHookContext } from '../types/scheduling'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField, createEmailLexicalEditor } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
 import { createBroadcastScheduleField } from '../fields/broadcastSchedule'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 import { getBroadcastConfig } from '../utils/getBroadcastConfig'
+import { getBroadcastProvider } from '../utils/getProvider'
+import { detectStateTransition, areScheduledTimesEqual, parseScheduledDate } from '../utils/scheduling-state'
+import { getErrorMessage, getErrorDetails } from '../utils/getErrorMessage'
 import { createSendBroadcastEndpoint } from '../endpoints/broadcasts/send'
 import { createScheduleBroadcastEndpoint } from '../endpoints/broadcasts/schedule'
 import { createTestBroadcastEndpoint } from '../endpoints/broadcasts/test'
@@ -63,6 +67,16 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         required: true,
         admin: {
           description: 'Email subject line'
+        },
+      },
+      {
+        name: 'emailOnly',
+        type: 'checkbox',
+        label: 'Email Only',
+        defaultValue: false,
+        admin: {
+          description: 'Check this to send via email only (won\'t be published on website). Use the plugin\'s Schedule Send button instead of Payload\'s Schedule Publish.',
+          position: 'sidebar',
         },
       },
       // Add any additional fields from customizations after subject
@@ -572,77 +586,231 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
 
           return doc
         },
-        // Hook to send when published
-        async ({ doc, operation, previousDoc, req }) => {
-          // Only run on updates when transitioning to published
-          if (operation !== 'update') return doc
-          
-          const wasUnpublished = !previousDoc?._status || previousDoc._status === 'draft'
-          const isNowPublished = doc._status === 'published'
-          
-          if (wasUnpublished && isNowPublished && doc.providerId) {
-            // Check if already sent
-            if (doc.sendStatus === BroadcastStatus.SENT || doc.sendStatus === BroadcastStatus.SENDING) {
-              return doc
-            }
-            
+        // Unified scheduling hook: syncs email scheduling with Payload publish scheduling
+        async ({ doc, operation, previousDoc, req, context }): Promise<typeof doc> => {
+          // Skip if this is an internal scheduling update (prevents recursion)
+          const hookContext = context as BroadcastHookContext | undefined
+          if (hookContext?.isSchedulingUpdate) {
+            return doc
+          }
+
+          // Only process updates
+          if (operation !== 'update') {
+            return doc
+          }
+
+          // Skip if no providers configured
+          if (!hasProviders) {
+            return doc
+          }
+
+          // Cast to typed document for better type safety
+          const broadcastDoc = doc as BroadcastDocument
+
+          // Skip if no providerId (not synced to provider yet)
+          if (!broadcastDoc.providerId) {
+            return doc
+          }
+
+          // Skip if email-only (handled by ScheduleModal, not Payload's Schedule Publish)
+          if (broadcastDoc.emailOnly === true) {
+            return doc
+          }
+
+          // Skip if already sent or sending
+          if (
+            broadcastDoc.sendStatus === BroadcastStatus.SENT ||
+            broadcastDoc.sendStatus === BroadcastStatus.SENDING
+          ) {
+            return doc
+          }
+
+          const transition = detectStateTransition(
+            previousDoc as BroadcastDocument | undefined,
+            broadcastDoc
+          )
+
+          const publishedAt = parseScheduledDate(broadcastDoc.publishedAt)
+          const now = new Date()
+
+          // --- IDEMPOTENCY CHECK ---
+          // Skip if already scheduled for this exact time
+          if (
+            broadcastDoc.sendStatus === BroadcastStatus.SCHEDULED &&
+            areScheduledTimesEqual(broadcastDoc.scheduledAt, publishedAt)
+          ) {
+            return doc
+          }
+
+          // --- PUBLISH TRANSITION ---
+          if (transition.wasUnpublished && transition.isNowPublished) {
             try {
-              // Get provider config from settings first, then fall back to env vars
-              const broadcastConfig = await getBroadcastConfig(req, pluginConfig)
-              const resendConfig = pluginConfig.providers?.resend // TODO: Add getResendConfig utility
-              
-              if (!broadcastConfig && !resendConfig) {
-                req.payload.logger.error('No provider configured for sending in Newsletter Settings or environment variables')
-                return doc
+              const provider = await getBroadcastProvider(req, pluginConfig)
+
+              // DECISION: Manual publish while scheduled = send immediately
+              // This matches user intent - clicking "Publish" means "do it now"
+              if (transition.isManualPublish) {
+                req.payload.logger.info(
+                  {
+                    broadcastId: broadcastDoc.id,
+                    action: 'manualPublishOverride',
+                    scheduledFor: broadcastDoc.publishedAt,
+                  },
+                  'Manual publish detected, sending immediately instead of waiting for scheduled time'
+                )
               }
-              
-              // Send via provider
-              if (broadcastConfig && broadcastConfig.token) {
-                const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-                const provider = new BroadcastApiProvider(broadcastConfig)
-                await provider.send(doc.providerId)
-              }
-              // Add resend provider support here when needed
-              
-              // Update status
-              await req.payload.update({
-                collection: 'broadcasts',
-                id: doc.id,
-                data: {
-                  sendStatus: BroadcastStatus.SENDING,
-                  sentAt: new Date().toISOString(),
-                },
-                req,
-              })
-              
-              req.payload.logger.info(`Broadcast ${doc.id} sent successfully`)
-              
-            } catch (error) {
-              // Log full error details for debugging
-              if (error instanceof Error) {
-                req.payload.logger.error(`Failed to send broadcast ${doc.id}:`, {
-                  message: error.message,
-                  stack: error.stack,
-                  name: error.name,
-                  // If it's a BroadcastProviderError, it might have additional details
-                  ...(error as any).details
+
+              // Check if publishedAt is in the future AND not a manual publish
+              if (publishedAt && publishedAt.getTime() > now.getTime() && !transition.isManualPublish) {
+                // Future scheduled publish - schedule the email for that time
+                // NOTE: provider.schedule() expects Date object, not string
+                await provider.schedule(broadcastDoc.providerId, publishedAt)
+
+                await req.payload.update({
+                  collection: 'broadcasts',
+                  id: broadcastDoc.id,
+                  data: {
+                    sendStatus: BroadcastStatus.SCHEDULED,
+                    scheduledAt: publishedAt.toISOString(),
+                  },
+                  context: { isSchedulingUpdate: true } as BroadcastHookContext,
                 })
+
+                req.payload.logger.info(
+                  {
+                    broadcastId: broadcastDoc.id,
+                    scheduledAt: publishedAt.toISOString(),
+                  },
+                  'Email scheduled to sync with website publish'
+                )
               } else {
-                req.payload.logger.error({ error: String(error) }, `Failed to send broadcast ${doc.id}`)
+                // Immediate publish OR manual publish - send email now
+                await provider.send(broadcastDoc.providerId)
+
+                await req.payload.update({
+                  collection: 'broadcasts',
+                  id: broadcastDoc.id,
+                  data: {
+                    sendStatus: BroadcastStatus.SENDING,
+                    sentAt: new Date().toISOString(),
+                  },
+                  context: { isSchedulingUpdate: true } as BroadcastHookContext,
+                })
+
+                req.payload.logger.info(
+                  { broadcastId: broadcastDoc.id },
+                  'Broadcast sent successfully on publish'
+                )
               }
-              
-              // Update status to failed
+            } catch (error: unknown) {
+              req.payload.logger.error(
+                {
+                  broadcastId: broadcastDoc.id,
+                  error: getErrorDetails(error),
+                },
+                'Failed to schedule/send email for published broadcast'
+              )
+
               await req.payload.update({
                 collection: 'broadcasts',
-                id: doc.id,
+                id: broadcastDoc.id,
                 data: {
                   sendStatus: BroadcastStatus.FAILED,
+                  // Store error in webhookData.failureReason since we don't have a sendError field
+                  webhookData: {
+                    ...((doc as any).webhookData || {}),
+                    failureReason: `Email operation failed: ${getErrorMessage(error)}`,
+                  },
                 },
-                req,
+                context: { isSchedulingUpdate: true } as BroadcastHookContext,
               })
+              // Don't throw - website is already published
             }
+
+            return doc
           }
-          
+
+          // --- SCHEDULE CANCELLATION ---
+          if (
+            transition.wasScheduled &&
+            transition.isNoLongerScheduled &&
+            broadcastDoc.sendStatus === BroadcastStatus.SCHEDULED
+          ) {
+            try {
+              const provider = await getBroadcastProvider(req, pluginConfig)
+              await provider.cancelSchedule(broadcastDoc.providerId)
+
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: broadcastDoc.id,
+                data: {
+                  sendStatus: BroadcastStatus.DRAFT,
+                  scheduledAt: null,
+                },
+                context: { isSchedulingUpdate: true } as BroadcastHookContext,
+              })
+
+              req.payload.logger.info(
+                { broadcastId: broadcastDoc.id },
+                'Email schedule cancelled (publish schedule removed)'
+              )
+            } catch (error: unknown) {
+              req.payload.logger.error(
+                {
+                  broadcastId: broadcastDoc.id,
+                  error: getErrorDetails(error),
+                },
+                'Failed to cancel scheduled email - email may still send at original time'
+              )
+              // Don't update status - let user know the cancel may have failed
+            }
+
+            return doc
+          }
+
+          // --- SCHEDULE TIME CHANGE ---
+          if (
+            transition.scheduleTimeChanged &&
+            publishedAt &&
+            broadcastDoc.sendStatus === BroadcastStatus.SCHEDULED
+          ) {
+            try {
+              const provider = await getBroadcastProvider(req, pluginConfig)
+
+              // Cancel existing schedule, then create new one
+              await provider.cancelSchedule(broadcastDoc.providerId)
+              await provider.schedule(broadcastDoc.providerId, publishedAt)
+
+              await req.payload.update({
+                collection: 'broadcasts',
+                id: broadcastDoc.id,
+                data: {
+                  scheduledAt: publishedAt.toISOString(),
+                },
+                context: { isSchedulingUpdate: true } as BroadcastHookContext,
+              })
+
+              req.payload.logger.info(
+                {
+                  broadcastId: broadcastDoc.id,
+                  newScheduledAt: publishedAt.toISOString(),
+                },
+                'Email rescheduled to new publish time'
+              )
+            } catch (error: unknown) {
+              req.payload.logger.error(
+                {
+                  broadcastId: broadcastDoc.id,
+                  newScheduledAt: publishedAt.toISOString(),
+                  error: getErrorDetails(error),
+                },
+                'Failed to reschedule email - may send at original time or not at all'
+              )
+            }
+
+            return doc
+          }
+
           return doc
         },
       ],
