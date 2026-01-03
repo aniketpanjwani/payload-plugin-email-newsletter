@@ -352,6 +352,33 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             name: 'pausedAt',
             type: 'date',
           },
+          {
+            name: 'webhookEvents',
+            type: 'array',
+            label: 'Webhook Event Log',
+            maxRows: 10,
+            admin: {
+              readOnly: true,
+              description: 'Recent webhook events for debugging',
+            },
+            fields: [
+              {
+                name: 'eventType',
+                type: 'text',
+                admin: { readOnly: true },
+              },
+              {
+                name: 'receivedAt',
+                type: 'date',
+                admin: { readOnly: true },
+              },
+              {
+                name: 'eventPayload',
+                type: 'json',
+                admin: { readOnly: true },
+              },
+            ],
+          },
         ],
       },
     ],

@@ -228,3 +228,7 @@ export type { PreviewOptions, PreviewResult } from './utils/preview'
 
 // Export email HTML utilities
 export { convertToEmailSafeHtml } from './utils/emailSafeHtml'
+
+// Export polling fallback for stuck broadcasts
+export { syncStuckBroadcasts } from './jobs/syncBroadcastStatus'
+export type { SyncOptions, SyncResult } from './jobs/syncBroadcastStatus'

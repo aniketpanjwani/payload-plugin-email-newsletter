@@ -81,61 +81,75 @@ async function updateBroadcastStatus(
     }
     
     const broadcast = existing.docs[0]
-    const updateData: any = {
-      status,
-      lastWebhookEvent: event.type,
-      lastWebhookEventAt: event.occurred_at,
+
+    // Build new webhook event entry for logging
+    const newWebhookEvent = {
+      eventType: event.type,
+      receivedAt: new Date().toISOString(),
+      eventPayload: event.data,
     }
-    
-    // Add event-specific data
+
+    // Get existing webhook events, keep only last 9 to make room for new one
+    const existingEvents = broadcast.webhookData?.webhookEvents || []
+    const webhookEvents = [...existingEvents.slice(-9), newWebhookEvent]
+
+    // Build update data - note webhookData fields use dot notation for nested paths
+    const updateData: any = {
+      sendStatus: status,  // CRITICAL: Top-level field - 'sendStatus' not 'status'
+      'webhookData.lastWebhookEvent': event.type,
+      'webhookData.lastWebhookEventAt': event.occurred_at,
+      'webhookData.webhookEvents': webhookEvents,  // Log event for debugging
+    }
+
+    // Add event-specific data - use proper nested paths for webhookData fields
     switch (event.type) {
       case WEBHOOK_EVENT_TYPES.BROADCAST_SCHEDULED:
-        updateData.scheduledAt = (event as BroadcastScheduledEvent).data.scheduled_for
+        updateData.scheduledAt = (event as BroadcastScheduledEvent).data.scheduled_for  // Top-level
         break
-        
+
       case WEBHOOK_EVENT_TYPES.BROADCAST_SENDING: {
         const sendingEvent = event as BroadcastSendingEvent
-        updateData.sentCount = sendingEvent.data.sent_count
-        updateData.totalCount = sendingEvent.data.total_count
+        updateData['webhookData.sentCount'] = sendingEvent.data.sent_count
+        updateData['webhookData.totalCount'] = sendingEvent.data.total_count
         break
       }
-        
+
       case WEBHOOK_EVENT_TYPES.BROADCAST_SENT: {
         const sentEvent = event as BroadcastSentEvent
-        updateData.sentCount = sentEvent.data.sent_count
-        updateData.sentAt = sentEvent.data.completed_at
-        updateData.sendingStartedAt = sentEvent.data.started_at
+        updateData['webhookData.sentCount'] = sentEvent.data.sent_count
+        updateData.sentAt = sentEvent.data.completed_at  // Top-level
+        updateData['webhookData.sendingStartedAt'] = sentEvent.data.started_at
         break
       }
-        
+
       case WEBHOOK_EVENT_TYPES.BROADCAST_FAILED: {
         const failedEvent = event as BroadcastFailedEvent
-        updateData.failureReason = failedEvent.data.error
-        updateData.failedAt = failedEvent.data.failed_at
+        updateData['webhookData.failureReason'] = failedEvent.data.error
+        updateData['webhookData.failedAt'] = failedEvent.data.failed_at
         break
       }
-        
+
       case WEBHOOK_EVENT_TYPES.BROADCAST_PARTIAL_FAILURE: {
         const partialFailureEvent = event as BroadcastPartialFailureEvent
-        updateData.sentCount = partialFailureEvent.data.sent_count
-        updateData.failedCount = partialFailureEvent.data.failed_count
-        updateData.totalCount = partialFailureEvent.data.total_count
-        updateData.hasWarnings = true
+        updateData['webhookData.sentCount'] = partialFailureEvent.data.sent_count
+        updateData['webhookData.failedCount'] = partialFailureEvent.data.failed_count
+        updateData['webhookData.totalCount'] = partialFailureEvent.data.total_count
+        updateData['webhookData.hasWarnings'] = true
         break
       }
-        
+
       case WEBHOOK_EVENT_TYPES.BROADCAST_ABORTED: {
         const abortedEvent = event as BroadcastAbortedEvent
-        updateData.abortedAt = abortedEvent.data.aborted_at
-        updateData.abortReason = abortedEvent.data.reason
+        updateData['webhookData.abortedAt'] = abortedEvent.data.aborted_at
+        updateData['webhookData.abortReason'] = abortedEvent.data.reason
         break
       }
-        
+
       case WEBHOOK_EVENT_TYPES.BROADCAST_PAUSED: {
         const pausedEvent = event as BroadcastPausedEvent
-        updateData.pausedAt = pausedEvent.data.paused_at
-        updateData.sentCount = pausedEvent.data.sent_count
-        updateData.remainingCount = pausedEvent.data.remaining_count
+        updateData['webhookData.pausedAt'] = pausedEvent.data.paused_at
+        updateData['webhookData.sentCount'] = pausedEvent.data.sent_count
+        updateData['webhookData.remainingCount'] = pausedEvent.data.remaining_count
         break
       }
     }
