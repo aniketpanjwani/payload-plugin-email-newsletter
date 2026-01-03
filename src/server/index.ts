@@ -17,3 +17,9 @@ export { createNewsletterSettingsGlobal } from '../globals/NewsletterSettings'
 // Export email providers
 export { ResendProvider } from '../providers/resend'
 export { BroadcastProvider } from '../providers/broadcast'
+
+// Export preview utilities for external use (e.g., custom Content API endpoints)
+export { populateMediaFields } from '../utils/mediaPopulation'
+export { generateBroadcastPreviewHtml } from '../utils/preview'
+export type { PreviewOptions, PreviewResult } from '../utils/preview'
+export { convertToEmailSafeHtml } from '../utils/emailSafeHtml'

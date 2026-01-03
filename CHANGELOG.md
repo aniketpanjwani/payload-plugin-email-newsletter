@@ -1,3 +1,9 @@
+## [0.25.13] - 2026-01-02
+
+### Fixed
+- Fixed server exports to include preview utilities from `src/server/index.ts`
+- Preview utilities are now properly accessible when importing from `payload-plugin-newsletter`
+
 ## [0.25.12] - 2026-01-02
 
 ### Added
