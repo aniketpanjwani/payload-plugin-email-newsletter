@@ -4,6 +4,7 @@ import type { NewsletterPluginConfig } from '../types'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField, createEmailLexicalEditor } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
+import { createBroadcastScheduleField } from '../fields/broadcastSchedule'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 import { getBroadcastConfig } from '../utils/getBroadcastConfig'
 import { createSendBroadcastEndpoint } from '../endpoints/broadcasts/send'
@@ -142,6 +143,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           },
         },
       },
+      // Scheduling controls - shows schedule/cancel buttons based on status
+      createBroadcastScheduleField(),
       {
         name: 'settings',
         type: 'group',
