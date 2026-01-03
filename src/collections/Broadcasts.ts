@@ -9,10 +9,12 @@ import { createBroadcastScheduleField } from '../fields/broadcastSchedule'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 import { getBroadcastConfig } from '../utils/getBroadcastConfig'
 import { getBroadcastProvider } from '../utils/getProvider'
-import { detectStateTransition, areScheduledTimesEqual, parseScheduledDate } from '../utils/scheduling-state'
+import { detectStateTransition, areScheduledTimesEqual, parseScheduledDate, draftState, scheduledState, sendingState, failedState } from '../utils/scheduling-state'
 import { getErrorMessage, getErrorDetails } from '../utils/getErrorMessage'
+import { generateIdempotencyKey, getCompletedOperation, markOperationCompleted } from '../utils/idempotency'
 import { createSendBroadcastEndpoint } from '../endpoints/broadcasts/send'
-import { createScheduleBroadcastEndpoint } from '../endpoints/broadcasts/schedule'
+import { createScheduleBroadcastEndpoint, createCancelScheduleBroadcastEndpoint } from '../endpoints/broadcasts/schedule'
+import { createRetrySyncEndpoint } from '../endpoints/broadcasts/retry-sync'
 import { createTestBroadcastEndpoint } from '../endpoints/broadcasts/test'
 import { createBroadcastPreviewEndpoint, populateMediaFields } from '../endpoints/broadcasts/preview'
 
@@ -57,6 +59,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
     endpoints: [
       createSendBroadcastEndpoint(pluginConfig, collectionSlug),
       createScheduleBroadcastEndpoint(pluginConfig, collectionSlug),
+      createCancelScheduleBroadcastEndpoint(pluginConfig, collectionSlug),
+      createRetrySyncEndpoint(pluginConfig, collectionSlug),
       createTestBroadcastEndpoint(pluginConfig, collectionSlug),
       createBroadcastPreviewEndpoint(pluginConfig, collectionSlug),
     ],
@@ -301,6 +305,44 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           condition: () => false, // Hidden by default
         },
       },
+      // Provider sync status tracking
+      {
+        name: 'providerSyncStatus',
+        type: 'select',
+        label: 'Provider Sync Status',
+        defaultValue: 'pending',
+        options: [
+          { label: 'Pending', value: 'pending' },
+          { label: 'Synced', value: 'synced' },
+          { label: 'Failed', value: 'failed' },
+        ],
+        admin: {
+          readOnly: true,
+          position: 'sidebar',
+          description: 'Status of sync with email provider',
+          condition: (data) => hasProviders && data?.providerId,
+          components: {
+            Field: 'payload-plugin-newsletter/components#SyncStatusField',
+          },
+        },
+      },
+      {
+        name: 'providerSyncError',
+        type: 'text',
+        admin: {
+          readOnly: true,
+          condition: (data) => data?.providerSyncStatus === 'failed',
+          description: 'Error message from last sync attempt',
+        },
+      },
+      {
+        name: 'lastSyncAttempt',
+        type: 'date',
+        admin: {
+          readOnly: true,
+          condition: () => false, // Hidden, used for tracking
+        },
+      },
       // Webhook tracking fields
       {
         name: 'webhookData',
@@ -424,15 +466,9 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
             }, 'Broadcast afterChange update hook triggered')
 
             try {
-              // Get provider config from settings first, then fall back to env vars
+              // Get provider (centralized initialization)
+              const provider = await getBroadcastProvider(req, pluginConfig)
               const providerConfig = await getBroadcastConfig(req, pluginConfig)
-              if (!providerConfig || !providerConfig.token) {
-                req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
-                return doc
-              }
-
-              const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-              const provider = new BroadcastApiProvider(providerConfig)
 
               // If no providerId/externalId and has enough content, create in provider
               if (!doc.providerId && !doc.externalId && doc.subject && doc.contentSection?.content) {
@@ -457,20 +493,23 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   content: htmlContent,
                   trackOpens: doc.settings?.trackOpens ?? true,
                   trackClicks: doc.settings?.trackClicks ?? true,
-                  replyTo: doc.settings?.replyTo || providerConfig.replyTo,
+                  replyTo: doc.settings?.replyTo || providerConfig?.replyTo,
                   audienceIds: doc.audienceIds?.map((a: any) => a.audienceId) || [],
                 }
 
                 const providerBroadcast = await provider.create(createData)
-                
+
                 req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${providerBroadcast.id}`)
-                
-                // Return the document with provider IDs
+
+                // Return the document with provider IDs and sync status
                 return {
                   ...doc,
                   providerId: providerBroadcast.id,
                   externalId: providerBroadcast.id,
                   providerData: providerBroadcast.providerData,
+                  providerSyncStatus: 'synced',
+                  providerSyncError: null,
+                  lastSyncAttempt: new Date().toISOString(),
                 }
               }
 
@@ -532,7 +571,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     updates.trackClicks = doc.settings.trackClicks
                   }
                   if (doc.settings?.replyTo !== previousDoc?.settings?.replyTo) {
-                    updates.replyTo = doc.settings.replyTo || providerConfig.replyTo
+                    updates.replyTo = doc.settings.replyTo || providerConfig?.replyTo
                   }
                   if (JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)) {
                     updates.audienceIds = doc.audienceIds?.map((a: any) => a.audienceId)
@@ -544,42 +583,52 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   }, 'Syncing broadcast updates to provider')
                   
                   await provider.update(doc.providerId, updates)
+
+                  // Update sync status to synced
+                  await req.payload.update({
+                    collection: 'broadcasts',
+                    id: doc.id,
+                    data: {
+                      providerSyncStatus: 'synced',
+                      providerSyncError: null,
+                      lastSyncAttempt: new Date().toISOString(),
+                    },
+                    context: { isSchedulingUpdate: true } as BroadcastHookContext,
+                  })
+
                   req.payload.logger.info(`Broadcast ${doc.id} synced to provider successfully`)
                 } else {
                   req.payload.logger.info('No content changes to sync to provider')
                 }
               }
-            } catch (error) {
-              // Enhanced error logging for debugging
-              req.payload.logger.error('Raw error from broadcast update operation:')
-              req.payload.logger.error(error)
-              
-              if (error instanceof Error) {
-                req.payload.logger.error('Error is instance of Error:', {
-                  message: error.message,
-                  stack: error.stack,
-                  name: error.name,
-                  ...(error as any).details,
-                  ...(error as any).response,
-                  ...(error as any).data,
-                  ...(error as any).status,
-                  ...(error as any).statusText,
-                })
-              } else if (typeof error === 'string') {
-                req.payload.logger.error({ errorValue: error }, 'Error is a string')
-              } else if (error && typeof error === 'object') {
-                req.payload.logger.error({ errorValue: JSON.stringify(error, null, 2) }, 'Error is an object')
-              } else {
-                req.payload.logger.error({ errorType: typeof error }, 'Unknown error type')
-              }
+            } catch (error: unknown) {
+              req.payload.logger.error(
+                {
+                  broadcastId: doc.id,
+                  subject: doc.subject,
+                  error: getErrorDetails(error),
+                },
+                'Failed to sync broadcast to provider'
+              )
 
-              req.payload.logger.error({
-                id: doc.id,
-                subject: doc.subject,
-                hasContent: !!doc.contentSection?.content,
-                contentType: doc.contentSection?.content ? typeof doc.contentSection.content : 'none',
-              }, 'Failed broadcast document (update operation)')
-              
+              // Update sync status to failed so user can see the issue
+              try {
+                await req.payload.update({
+                  collection: 'broadcasts',
+                  id: doc.id,
+                  data: {
+                    providerSyncStatus: 'failed',
+                    providerSyncError: getErrorMessage(error),
+                    lastSyncAttempt: new Date().toISOString(),
+                  },
+                  context: { isSchedulingUpdate: true } as BroadcastHookContext,
+                })
+              } catch (updateError) {
+                req.payload.logger.error(
+                  { broadcastId: doc.id, error: getErrorDetails(updateError) },
+                  'Failed to update sync status after sync failure'
+                )
+              }
               // Don't throw - allow Payload update to succeed even if provider sync fails
             }
           }
@@ -663,16 +712,28 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               // Check if publishedAt is in the future AND not a manual publish
               if (publishedAt && publishedAt.getTime() > now.getTime() && !transition.isManualPublish) {
                 // Future scheduled publish - schedule the email for that time
-                // NOTE: provider.schedule() expects Date object, not string
-                await provider.schedule(broadcastDoc.providerId, publishedAt)
+                const scheduleKey = generateIdempotencyKey(broadcastDoc.id, 'schedule', {
+                  time: publishedAt.getTime(),
+                })
+
+                // Check if this exact schedule operation was recently completed
+                // (prevents duplicate if DB update failed after provider success)
+                const cached = getCompletedOperation(scheduleKey)
+                if (cached) {
+                  req.payload.logger.info(
+                    { broadcastId: broadcastDoc.id, idempotencyKey: scheduleKey },
+                    'Schedule operation already completed (idempotency check), updating local state only'
+                  )
+                } else {
+                  // NOTE: provider.schedule() expects Date object, not string
+                  await provider.schedule(broadcastDoc.providerId, publishedAt)
+                  markOperationCompleted(scheduleKey, { scheduledAt: publishedAt.toISOString() })
+                }
 
                 await req.payload.update({
                   collection: 'broadcasts',
                   id: broadcastDoc.id,
-                  data: {
-                    sendStatus: BroadcastStatus.SCHEDULED,
-                    scheduledAt: publishedAt.toISOString(),
-                  },
+                  data: scheduledState(publishedAt),
                   context: { isSchedulingUpdate: true } as BroadcastHookContext,
                 })
 
@@ -685,13 +746,25 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 )
               } else {
                 // Immediate publish OR manual publish - send email now
-                await provider.send(broadcastDoc.providerId)
+                const sendKey = generateIdempotencyKey(broadcastDoc.id, 'send', {})
+
+                // Check if this send operation was recently completed
+                const cached = getCompletedOperation(sendKey)
+                if (cached) {
+                  req.payload.logger.info(
+                    { broadcastId: broadcastDoc.id, idempotencyKey: sendKey },
+                    'Send operation already completed (idempotency check), updating local state only'
+                  )
+                } else {
+                  await provider.send(broadcastDoc.providerId)
+                  markOperationCompleted(sendKey, { sentAt: new Date().toISOString() })
+                }
 
                 await req.payload.update({
                   collection: 'broadcasts',
                   id: broadcastDoc.id,
                   data: {
-                    sendStatus: BroadcastStatus.SENDING,
+                    ...sendingState(),
                     sentAt: new Date().toISOString(),
                   },
                   context: { isSchedulingUpdate: true } as BroadcastHookContext,
@@ -715,7 +788,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 collection: 'broadcasts',
                 id: broadcastDoc.id,
                 data: {
-                  sendStatus: BroadcastStatus.FAILED,
+                  ...failedState(),
                   // Store error in webhookData.failureReason since we don't have a sendError field
                   webhookData: {
                     ...((doc as any).webhookData || {}),
@@ -738,15 +811,24 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           ) {
             try {
               const provider = await getBroadcastProvider(req, pluginConfig)
-              await provider.cancelSchedule(broadcastDoc.providerId)
+              const cancelKey = generateIdempotencyKey(broadcastDoc.id, 'cancel', {})
+
+              // Check if cancel was recently completed
+              const cached = getCompletedOperation(cancelKey)
+              if (cached) {
+                req.payload.logger.info(
+                  { broadcastId: broadcastDoc.id, idempotencyKey: cancelKey },
+                  'Cancel operation already completed (idempotency check), updating local state only'
+                )
+              } else {
+                await provider.cancelSchedule(broadcastDoc.providerId)
+                markOperationCompleted(cancelKey, { cancelledAt: new Date().toISOString() })
+              }
 
               await req.payload.update({
                 collection: 'broadcasts',
                 id: broadcastDoc.id,
-                data: {
-                  sendStatus: BroadcastStatus.DRAFT,
-                  scheduledAt: null,
-                },
+                data: draftState(),
                 context: { isSchedulingUpdate: true } as BroadcastHookContext,
               })
 
@@ -776,10 +858,30 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           ) {
             try {
               const provider = await getBroadcastProvider(req, pluginConfig)
+              const previousScheduledAt = broadcastDoc.scheduledAt
 
-              // Cancel existing schedule, then create new one
-              await provider.cancelSchedule(broadcastDoc.providerId)
-              await provider.schedule(broadcastDoc.providerId, publishedAt)
+              // Use a compound idempotency key for reschedule (includes old and new time)
+              const rescheduleKey = generateIdempotencyKey(broadcastDoc.id, 'schedule', {
+                from: previousScheduledAt ? new Date(previousScheduledAt).getTime() : 0,
+                to: publishedAt.getTime(),
+              })
+
+              // Check if this exact reschedule was recently completed
+              const cached = getCompletedOperation(rescheduleKey)
+              if (cached) {
+                req.payload.logger.info(
+                  { broadcastId: broadcastDoc.id, idempotencyKey: rescheduleKey },
+                  'Reschedule operation already completed (idempotency check), updating local state only'
+                )
+              } else {
+                // Cancel existing schedule, then create new one
+                await provider.cancelSchedule(broadcastDoc.providerId)
+                await provider.schedule(broadcastDoc.providerId, publishedAt)
+                markOperationCompleted(rescheduleKey, {
+                  rescheduledAt: new Date().toISOString(),
+                  newTime: publishedAt.toISOString(),
+                })
+              }
 
               await req.payload.update({
                 collection: 'broadcasts',
@@ -822,15 +924,8 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
           if (!hasProviders || !doc?.providerId) return doc
 
           try {
-            // Get provider config from settings first, then fall back to env vars
-            const providerConfig = await getBroadcastConfig(req, pluginConfig)
-            if (!providerConfig || !providerConfig.token) {
-              req.payload.logger.error('Broadcast provider not configured in Newsletter Settings or environment variables')
-              return doc
-            }
-
-            const { BroadcastApiProvider } = await import('../providers/broadcast/broadcast')
-            const provider = new BroadcastApiProvider(providerConfig)
+            // Get provider (centralized initialization)
+            const provider = await getBroadcastProvider(req, pluginConfig)
 
             // Only delete if broadcast is still editable
             const capabilities = provider.getCapabilities()

@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { useModal, useDocumentInfo } from '@payloadcms/ui'
 
 export interface ScheduleModalProps {
   broadcastId: string

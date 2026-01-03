@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { ScheduleModal } from './ScheduleModal'
+import { BroadcastStatus } from '../../types/broadcast'
 
 export interface BroadcastScheduleButtonProps {
   broadcastId: string
@@ -15,13 +16,13 @@ export interface BroadcastScheduleButtonProps {
  */
 export const BroadcastScheduleButton: React.FC<BroadcastScheduleButtonProps> = ({
   broadcastId,
-  sendStatus = 'draft',
+  sendStatus = BroadcastStatus.DRAFT,
   providerId,
 }) => {
   const [showModal, setShowModal] = useState(false)
 
   // Only show for drafts that have a providerId
-  if (sendStatus !== 'draft') {
+  if (sendStatus !== BroadcastStatus.DRAFT) {
     return null
   }
 

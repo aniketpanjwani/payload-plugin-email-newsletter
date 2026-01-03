@@ -1,4 +1,51 @@
 import type { BroadcastDocument, StateTransition } from '../types/scheduling'
+import { BroadcastStatus } from '../types/broadcast'
+
+// =============================================================================
+// State Factory Functions
+// =============================================================================
+// These functions return guaranteed-valid state objects for database updates.
+// Using these instead of manually constructing objects prevents invalid states
+// like { sendStatus: 'draft', scheduledAt: '2024-01-01' }.
+
+/**
+ * Create a valid draft state. Draft broadcasts cannot have a scheduledAt time.
+ */
+export function draftState(): { sendStatus: BroadcastStatus.DRAFT; scheduledAt: null } {
+  return { sendStatus: BroadcastStatus.DRAFT, scheduledAt: null }
+}
+
+/**
+ * Create a valid scheduled state. Scheduled broadcasts must have a scheduledAt time.
+ */
+export function scheduledState(scheduledAt: Date): { sendStatus: BroadcastStatus.SCHEDULED; scheduledAt: string } {
+  return { sendStatus: BroadcastStatus.SCHEDULED, scheduledAt: scheduledAt.toISOString() }
+}
+
+/**
+ * Create a valid sending state.
+ */
+export function sendingState(): { sendStatus: BroadcastStatus.SENDING } {
+  return { sendStatus: BroadcastStatus.SENDING }
+}
+
+/**
+ * Create a valid sent state.
+ */
+export function sentState(): { sendStatus: BroadcastStatus.SENT } {
+  return { sendStatus: BroadcastStatus.SENT }
+}
+
+/**
+ * Create a valid failed state.
+ */
+export function failedState(): { sendStatus: BroadcastStatus.FAILED } {
+  return { sendStatus: BroadcastStatus.FAILED }
+}
+
+// =============================================================================
+// State Transition Detection
+// =============================================================================
 
 /**
  * Detect all relevant state transitions for scheduling logic.

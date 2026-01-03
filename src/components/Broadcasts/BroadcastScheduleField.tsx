@@ -4,6 +4,7 @@ import React from 'react'
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { BroadcastScheduleButton } from './BroadcastScheduleButton'
 import { CancelScheduleButton } from './CancelScheduleButton'
+import { BroadcastStatus } from '../../types/broadcast'
 
 /**
  * Field component that shows scheduling controls based on broadcast status
@@ -43,7 +44,7 @@ export const BroadcastScheduleField: React.FC = () => {
   }
 
   // Already sent or sending - show readonly status
-  if (sendStatus === 'sent' || sendStatus === 'sending') {
+  if (sendStatus === BroadcastStatus.SENT || sendStatus === BroadcastStatus.SENDING) {
     return (
       <div
         style={{
@@ -54,7 +55,7 @@ export const BroadcastScheduleField: React.FC = () => {
           color: 'var(--theme-elevation-600, #666)',
         }}
       >
-        {sendStatus === 'sent'
+        {sendStatus === BroadcastStatus.SENT
           ? 'This broadcast has been sent and cannot be rescheduled.'
           : 'This broadcast is currently being sent.'}
       </div>
@@ -62,7 +63,7 @@ export const BroadcastScheduleField: React.FC = () => {
   }
 
   // Failed broadcasts can potentially be rescheduled
-  if (sendStatus === 'failed') {
+  if (sendStatus === BroadcastStatus.FAILED) {
     return (
       <div
         style={{
@@ -92,7 +93,7 @@ export const BroadcastScheduleField: React.FC = () => {
         <div style={{ marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>
           Email Scheduling
         </div>
-        {sendStatus === 'scheduled' && scheduledAt ? (
+        {sendStatus === BroadcastStatus.SCHEDULED && scheduledAt ? (
           <div style={{ fontSize: '14px', color: 'var(--theme-elevation-600, #666)' }}>
             <div style={{ marginBottom: '8px' }}>
               ✓ Email scheduled to send:{' '}
@@ -104,7 +105,7 @@ export const BroadcastScheduleField: React.FC = () => {
               To cancel, remove the scheduled publish date.
             </div>
           </div>
-        ) : sendStatus === 'draft' ? (
+        ) : sendStatus === BroadcastStatus.DRAFT ? (
           <div style={{ fontSize: '14px', color: 'var(--theme-elevation-600, #666)' }}>
             <div style={{ marginBottom: '8px' }}>
               Use Payload&apos;s <strong>Schedule Publish</strong> feature (in the sidebar) to
@@ -137,7 +138,7 @@ export const BroadcastScheduleField: React.FC = () => {
       <div style={{ marginBottom: '8px', fontWeight: 500, fontSize: '14px' }}>
         Email-Only Scheduling
       </div>
-      {sendStatus === 'scheduled' ? (
+      {sendStatus === BroadcastStatus.SCHEDULED ? (
         <CancelScheduleButton
           broadcastId={String(id)}
           sendStatus={sendStatus}

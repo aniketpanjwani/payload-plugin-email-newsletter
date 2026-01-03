@@ -2,7 +2,8 @@ import type { Endpoint, PayloadHandler, PayloadRequest } from 'payload'
 import type { NewsletterPluginConfig, SendBroadcastOptions } from '../../types'
 import { NewsletterProviderError, NewsletterStatus } from '../../types'
 import { requireAdmin } from '../../utils/auth'
-import { getBroadcastConfig } from '../../utils/getBroadcastConfig'
+import { getBroadcastProvider } from '../../utils/getProvider'
+import { BroadcastProviderError } from '../../types/broadcast'
 
 export const createSendBroadcastEndpoint = (
   config: NewsletterPluginConfig,
@@ -59,17 +60,8 @@ export const createSendBroadcastEndpoint = (
           }, { status: 404 })
         }
 
-        // Get provider config from settings first, then fall back to env vars
-        const providerConfig = await getBroadcastConfig(req, config)
-        if (!providerConfig || !providerConfig.token) {
-          return Response.json({
-            success: false,
-            error: 'Broadcast provider not configured in Newsletter Settings or environment variables',
-          }, { status: 500 })
-        }
-
-        const { BroadcastApiProvider } = await import('../../providers/broadcast/broadcast')
-        const provider = new BroadcastApiProvider(providerConfig)
+        // Get provider (centralized initialization)
+        const provider = await getBroadcastProvider(req, config)
 
         // Send broadcast using provider ID
         const broadcast = await provider.send(broadcastDoc.providerId, data)
@@ -92,7 +84,15 @@ export const createSendBroadcastEndpoint = (
         })
       } catch (error) {
         console.error('Failed to send broadcast:', error)
-        
+
+        if (error instanceof BroadcastProviderError) {
+          return Response.json({
+            success: false,
+            error: error.message,
+            code: error.code,
+          }, { status: error.code === 'CONFIGURATION_ERROR' ? 500 : 500 })
+        }
+
         if (error instanceof NewsletterProviderError) {
           return Response.json({
             success: false,

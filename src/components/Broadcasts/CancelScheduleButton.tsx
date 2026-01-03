@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
+import { BroadcastStatus } from '../../types/broadcast'
 
 export interface CancelScheduleButtonProps {
   broadcastId: string
@@ -14,13 +15,13 @@ export interface CancelScheduleButtonProps {
  */
 export const CancelScheduleButton: React.FC<CancelScheduleButtonProps> = ({
   broadcastId,
-  sendStatus = 'draft',
+  sendStatus = BroadcastStatus.DRAFT,
   scheduledAt,
 }) => {
   const [isLoading, setIsLoading] = useState(false)
 
   // Only show for scheduled broadcasts
-  if (sendStatus !== 'scheduled') {
+  if (sendStatus !== BroadcastStatus.SCHEDULED) {
     return null
   }
 

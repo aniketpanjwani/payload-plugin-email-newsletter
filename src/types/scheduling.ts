@@ -28,14 +28,14 @@ export interface BroadcastDocument {
 
 /**
  * Valid state combinations for scheduling (discriminated union).
- * Helps ensure we don't end up in invalid states.
+ * Used by state factory functions to ensure we don't end up in invalid states.
  */
 export type SchedulingState =
-  | { sendStatus: 'draft'; scheduledAt: null }
-  | { sendStatus: 'scheduled'; scheduledAt: string }
-  | { sendStatus: 'sending'; scheduledAt: string | null }
-  | { sendStatus: 'sent'; scheduledAt: string | null }
-  | { sendStatus: 'failed'; scheduledAt: string | null }
+  | { sendStatus: BroadcastStatus.DRAFT; scheduledAt: null }
+  | { sendStatus: BroadcastStatus.SCHEDULED; scheduledAt: string }
+  | { sendStatus: BroadcastStatus.SENDING; scheduledAt?: string | null }
+  | { sendStatus: BroadcastStatus.SENT; scheduledAt?: string | null }
+  | { sendStatus: BroadcastStatus.FAILED; scheduledAt?: string | null }
 
 /**
  * State transition detection result.
