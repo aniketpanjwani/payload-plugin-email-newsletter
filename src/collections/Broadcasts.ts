@@ -574,9 +574,27 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 )
 
                 if (syncResult.success) {
-                  req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${syncResult.providerId}`)
+                  req.payload.logger.info(
+                    { broadcastId: doc.id, providerId: syncResult.providerId },
+                    'Broadcast synced to provider on UPDATE'
+                  )
 
-                  // Return the document with provider IDs and sync status
+                  // Update document with provider IDs
+                  // Using context flag to prevent this update from re-triggering the hook
+                  await req.payload.update({
+                    collection: collectionSlug,
+                    id: doc.id,
+                    data: {
+                      providerId: syncResult.providerId,
+                      externalId: syncResult.externalId,
+                      providerData: syncResult.providerData,
+                      providerSyncStatus: 'synced',
+                      providerSyncError: null,
+                      lastSyncAttempt: new Date().toISOString(),
+                    },
+                    context: { isSchedulingUpdate: true } as BroadcastHookContext,
+                  })
+
                   return {
                     ...doc,
                     providerId: syncResult.providerId,
@@ -584,7 +602,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     providerData: syncResult.providerData,
                     providerSyncStatus: 'synced',
                     providerSyncError: null,
-                    lastSyncAttempt: new Date().toISOString(),
                   }
                 } else {
                   req.payload.logger.error(
