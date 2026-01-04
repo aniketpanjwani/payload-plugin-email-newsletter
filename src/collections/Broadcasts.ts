@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import type { SerializedEditorState } from 'lexical'
 import type { NewsletterPluginConfig } from '../types'
 import type { BroadcastDocument, BroadcastHookContext } from '../types/scheduling'
+import type { AudienceIdField } from '../types/broadcast'
 import { BroadcastStatus } from '../types'
 import { createEmailContentField, createEmailLexicalEditor } from '../fields/emailContent'
 import { createBroadcastInlinePreviewField } from '../fields/broadcastInlinePreview'
@@ -9,6 +10,7 @@ import { createBroadcastScheduleField } from '../fields/broadcastSchedule'
 import { convertToEmailSafeHtml } from '../utils/emailSafeHtml'
 import { getBroadcastConfig } from '../utils/getBroadcastConfig'
 import { getBroadcastProvider } from '../utils/getProvider'
+import { shouldSyncToProvider, syncBroadcastToProvider } from '../utils/broadcast-sync'
 import { detectStateTransition, areScheduledTimesEqual, parseScheduledDate, draftState, scheduledState, sendingState, failedState } from '../utils/scheduling-state'
 import { getErrorMessage, getErrorDetails } from '../utils/getErrorMessage'
 import { generateIdempotencyKey, getCompletedOperation, markOperationCompleted } from '../utils/idempotency'
@@ -444,72 +446,152 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
     hooks: {
       // Sync with provider on create and update
       afterChange: [
-        async ({ doc, operation, req, previousDoc }) => {
+        async ({ doc, operation, req, previousDoc, context }) => {
           if (!hasProviders) return doc
 
-          // Skip create operation - we'll handle provider creation on first update
-          if (operation === 'create') {
-            req.payload.logger.info('Broadcast created in Payload, provider sync will happen on first update with content')
+          // CRITICAL: Check context flag FIRST to prevent infinite loops
+          // This must be at the TOP before any operation checks
+          const hookContext = context as BroadcastHookContext | undefined
+          if (hookContext?.isSchedulingUpdate) {
             return doc
           }
-          
-          // Handle update operation
-          if (operation === 'update') {
-            req.payload.logger.info({
-              operation,
-              hasProviderId: !!doc.providerId,
-              hasExternalId: !!doc.externalId,
-              sendStatus: doc.sendStatus,
-              publishStatus: doc._status,
-              hasSubject: !!doc.subject,
-              hasContent: !!doc.contentSection?.content
-            }, 'Broadcast afterChange update hook triggered')
 
+          req.payload.logger.info({
+            operation,
+            hasProviderId: !!doc.providerId,
+            hasExternalId: !!doc.externalId,
+            sendStatus: doc.sendStatus,
+            publishStatus: doc._status,
+            hasSubject: !!doc.subject,
+            hasContent: !!doc.contentSection?.content
+          }, `Broadcast afterChange ${operation} hook triggered`)
+
+          // === CREATE OPERATION ===
+          if (operation === 'create') {
+            // Check if broadcast has sufficient content for sync
+            if (!shouldSyncToProvider(doc)) {
+              req.payload.logger.info(
+                { broadcastId: doc.id },
+                'Broadcast created without sufficient content - skipping provider sync'
+              )
+              return doc
+            }
+
+            // Sync to provider
+            try {
+              const provider = await getBroadcastProvider(req, pluginConfig)
+              const providerConfig = await getBroadcastConfig(req, pluginConfig)
+
+              const syncResult = await syncBroadcastToProvider(
+                doc,
+                req,
+                pluginConfig,
+                providerConfig,
+                provider
+              )
+
+              if (syncResult.success) {
+                req.payload.logger.info(
+                  { broadcastId: doc.id, providerId: syncResult.providerId },
+                  'Broadcast synced to provider on CREATE'
+                )
+
+                // Update document with provider IDs
+                // Using context flag to prevent this update from re-triggering the hook
+                await req.payload.update({
+                  collection: collectionSlug,
+                  id: doc.id,
+                  data: {
+                    providerId: syncResult.providerId,
+                    externalId: syncResult.externalId,
+                    providerData: syncResult.providerData,
+                    providerSyncStatus: 'synced',
+                    providerSyncError: null,
+                    lastSyncAttempt: new Date().toISOString(),
+                  },
+                  context: { isSchedulingUpdate: true } as BroadcastHookContext,
+                })
+
+                return {
+                  ...doc,
+                  providerId: syncResult.providerId,
+                  externalId: syncResult.externalId,
+                  providerData: syncResult.providerData,
+                  providerSyncStatus: 'synced',
+                  providerSyncError: null,
+                }
+              } else {
+                req.payload.logger.error(
+                  { broadcastId: doc.id, error: syncResult.error },
+                  'Failed to sync broadcast to provider on CREATE'
+                )
+
+                // Update document with failed status
+                await req.payload.update({
+                  collection: collectionSlug,
+                  id: doc.id,
+                  data: {
+                    providerSyncStatus: 'failed',
+                    providerSyncError: syncResult.error,
+                    lastSyncAttempt: new Date().toISOString(),
+                  },
+                  context: { isSchedulingUpdate: true } as BroadcastHookContext,
+                })
+
+                return {
+                  ...doc,
+                  providerSyncStatus: 'failed',
+                  providerSyncError: syncResult.error,
+                }
+              }
+            } catch (error: unknown) {
+              // Handle unexpected errors (e.g., provider initialization failure)
+              req.payload.logger.error(
+                { broadcastId: doc.id, error: getErrorDetails(error) },
+                'Unexpected error during CREATE sync'
+              )
+              return doc
+            }
+          }
+
+          // === UPDATE OPERATION ===
+          if (operation === 'update') {
             try {
               // Get provider (centralized initialization)
               const provider = await getBroadcastProvider(req, pluginConfig)
               const providerConfig = await getBroadcastConfig(req, pluginConfig)
 
               // If no providerId/externalId and has enough content, create in provider
-              if (!doc.providerId && !doc.externalId && doc.subject && doc.contentSection?.content) {
+              if (!doc.providerId && !doc.externalId && shouldSyncToProvider(doc)) {
                 req.payload.logger.info('Creating broadcast in provider on first update with content')
-                
-                const htmlContent = await convertToEmailSafeHtml(
-                  await populateMediaFields(doc.contentSection.content, req.payload, pluginConfig) as SerializedEditorState | null,
-                  {
-                    wrapInTemplate: pluginConfig.customizations?.broadcasts?.emailPreview?.wrapInTemplate ?? true,
-                    customWrapper: pluginConfig.customizations?.broadcasts?.emailPreview?.customWrapper,
-                    preheader: doc.contentSection?.preheader,
-                    subject: doc.subject,
-                    documentData: doc,
-                    customBlockConverter: pluginConfig.customizations?.broadcasts?.customBlockConverter
-                  }
+
+                const syncResult = await syncBroadcastToProvider(
+                  doc,
+                  req,
+                  pluginConfig,
+                  providerConfig,
+                  provider
                 )
 
-                const createData = {
-                  name: doc.subject,
-                  subject: doc.subject,
-                  preheader: doc.contentSection?.preheader || '',
-                  content: htmlContent,
-                  trackOpens: doc.settings?.trackOpens ?? true,
-                  trackClicks: doc.settings?.trackClicks ?? true,
-                  replyTo: doc.settings?.replyTo || providerConfig?.replyTo,
-                  audienceIds: doc.audienceIds?.map((a: any) => a.audienceId) || [],
-                }
+                if (syncResult.success) {
+                  req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${syncResult.providerId}`)
 
-                const providerBroadcast = await provider.create(createData)
-
-                req.payload.logger.info(`Broadcast ${doc.id} created in provider with ID ${providerBroadcast.id}`)
-
-                // Return the document with provider IDs and sync status
-                return {
-                  ...doc,
-                  providerId: providerBroadcast.id,
-                  externalId: providerBroadcast.id,
-                  providerData: providerBroadcast.providerData,
-                  providerSyncStatus: 'synced',
-                  providerSyncError: null,
-                  lastSyncAttempt: new Date().toISOString(),
+                  // Return the document with provider IDs and sync status
+                  return {
+                    ...doc,
+                    providerId: syncResult.providerId,
+                    externalId: syncResult.externalId,
+                    providerData: syncResult.providerData,
+                    providerSyncStatus: 'synced',
+                    providerSyncError: null,
+                    lastSyncAttempt: new Date().toISOString(),
+                  }
+                } else {
+                  req.payload.logger.error(
+                    { broadcastId: doc.id, error: syncResult.error },
+                    'Failed to create broadcast in provider during UPDATE'
+                  )
+                  // Continue - don't block update, just log the error
                 }
               }
 
@@ -530,7 +612,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                 }
 
                 // Check what has changed
-                const contentChanged = 
+                const contentChanged =
                   doc.subject !== previousDoc?.subject ||
                   doc.contentSection?.preheader !== previousDoc?.contentSection?.preheader ||
                   JSON.stringify(doc.contentSection?.content) !== JSON.stringify(previousDoc?.contentSection?.content) ||
@@ -540,8 +622,17 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                   JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)
 
                 if (contentChanged) {
-                  // Build update data
-                  const updates: any = {}
+                  // Build update data with proper types
+                  const updates: Partial<{
+                    name: string
+                    subject: string
+                    preheader: string
+                    content: string
+                    trackOpens: boolean
+                    trackClicks: boolean
+                    replyTo: string
+                    audienceIds: string[]
+                  }> = {}
                   if (doc.subject !== previousDoc?.subject) {
                     updates.name = doc.subject // Use subject as name in the provider
                     updates.subject = doc.subject
@@ -574,19 +665,19 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
                     updates.replyTo = doc.settings.replyTo || providerConfig?.replyTo
                   }
                   if (JSON.stringify(doc.audienceIds) !== JSON.stringify(previousDoc?.audienceIds)) {
-                    updates.audienceIds = doc.audienceIds?.map((a: any) => a.audienceId)
+                    updates.audienceIds = (doc.audienceIds as AudienceIdField[] | undefined)?.map((a) => a.audienceId)
                   }
 
                   req.payload.logger.info({
                     providerId: doc.providerId,
                     updates
                   }, 'Syncing broadcast updates to provider')
-                  
+
                   await provider.update(doc.providerId, updates)
 
                   // Update sync status to synced
                   await req.payload.update({
-                    collection: 'broadcasts',
+                    collection: collectionSlug,
                     id: doc.id,
                     data: {
                       providerSyncStatus: 'synced',
@@ -614,7 +705,7 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
               // Update sync status to failed so user can see the issue
               try {
                 await req.payload.update({
-                  collection: 'broadcasts',
+                  collection: collectionSlug,
                   id: doc.id,
                   data: {
                     providerSyncStatus: 'failed',

@@ -179,6 +179,63 @@ export interface BroadcastTemplateVariable {
   required?: boolean;
 }
 
+/**
+ * Audience ID field structure used in broadcast documents
+ */
+export interface AudienceIdField {
+  audienceId: string;
+}
+
+/**
+ * Data required for creating a broadcast in the provider
+ */
+export interface ProviderCreateData {
+  name: string;
+  subject: string;
+  preheader: string;
+  content: string;
+  trackOpens: boolean;
+  trackClicks: boolean;
+  replyTo?: string;
+  audienceIds: string[];
+}
+
+/**
+ * Result from syncing a broadcast to the provider (discriminated union)
+ */
+export type ProviderSyncResult = {
+  success: true;
+  providerId: string;
+  externalId: string;
+  providerData: unknown;
+} | {
+  success: false;
+  error: string;
+}
+
+/**
+ * Document shape for broadcast in afterChange hook
+ */
+export interface BroadcastDocument {
+  id: string;
+  subject?: string | null;
+  contentSection?: {
+    content?: unknown;
+    preheader?: string;
+  } | null;
+  settings?: {
+    trackOpens?: boolean;
+    trackClicks?: boolean;
+    replyTo?: string;
+  };
+  audienceIds?: AudienceIdField[];
+  providerId?: string | null;
+  externalId?: string | null;
+  providerData?: unknown;
+  providerSyncStatus?: 'pending' | 'synced' | 'failed';
+  providerSyncError?: string | null;
+}
+
 // Re-export newsletter types with deprecation notice for backwards compatibility
 export {
   NewsletterStatus,
