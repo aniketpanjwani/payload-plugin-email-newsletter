@@ -319,7 +319,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         ],
         admin: {
           readOnly: true,
-          position: 'sidebar',
           description: 'Status of sync with email provider',
           condition: (data) => hasProviders && data?.providerId,
           components: {

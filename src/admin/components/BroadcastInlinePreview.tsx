@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { useDocumentForm } from '@payloadcms/ui'
+import React, { useState, useCallback, useEffect } from 'react'
 import type { UIFieldClientComponent } from 'payload'
 
 export const BroadcastInlinePreview: UIFieldClientComponent = () => {
@@ -9,44 +8,59 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [documentId, setDocumentId] = useState<string | null>(null)
 
-  // Use getData and getFields methods (action-based, not deprecated fields property)
-  const { getData, getFields } = useDocumentForm()
+  // Extract document ID from URL on mount
+  useEffect(() => {
+    // URL pattern: /admin/collections/broadcasts/:id
+    const pathParts = window.location.pathname.split('/')
+    const broadcastsIndex = pathParts.indexOf('broadcasts')
+    if (broadcastsIndex !== -1 && pathParts[broadcastsIndex + 1]) {
+      const id = pathParts[broadcastsIndex + 1]
+      // Skip if it's "create" or other non-ID paths
+      if (id !== 'create' && id.length > 10) {
+        setDocumentId(id)
+      }
+    }
+  }, [])
 
   const generatePreview = useCallback(async () => {
+    if (!documentId) {
+      setError('Cannot generate preview: Document must be saved first. Save the document and try again.')
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
 
-      // Use getData() to get current form data (action-based, always up-to-date)
-      const formData = getData()
-      console.log('[BroadcastPreview] Form data from getData():', formData)
+      // Fetch the saved document data via API
+      const docResponse = await fetch(`/api/broadcasts/${documentId}`)
+      if (!docResponse.ok) {
+        throw new Error(`Failed to fetch document: ${docResponse.statusText}`)
+      }
+      const docData = await docResponse.json()
 
-      // Also try getFields for debugging
-      const fields = getFields()
-      console.log('[BroadcastPreview] Fields from getFields():', fields)
-      console.log('[BroadcastPreview] Field keys:', Object.keys(fields || {}))
+      console.log('[BroadcastPreview] Document data:', {
+        id: docData.id,
+        subject: docData.subject,
+        hasContent: !!docData.contentSection?.content,
+      })
 
-      // Try to get content from various possible locations
-      const content = formData?.contentSection?.content
-        || formData?.content
-        || (fields as any)?.['contentSection.content']?.value
-        || (fields as any)?.['content']?.value
-
-      console.log('[BroadcastPreview] Content found:', content ? 'yes' : 'no')
-
+      const content = docData.contentSection?.content || docData.content
       if (!content) {
-        setError('No content available to preview. Check console for field structure.')
+        setError('No content available to preview. Add some content and save the document first.')
         setLoading(false)
         return
       }
 
+      // Generate preview using the preview endpoint
       const response = await fetch('/api/broadcasts/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content,
-          documentData: formData,
+          documentData: docData,
         }),
       })
 
@@ -63,7 +77,7 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
     } finally {
       setLoading(false)
     }
-  }, [getData, getFields])
+  }, [documentId])
 
   return (
     <div className="field-type">
@@ -80,6 +94,12 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
           >
             {loading ? 'Generating Preview...' : 'Generate Preview'}
           </button>
+
+          {!documentId && (
+            <div style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              Save the document first to enable preview.
+            </div>
+          )}
 
           {error && (
             <div className="error-message" style={{ color: '#dc2626', marginTop: '0.5rem' }}>
@@ -127,7 +147,6 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
   )
 }
 
-// Export type for compatibility
 export interface BroadcastInlinePreviewProps {
   data?: any
   field?: any
