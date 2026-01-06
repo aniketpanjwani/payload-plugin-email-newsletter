@@ -10,6 +10,7 @@ export { BroadcastPreviewField } from './components/Broadcasts/BroadcastPreviewF
 
 // Scheduling components
 export { BroadcastScheduleField } from './components/Broadcasts/BroadcastScheduleField'
+export { SyncStatusField } from './components/Broadcasts/SyncStatusField'
 export { BroadcastScheduleButton } from './components/Broadcasts/BroadcastScheduleButton'
 export { CancelScheduleButton } from './components/Broadcasts/CancelScheduleButton'
 export { ScheduleModal } from './components/Broadcasts/ScheduleModal'
