@@ -82,7 +82,6 @@ export const createBroadcastsCollection = (pluginConfig: NewsletterPluginConfig)
         defaultValue: false,
         admin: {
           description: 'Check this to send via email only (won\'t be published on website). Use the plugin\'s Schedule Send button instead of Payload\'s Schedule Publish.',
-          position: 'sidebar',
         },
       },
       // Add any additional fields from customizations after subject
