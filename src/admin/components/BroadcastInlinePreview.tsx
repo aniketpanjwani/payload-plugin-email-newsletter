@@ -19,17 +19,23 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
       setError(null)
 
       // Debug: log available field keys to understand structure
-      console.log('[BroadcastPreview] Available field keys:', Object.keys(fields || {}))
+      const fieldKeys = Object.keys(fields || {})
+      console.log('[BroadcastPreview] Available field keys:', fieldKeys)
 
       // Access content using the flattened field name
       // Payload flattens nested fields with dot notation
       // Try multiple possible paths since structure may vary
       const contentField = fields?.['contentSection.content']
         || fields?.['content']
-        || fields?.['contentSection']?.value?.content
-      const contentValue = contentField?.value || contentField
+
+      // Also try accessing via contentSection group if it's not flattened
+      const contentSectionField = fields?.['contentSection'] as { value?: { content?: unknown } } | undefined
+      const fallbackContent = contentSectionField?.value?.content
+
+      const contentValue = contentField?.value || contentField || fallbackContent
 
       console.log('[BroadcastPreview] Content field:', contentField)
+      console.log('[BroadcastPreview] Fallback content:', fallbackContent ? 'exists' : 'missing')
       console.log('[BroadcastPreview] Content value:', contentValue ? 'exists' : 'missing')
 
       if (!contentValue) {
