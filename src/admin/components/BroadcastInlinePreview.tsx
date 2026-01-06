@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from 'react'
 import { useDocumentForm } from '@payloadcms/ui'
-import { reduceFieldsToValues } from 'payload/shared'
 import type { UIFieldClientComponent } from 'payload'
 
 export const BroadcastInlinePreview: UIFieldClientComponent = () => {
@@ -11,61 +10,43 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
   const [showPreview, setShowPreview] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Use useDocumentForm to access top-level document form (works in child contexts)
-  const { fields } = useDocumentForm()
+  // Use getData and getFields methods (action-based, not deprecated fields property)
+  const { getData, getFields } = useDocumentForm()
 
   const generatePreview = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Debug: log raw fields
-      console.log('[BroadcastPreview] Fields from useDocumentForm:', fields)
+      // Use getData() to get current form data (action-based, always up-to-date)
+      const formData = getData()
+      console.log('[BroadcastPreview] Form data from getData():', formData)
 
-      const fieldKeys = Object.keys(fields || {})
-      console.log('[BroadcastPreview] Available field keys:', fieldKeys)
+      // Also try getFields for debugging
+      const fields = getFields()
+      console.log('[BroadcastPreview] Fields from getFields():', fields)
+      console.log('[BroadcastPreview] Field keys:', Object.keys(fields || {}))
 
-      // Try reducing fields to values (as recommended by Payload docs)
-      const formData = reduceFieldsToValues(fields, true)
-      console.log('[BroadcastPreview] Reduced form data:', formData)
+      // Try to get content from various possible locations
+      const content = formData?.contentSection?.content
+        || formData?.content
+        || (fields as any)?.['contentSection.content']?.value
+        || (fields as any)?.['content']?.value
 
-      // Access content using the flattened field name
-      // Payload flattens nested fields with dot notation
-      // Try multiple possible paths since structure may vary
-      const contentField = fields?.['contentSection.content']
-        || fields?.['content']
+      console.log('[BroadcastPreview] Content found:', content ? 'yes' : 'no')
 
-      // Also try accessing via contentSection group if it's not flattened
-      const contentSectionField = fields?.['contentSection'] as { value?: { content?: unknown } } | undefined
-      const fallbackContent = contentSectionField?.value?.content
-
-      const contentValue = contentField?.value || contentField || fallbackContent
-
-      console.log('[BroadcastPreview] Content field:', contentField)
-      console.log('[BroadcastPreview] Fallback content:', fallbackContent ? 'exists' : 'missing')
-      console.log('[BroadcastPreview] Content value:', contentValue ? 'exists' : 'missing')
-
-      if (!contentValue) {
+      if (!content) {
         setError('No content available to preview. Check console for field structure.')
         setLoading(false)
         return
       }
 
-      // Build document data from all fields
-      const documentData: Record<string, any> = {}
-      Object.entries(fields || {}).forEach(([key, field]) => {
-        // Skip complex fields that might cause serialization issues
-        if (field && typeof field === 'object' && 'value' in field) {
-          documentData[key] = field.value
-        }
-      })
-
       const response = await fetch('/api/broadcasts/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          content: contentValue,
-          documentData, // Pass all form data
+        body: JSON.stringify({
+          content,
+          documentData: formData,
         }),
       })
 
@@ -82,12 +63,12 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
     } finally {
       setLoading(false)
     }
-  }, [fields])
+  }, [getData, getFields])
 
   return (
     <div className="field-type">
       <div className="field-label">Email Preview</div>
-      
+
       {!showPreview ? (
         <div className="preview-controls">
           <button
@@ -99,7 +80,7 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
           >
             {loading ? 'Generating Preview...' : 'Generate Preview'}
           </button>
-          
+
           {error && (
             <div className="error-message" style={{ color: '#dc2626', marginTop: '0.5rem' }}>
               {error}
@@ -126,7 +107,7 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
               {loading ? 'Regenerating...' : 'Refresh Preview'}
             </button>
           </div>
-          
+
           <div className="email-preview-container">
             <iframe
               srcDoc={preview}
