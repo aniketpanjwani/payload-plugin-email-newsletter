@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { useAllFormFields } from '@payloadcms/ui'
+import { useDocumentForm } from '@payloadcms/ui'
 import { reduceFieldsToValues } from 'payload/shared'
 import type { UIFieldClientComponent } from 'payload'
 
@@ -11,18 +11,16 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
   const [showPreview, setShowPreview] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Use useAllFormFields to access ALL form data
-  const [fields, dispatchFields] = useAllFormFields()
+  // Use useDocumentForm to access top-level document form (works in child contexts)
+  const { fields } = useDocumentForm()
 
   const generatePreview = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Debug: log raw fields and reduced values
-      console.log('[BroadcastPreview] Raw fields object:', fields)
-      console.log('[BroadcastPreview] Fields type:', typeof fields)
-      console.log('[BroadcastPreview] Is fields null/undefined:', fields === null, fields === undefined)
+      // Debug: log raw fields
+      console.log('[BroadcastPreview] Fields from useDocumentForm:', fields)
 
       const fieldKeys = Object.keys(fields || {})
       console.log('[BroadcastPreview] Available field keys:', fieldKeys)
