@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { useFormFields } from '@payloadcms/ui'
+import { useAllFormFields } from '@payloadcms/ui'
 import type { UIFieldClientComponent } from 'payload'
 
 export const BroadcastInlinePreview: UIFieldClientComponent = () => {
@@ -10,8 +10,8 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
   const [showPreview, setShowPreview] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Use useFormFields to access ALL form data, not just local field data
-  const fields = useFormFields(([fields]) => fields)
+  // Use useAllFormFields to access ALL form data
+  const [fields] = useAllFormFields()
 
   const generatePreview = useCallback(async () => {
     try {
