@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useAllFormFields } from '@payloadcms/ui'
+import { reduceFieldsToValues } from 'payload/shared'
 import type { UIFieldClientComponent } from 'payload'
 
 export const BroadcastInlinePreview: UIFieldClientComponent = () => {
@@ -11,16 +12,24 @@ export const BroadcastInlinePreview: UIFieldClientComponent = () => {
   const [error, setError] = useState<string | null>(null)
 
   // Use useAllFormFields to access ALL form data
-  const [fields] = useAllFormFields()
+  const [fields, dispatchFields] = useAllFormFields()
 
   const generatePreview = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Debug: log available field keys to understand structure
+      // Debug: log raw fields and reduced values
+      console.log('[BroadcastPreview] Raw fields object:', fields)
+      console.log('[BroadcastPreview] Fields type:', typeof fields)
+      console.log('[BroadcastPreview] Is fields null/undefined:', fields === null, fields === undefined)
+
       const fieldKeys = Object.keys(fields || {})
       console.log('[BroadcastPreview] Available field keys:', fieldKeys)
+
+      // Try reducing fields to values (as recommended by Payload docs)
+      const formData = reduceFieldsToValues(fields, true)
+      console.log('[BroadcastPreview] Reduced form data:', formData)
 
       // Access content using the flattened field name
       // Payload flattens nested fields with dot notation
